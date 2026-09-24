@@ -1,4 +1,4 @@
-# ServerCasino
+# ServerCasino 0.5.1-preview
 
 面向 Paper/Purpur 26.2、Java 25 的 Casino 插件。源码许可为 GPL-3.0，见 [LICENSE](LICENSE)。主命令 `/casino`；默认实体机器是免费练习，不扣款、不发放金币。不提供菜单新开金币局；已有金币记录仍可继续处理和核对。
 
@@ -6,9 +6,13 @@
 
 在本项目目录运行 `mvn clean package`，使用 Java 25 与 Maven 3.9+。首次构建需要联网下载 `pom.xml` 中公开依赖；离线构建只适用于缓存已完整的环境。安装 `target/server-casino-*.jar`，不要安装 `original-*.jar`。
 
-停止服务器并备份 `plugins/ServerCasino` 后替换插件，同一插件仅保留一个 JAR。按需安装 Vault 与兼容经济插件；没有经济提供者时只提供练习。菜单采用 Paper 原生 Dialog；菜单可通过 `menu-enabled` 开关控制。AuthMe 接入用于已有认证保护。默认模型可通过 CraftEngine 合并，或者由管理员自己的资源包系统分发。
+停止服务器并备份 `plugins/ServerCasino` 后替换插件，同一插件仅保留一个 JAR。仅安装 ServerCasino JAR 即可运行命令、实体机器逻辑和 Paper 原生 Dialog；不需要 ServerGames、ServerBoards、ServerMenu、KaMenu、Vault、AuthMe 或 CraftEngine。`menu-enabled: true` 开启菜单，玩家还需 `casino.use` 权限。Shift＋F 统一入口由 ServerMenu 提供，不属于 Casino。没有经济提供者时仍可免费练习。
 
 运行 `python tools/package-resources.py` 得到 `target/casino-craftengine.zip`。将其中 `resources/casino` 安装至 `plugins/CraftEngine/resources/casino`，重新生成并分发服务器合并资源包。不要覆盖其他内容包。ZIP 是 CraftEngine 内容包，不能直接作为客户端资源包 URL；管理员须使用合并后的有效资源包。
+
+不使用 CraftEngine 时，运行 `python tools/package-client-pack.py` 得到 `target/casino-client-pack-26.2.zip`，将此客户端资源包分发给玩家，或把其中 `assets/casino` 合并到服务器现有的 26.2 资源包。机器即使没有资源包也能创建和操作，但客户端不会完整显示 `casino:*` 模型。菜单本身不依赖这些模型。两种资源分发方式择一使用，避免重复注册同一批物品模型。详见 [安装说明](docs/installation.md)。
+
+完全不分发资源包时，可在 `plugins/ServerCasino/config.yml` 设置 `machine-appearance: vanilla` 并重启。12 种机器会改用原版方块、物品和文字标签显示，玩法、按钮命中区域及存档保持不变。默认值 `resource-pack` 保留现有批准外观；原版模式无法复刻自定义模型的形状与贴图。模式是全服设置，不按玩家分别选择。
 
 ## 命令与配置
 

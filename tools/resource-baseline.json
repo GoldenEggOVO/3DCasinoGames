@@ -1,8 +1,8 @@
 {
   "craftengine/resources/casino/pack.yml": "ff2e14f1a809325dc0545c182f3c4ae7ea3c108785516bf95c6fcca2a1f6e8d7",
-  "craftengine/resources/casino/configuration/cabinets.yml": "5a901440302acdb669d45a97f462b1f9dd84f4f81a90b01aaaaf06c60fa77ac7",
-  "craftengine/resources/casino/configuration/machine-ball.yml": "c9e0d5659523d817db058c008d996cc5946138facb3f6d7c188332690b905b9a",
-  "craftengine/resources/casino/configuration/showcase.yml": "3cc0c1c4caef558de745b0a5fa5f92736e3cedf2cd89394b95a3a5968e5e54fb",
+  "craftengine/resources/casino/configuration/cabinets.yml": "f7a7e212ca30a2d0522a3824f002cf034bc4eb058d47a2a2f26bdd0c06db2ab4",
+  "craftengine/resources/casino/configuration/machine-ball.yml": "1454ce4d3af207b0f22acf648a664406f0cdc9ed35ed7f65849be0df7437f0d6",
+  "craftengine/resources/casino/configuration/showcase.yml": "280ebbf7c851d7697f843d192d7fb974490034dc64df179c336298541f57cdd8",
   "craftengine/resources/casino/resourcepack/assets/casino/font/advanced.json": "0224759d3eb3e04e1c0ed7cbcabd6c2746893732536f3bf242d0f65c58f96abb",
   "craftengine/resources/casino/resourcepack/assets/casino/font/icons.json": "8edc2610b9b9ba1fbdae56fc1f81efe2b06fbb54e81e5da69f12f51b97bbb3d8",
   "craftengine/resources/casino/resourcepack/assets/casino/items/cabinet_blackjack_screen.json": "a86199c2fe932ac118883b0cb86392c646a23e8d4298f88dd816cbe30d3e9d5a",

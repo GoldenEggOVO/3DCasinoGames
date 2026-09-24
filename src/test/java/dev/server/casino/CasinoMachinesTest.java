@@ -29,4 +29,14 @@ class CasinoMachinesTest {
     void emptyScreenHasBothLabelsWithoutInventedTotals() {
         assertEquals("PLAYER  —\nDEALER  —", BlackjackMachine.readout(List.of(), List.of(), false));
     }
+
+    @Test
+    void vanillaBlackjackShowsCardsButKeepsDealerHoleCardHidden() {
+        String active = BlackjackMachine.vanillaReadout(List.of(0, 14), List.of(26, 39), true);
+        assertTrue(active.contains("♠A  ♥2"));
+        assertTrue(active.contains("♣A  ?"));
+        assertFalse(active.contains("♦A"));
+        assertTrue(BlackjackMachine.vanillaReadout(List.of(0), List.of(26, 39), false)
+                .contains("♣A  ♦A"));
+    }
 }

@@ -247,7 +247,7 @@ if __name__=='__main__':
     lines=['items:']
     for key in REPORT:
         lines += [f'  casino:{key}:','    material: paper','    data:',f'      item_name: <!i>{key.removeprefix("showcase_").replace("_"," ").upper()}',
-                  '    model:','      type: minecraft:model',f'      path: casino:item/{key}']
+                  f'    item-model: casino:{key}']
     (old.PACK/'configuration/showcase.yml').write_text('\n'.join(lines)+'\n',encoding='utf-8')
     (ROOT/'reports').mkdir(exist_ok=True)
     (ROOT/'reports/showcase-model-manifest.json').write_text(json.dumps(REPORT,indent=2),encoding='utf-8')

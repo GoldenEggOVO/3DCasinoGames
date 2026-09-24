@@ -3,6 +3,4 @@ items:
     material: snowball
     data:
       item_name: <!i><aqua>弹珠
-    model:
-      type: minecraft:model
-      path: casino:item/plinko_ball
+    item-model: casino:plinko_ball

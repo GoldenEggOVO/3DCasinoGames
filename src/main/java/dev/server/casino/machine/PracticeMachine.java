@@ -6,6 +6,8 @@ import dev.server.casino.game.DemoRound;
 import dev.server.casino.game.PracticeRound;
 import dev.server.casino.model.*;
 
+import net.kyori.adventure.text.Component;
+
 import org.bukkit.*;
 import org.bukkit.entity.*;
 import org.bukkit.inventory.ItemStack;
@@ -32,6 +34,7 @@ public abstract class PracticeMachine<R extends PracticeRound> {
     private final Map<ItemDisplay, String> buttonActions = new LinkedHashMap<>();
     private final Map<ItemDisplay, Integer> pressed = new HashMap<>();
     private ItemDisplay highlighted;
+    private TextDisplay vanillaStatus;
     protected int age;
     private long lastClick;
 
@@ -75,13 +78,15 @@ public abstract class PracticeMachine<R extends PracticeRound> {
                                     worldAt(transform.x(), transform.y(), transform.z()),
                                     ItemDisplay.class,
                                     this::common);
-            display.setItemStack(ModelItems.resolve(part.model()));
+            display.setItemStack(ModelItems.resolve(part.model(), vanillaAppearance()));
             display.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
             display.setTransformation(
                     new Transformation(
                             new Vector3f(),
                             transform.rotation(),
-                            new Vector3f((float) (4 * transform.scale() * scale())),
+                            new Vector3f(
+                                    (float) ((vanillaAppearance() && !part.model().startsWith("material:")
+                                                    ? 1 : 4) * transform.scale() * scale())),
                             new Quaternionf().rotateY((float) Math.PI)));
         }
         var b = definition.settingsBounds();
@@ -152,6 +157,8 @@ public abstract class PracticeMachine<R extends PracticeRound> {
             if (done) iterator.remove();
         }
         animate();
+        if (vanillaStatus != null && age % 4 == 0)
+            vanillaStatus.text(Component.text(round.result()));
         if (age % 4 == 0) hover();
     }
 
@@ -187,7 +194,11 @@ public abstract class PracticeMachine<R extends PracticeRound> {
                     case "mine_bomb" -> "material:TNT";
                     default -> "casino:" + name;
                 };
-        return ModelItems.resolve(definition.models().getOrDefault(name, fallback));
+        return ModelItems.resolve(definition.models().getOrDefault(name, fallback), vanillaAppearance());
+    }
+
+    protected final boolean vanillaAppearance() {
+        return plugin.vanillaAppearance();
     }
 
     protected final ItemDisplay item(
@@ -206,10 +217,15 @@ public abstract class PracticeMachine<R extends PracticeRound> {
     }
 
     protected final ItemDisplay model(String name, double x, double y, double z, double size) {
-        return item(model(name), x, y, z, size, 0);
+        return item(model(name), x, y, z,
+                vanillaAppearance() ? size * VanillaModels.size(name) : size, 0);
     }
 
     protected final void body(String name) {
+        if (vanillaAppearance()) {
+            vanillaBody();
+            return;
+        }
         var anchor = definition.anchor("body");
         var point = anchor.apply(0, 0, 0);
         origin.getWorld()
@@ -227,6 +243,43 @@ public abstract class PracticeMachine<R extends PracticeRound> {
                                             new Vector3f((float) (4 * scale() * anchor.scale())),
                                             new Quaternionf().rotateY((float) Math.PI)));
                         });
+    }
+
+    private void vanillaBody() {
+        double height = game().equals("plinko") ? 4.6 : 3.0;
+        vanillaBlock(Material.DEEPSLATE_TILES, -1.5, 0, -1.2, 3, .35, 2.7);
+        vanillaBlock(Material.BLACK_CONCRETE, -1.5, .35, -1.2, 3, height - .35, .16);
+        vanillaText(worldAt(0, height - .35, -.98), game().replace('_', ' ').toUpperCase(Locale.ROOT), .32f);
+        vanillaStatus = vanillaText(worldAt(0, height - .7, -.98), round.result(), .2f);
+    }
+
+    private void vanillaBlock(Material material, double x, double y, double z,
+            double width, double height, double depth) {
+        origin.getWorld().spawn(worldAt(x, y, z), BlockDisplay.class, display -> {
+            common(display);
+            display.setBlock(material.createBlockData());
+            display.setRotation(origin.getYaw(), 0);
+            display.setTransformation(new Transformation(new Vector3f(), new Quaternionf(),
+                    new Vector3f((float) (width * scale()), (float) (height * scale()),
+                            (float) (depth * scale())), new Quaternionf()));
+        });
+    }
+
+    protected final TextDisplay vanillaLabel(double x, double y, double z, String label, float size) {
+        return vanillaText(at(x, y, z), label, size);
+    }
+
+    private TextDisplay vanillaText(Location location, String label, float size) {
+        return origin.getWorld().spawn(location, TextDisplay.class, display -> {
+            common(display);
+            display.setBillboard(Display.Billboard.CENTER);
+            display.setBackgroundColor(Color.fromARGB(0));
+            display.setDefaultBackground(false);
+            display.setLineWidth(500);
+            display.text(Component.text(label));
+            display.setTransformation(new Transformation(new Vector3f(), new Quaternionf(),
+                    new Vector3f((float) (size * scale())), new Quaternionf()));
+        });
     }
 
     /** Apply the same playfield transform to dynamic poses as to their positions. */
@@ -305,6 +358,27 @@ public abstract class PracticeMachine<R extends PracticeRound> {
                                     display.setTransformation(buttonPose(button, 0));
                                     display.setInterpolationDuration(1);
                                 });
+        if (vanillaAppearance()) {
+            String label = switch (action) {
+                case "start", "play" -> "PLAY";
+                case "cash" -> "CASH";
+                case "double" -> "×2";
+                case "stand" -> "STAND";
+                case "hit" -> "HIT";
+                case "minus" -> "−";
+                case "plus" -> "+";
+                case "step" -> "STEP";
+                case "under" -> "UNDER";
+                case "over" -> "OVER";
+                default -> action.startsWith("select:")
+                        ? Integer.toString(Integer.parseInt(action.substring(7)) + 1) : action;
+            };
+            if (modelName.startsWith("showcase_button_money_"))
+                label = new String[] {"2X", "3X", "5X", "10X"}[
+                        Integer.parseInt(action.substring(7))];
+            vanillaText(worldAt(transform.x(), transform.y() + .12, transform.z() + .12),
+                    label, .18f);
+        }
         buttons.put(visual, button);
         buttonActions.put(visual, action);
         targets.add(
@@ -327,6 +401,10 @@ public abstract class PracticeMachine<R extends PracticeRound> {
         double factor = scale() * button.transform().scale();
         var translation = new Vector3f(0, 0, (float) (-press * factor));
         rotation.transform(translation);
+        if (vanillaAppearance())
+            return new Transformation(translation, rotation,
+                    new Vector3f((float) (button.width() * factor), (float) (.15 * factor),
+                            (float) (.15 * factor)), new Quaternionf().rotateY((float) Math.PI));
         return new Transformation(
                 translation,
                 rotation,

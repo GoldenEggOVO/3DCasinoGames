@@ -27,11 +27,16 @@ public final class CasinoPlugin extends JavaPlugin implements Listener {
     private EconomyAccess economy;
     private MachineManager machines;
     private MachineSettingsTargets machineSettings;
+    private boolean vanillaAppearance;
 
     @Override
     public void onEnable() {
         try {
             saveDefaultConfig();
+            String appearance = getConfig().getString("machine-appearance", "resource-pack");
+            if (!Set.of("resource-pack", "vanilla").contains(appearance))
+                throw new IllegalArgumentException("machine-appearance must be resource-pack or vanilla");
+            vanillaAppearance = appearance.equals("vanilla");
             EconomyProvider vault = VaultEconomyProvider.discover();
             if (vault != null) {
                 getServer()
@@ -86,6 +91,10 @@ public final class CasinoPlugin extends JavaPlugin implements Listener {
 
     public boolean menusEnabled() {
         return getConfig().getBoolean("menu-enabled", true);
+    }
+
+    public boolean vanillaAppearance() {
+        return vanillaAppearance;
     }
 
     public MachineSettingsTargets machineSettings() {

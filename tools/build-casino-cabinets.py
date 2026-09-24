@@ -321,7 +321,7 @@ if __name__ == '__main__':
     accessories()
     config = ['items:']
     for name in PALETTES:
-        config += [f'  casino:cabinet_{name}:', '    material: paper', '    data:', f'      item_name: <!i>{LABELS[name] or "Rocket"}', '    model:', '      type: minecraft:model', f'      path: casino:item/cabinet_{name}']
+        config += [f'  casino:cabinet_{name}:', '    material: paper', '    data:', f'      item_name: <!i>{LABELS[name] or "Rocket"}', f'    item-model: casino:cabinet_{name}']
     (PACK / 'configuration/cabinets.yml').write_text('\n'.join(config) + '\n', encoding='utf-8')
     report['alignment'] = {'plinko': {'peg_count': 78, 'rows': 12, 'peg_centres': '(col-row/2)*.36, 4.5-row*.27-.13, .43', 'slots': 13, 'slot_centres': '(i-6)*.36, 1.04, .43'}, 'mines': {'tile_centres': '(col-2)*.53, 1.29, -1.02+row*.51', 'clear_tile_size': [.46, .36], 'table_top': 1.02}, 'blackjack': {'table_y': .92, 'card_z': [-.32, .35], 'clear_card_x': [-1.2, 1.2]}, 'crash': {'screen_z': .4, 'rocket_x': -.55, 'rocket_bottom_y': [1.6, 2.65], 'rocket_z': .55}}
     report['validation'] = 'PASS: source bounds, item references, texture decoding and UVs, exact physical dimensions, bottom origins, height limits, 25 Mines tile clearances, Blackjack card plane; visual acceptance requires Minecraft'

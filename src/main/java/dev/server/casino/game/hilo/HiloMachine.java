@@ -34,8 +34,10 @@ public final class HiloMachine extends AnimatedMachine<HiloRound> {
         body("showcase_hilo");
         for (String action : List.of("under", "over", "play"))
             button(action, "showcase_button_" + action);
-        item(model("showcase_hilo_panel"), 0, 1.1, 0, 4, PITCH);
-        figures.add(item(model("showcase_slider"), 0, 1.16, .082, 4, PITCH));
+        item(model("showcase_hilo_panel"), 0, 1.1, 0,
+                vanillaAppearance() ? 4 * .4 : 4, PITCH);
+        figures.add(item(model("showcase_slider"), 0, 1.16, .082,
+                vanillaAppearance() ? 4 * .08 : 4, PITCH));
         for (int i = 0; i < 12; i++)
             hit("slider", figures.getFirst(), -1.1 + i * .2, 1.04, .08, .2, .20, -1);
         sliderLabel = text(0, 1.03, .22, .25);

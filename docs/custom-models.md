@@ -2,6 +2,8 @@
 
 模型定义只为现有游戏配置外观和布局，不执行脚本，也不定义新规则。资源可来自普通资源包或 CraftEngine，默认通过原版 `item_model` 渲染。外部命名空间不必为 casino。
 
+设置 `machine-appearance: vanilla` 时，模型 ID 会替换为原版材质，`material:` 引用仍直接使用指定材料；自定义坐标、按钮及模型定义快照保持生效。此模式用于无资源包游玩，不会保留自定义模型贴图。
+
 内置默认定义由 `src/main/java/dev/server/casino/model/BuiltinLayouts.java` 和 `MachineDefinition.builtin(game)` 提供。外部定义放在服务器 `plugins/ServerCasino/machines/*.yml`，每文件一台皮肤。缺省字段按 `game` 继承内置定义，因此只修改需要覆盖的项目。
 
 ```yaml

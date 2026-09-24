@@ -39,6 +39,12 @@ public final class BlackjackMachine extends PracticeMachine<BlackjackRound> {
                 + (dealer.isEmpty() ? "—" : active ? "?" : CasinoRules.total(dealer));
     }
 
+    public static String vanillaReadout(List<Integer> player, List<Integer> dealer, boolean active) {
+        var visibleDealer = active ? dealer.subList(0, Math.min(1, dealer.size())) : dealer;
+        return readout(player, dealer, active) + "\n" + CasinoRules.cards(player) + "\n"
+                + CasinoRules.cards(visibleDealer) + (active && dealer.size() > 1 ? "  ?" : "");
+    }
+
     @Override
     protected void buildGame() {
         body("cabinet_blackjack");
@@ -53,7 +59,7 @@ public final class BlackjackMachine extends PracticeMachine<BlackjackRound> {
         pose(panel, MachineGeometry.itemPose(BLACKJACK_PANEL_SCALE, PITCH, 0));
         for (String action : List.of("double", "stand", "hit", "start"))
             button(action, "cabinet_button_" + (action.equals("start") ? "play" : action));
-        model("cabinet_blackjack_screen", 0, 0, 0, 4);
+        if (!vanillaAppearance()) model("cabinet_blackjack_screen", 0, 0, 0, 4);
         readout = text(0, 1.24, -.76, .25);
     }
 
@@ -90,7 +96,9 @@ public final class BlackjackMachine extends PracticeMachine<BlackjackRound> {
             parts.remove(card);
             card.remove();
         }
-        readout.text(Component.text(readout(round.player(), round.dealer(), round.active())));
+        readout.text(Component.text(vanillaAppearance()
+                ? vanillaReadout(round.player(), round.dealer(), round.active())
+                : readout(round.player(), round.dealer(), round.active())));
         if (wasActive && !round.active())
             origin.getWorld()
                     .playSound(

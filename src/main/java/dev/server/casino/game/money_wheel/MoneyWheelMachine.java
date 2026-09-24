@@ -29,6 +29,14 @@ public final class MoneyWheelMachine extends AnimatedMachine<MoneyWheelRound> {
         for (int i = 0; i < 4; i++) button("select:" + i, "showcase_button_money_" + i);
         disc = model("showcase_wheel_money", 0, 2, .25, 4);
         model("showcase_pointer", 0, 2.93, .36, 4);
+        if (vanillaAppearance()) {
+            int[] segments = MoneyWheelRound.segments(), multipliers = MoneyWheelRound.multipliers();
+            for (int segment : segments) {
+                var label = text(0, 2, .30, .30);
+                label.text(net.kyori.adventure.text.Component.text(multipliers[segment] + "X"));
+                wheelLabels.add(label);
+            }
+        }
     }
 
     @Override
@@ -56,7 +64,7 @@ public final class MoneyWheelMachine extends AnimatedMachine<MoneyWheelRound> {
 
     void rotateDisc(double angle) {
         discAngle = angle;
-        var transform = MachineGeometry.itemPose(4, 0, 0);
+        var transform = MachineGeometry.itemPose(vanillaAppearance() ? 4 * .4 : 4, 0, 0);
         transform.getLeftRotation().rotateZ((float) angle);
         pose(disc, transform);
         disc.setInterpolationDelay(0);

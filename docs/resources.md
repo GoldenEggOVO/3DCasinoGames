@@ -6,6 +6,8 @@
 
 在任意当前目录运行项目内 `tools/package-resources.py`，路径始终相对于项目根。无需字体、Pillow 或旁边项目；文件排序、时间戳、权限和无压缩 ZIP 编码固定。重复运行产生相同字节。发布包仅包含 casino 命名空间，不包含旧资源别名。
 
+独立客户端资源包由 `tools/package-client-pack.py` 生成，输出 `target/casino-client-pack-26.2.zip`。它仅包含现有 `assets/casino` 与 26.2 的 `pack.mcmeta`，不包含 CraftEngine 配置；相同输入重复打包得到相同字节。可直接分发给客户端或将 `assets/casino` 合并进已有 26.2 资源包。CraftEngine 内容包仍由 `tools/package-resources.py` 生成；不要将该内容包直接作为客户端资源包。
+
 源码交付使用 `python tools/package-source.py`，输出 `target/server-casino-source.zip`。仅包含源码、资源、文档、生成工具和固定测试基线；排除 target、reports、artwork 原始绘图、本地字体、字体配置及 Python 缓存。打包前先完成代码更改和测试，再重新运行以纳入最终文件。
 
 ## 可选重绘

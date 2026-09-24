@@ -1,2 +1,5 @@
 # Optional native Paper dialogs. Commands and physical buttons work when disabled.
 menu-enabled: true
+
+# resource-pack keeps the approved models; vanilla uses built-in visuals and needs no client pack.
+machine-appearance: resource-pack

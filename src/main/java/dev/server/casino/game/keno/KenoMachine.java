@@ -28,9 +28,11 @@ public final class KenoMachine extends AnimatedMachine<KenoRound> {
         button("play", "showcase_button_play");
         for (int i = 1; i <= 40; i++) {
             double x = -1.15 + (i - 1) % 8 * (2.3 / 7), z = -.72 + (i - 1) / 8 * .335;
-            var tile = item(model("showcase_tile"), x, .85, z, 4, -Math.PI / 2);
+            var tile = item(model("showcase_tile"), x, .85, z,
+                    vanillaAppearance() ? 4 * .07 : 4, -Math.PI / 2);
             tiles.add(tile);
             hit("select:" + i, tile, x, .85, z, .27, .16, -1);
+            if (vanillaAppearance()) vanillaLabel(x, 1.02, z, Integer.toString(i), .17f);
         }
         for (int i = 0; i < 10; i++)
             gems.add(item(new ItemStack(Material.EMERALD), 0, .93, 0, 0, 0));

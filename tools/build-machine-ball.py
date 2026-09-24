@@ -40,9 +40,7 @@ texture.save(assets/'textures/item/plinko_ball.png')
     material: snowball
     data:
       item_name: <!i><aqua>弹珠
-    model:
-      type: minecraft:model
-      path: casino:item/plinko_ball
+    item-model: casino:plinko_ball
 ''', encoding='utf-8')
 assert len(elements) <= 64
 print(json.dumps({'elements_per_model':len(elements), 'entities_per_ball':1, 'texture_size':[32,32]}))

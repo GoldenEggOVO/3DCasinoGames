@@ -13,6 +13,19 @@ ASSETS = PACK / 'resourcepack/assets'
 
 
 class ResourcePackageTest(unittest.TestCase):
+    def test_craftengine_reuses_packaged_item_mappings(self):
+        for config in (PACK / 'configuration').glob('*.yml'):
+            text = config.read_text(encoding='utf-8')
+            self.assertNotRegex(text, r'(?m)^    model:', str(config))
+            ids = re.findall(r'^  (casino:[a-z0-9_]+):$', text, re.M)
+            references = re.findall(r'^    item-model: (casino:[a-z0-9_]+)$', text, re.M)
+            self.assertEqual(ids, references, str(config))
+            for reference in references:
+                name = reference.split(':', 1)[1]
+                path = ASSETS / 'casino/items' / (name + '.json')
+                self.assertTrue(path.is_file(), reference)
+                self.assert_reference(json.loads(path.read_text())['model']['model'], 'models', '.json')
+
     def test_approved_baseline_is_unchanged_except_namespace(self):
         manifest = json.loads((ROOT / 'tools/resource-baseline.json').read_text())
         for name, digest in manifest.items():
@@ -60,6 +73,24 @@ class ResourcePackageTest(unittest.TestCase):
             first = module.package(Path(temporary) / 'first.zip').read_bytes()
             second = module.package(Path(temporary) / 'second.zip').read_bytes()
             self.assertEqual(first, second)
+
+    def test_client_pack_contains_only_26_2_assets(self):
+        spec = importlib.util.spec_from_file_location('client_packager', ROOT / 'tools/package-client-pack.py')
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        with tempfile.TemporaryDirectory() as temporary:
+            output = module.package(Path(temporary) / 'client.zip')
+            second = module.package(Path(temporary) / 'again.zip')
+            self.assertEqual(output.read_bytes(), second.read_bytes())
+            with zipfile.ZipFile(output) as archive:
+                names = set(archive.namelist())
+                expected = {'assets/' + path.relative_to(ASSETS).as_posix()
+                            for path in ASSETS.rglob('*') if path.is_file()}
+                self.assertEqual(expected | {'pack.mcmeta'}, names)
+                self.assertEqual([88, 0], json.loads(archive.read('pack.mcmeta'))['pack']['min_format'])
+                self.assertEqual([88, 0], json.loads(archive.read('pack.mcmeta'))['pack']['max_format'])
+                self.assertEqual((ASSETS / 'casino/items/cabinet_blackjack.json').read_bytes(),
+                                 archive.read('assets/casino/items/cabinet_blackjack.json'))
 
     def test_source_package_excludes_build_outputs_and_local_records(self):
         spec = importlib.util.spec_from_file_location('source_packager', ROOT / 'tools/package-source.py')

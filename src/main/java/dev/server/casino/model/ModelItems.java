@@ -9,6 +9,15 @@ import org.bukkit.inventory.ItemStack;
 
 public final class ModelItems {
     public static ItemStack resolve(String reference) {
+        return resolve(reference, false);
+    }
+
+    public static ItemStack resolve(String reference, boolean vanilla) {
+        if (vanilla) {
+            if (reference.startsWith("material:"))
+                return new ItemStack(Material.valueOf(reference.substring(9)));
+            return new ItemStack(VanillaModels.material(reference));
+        }
         var provider = Bukkit.getServicesManager().load(MachineModelResolver.class);
         if (provider != null) {
             var result = provider.resolve(reference);
