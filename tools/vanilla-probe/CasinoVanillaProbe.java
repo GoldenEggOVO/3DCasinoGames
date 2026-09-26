@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -123,12 +124,14 @@ public final class CasinoVanillaProbe extends JavaPlugin {
                                         "cabinet_control_panel".equals(VanillaGeometry.name(display.getItemStack()))),
                                 "Blackjack sloped button panel remains");
                     }
+                    Set<UUID> dragonTilesBefore = Set.of();
                     if (game.equals("dragon_tower")) {
                         var displays = (List<Entity>) field(machine, "parts");
-                        long grayCubes = displays.stream().filter(BlockDisplay.class::isInstance)
+                        dragonTilesBefore = displays.stream().filter(BlockDisplay.class::isInstance)
                                 .map(BlockDisplay.class::cast)
-                                .filter(display -> display.getBlock().getMaterial() == Material.GRAY_TERRACOTTA).count();
-                        require(grayCubes == 24, "Dragon hidden tiles must be 24 gray terracotta cubes");
+                                .filter(display -> display.getBlock().getMaterial() == Material.GRAY_TERRACOTTA)
+                                .map(Entity::getUniqueId).collect(java.util.stream.Collectors.toSet());
+                        require(dragonTilesBefore.size() == 24, "Dragon hidden tiles must be 24 gray terracotta cubes");
                     }
                     writePreview(machine, game);
                     if (game.equals("keno")) {
@@ -154,6 +157,13 @@ public final class CasinoVanillaProbe extends JavaPlugin {
                         click(manager, player, (ItemDisplay) ((List<?>) field(machine,"tiles")).getFirst(), game);
                         ((PracticeMachine<?>) machine).tick();
                         var revealedParts = (List<Entity>) field(machine, "parts");
+                        var dragonTilesAfter = revealedParts.stream().filter(BlockDisplay.class::isInstance)
+                                .map(BlockDisplay.class::cast)
+                                .filter(display -> Set.of(Material.GRAY_TERRACOTTA, Material.EMERALD_BLOCK, Material.TNT)
+                                        .contains(display.getBlock().getMaterial()))
+                                .map(Entity::getUniqueId).collect(java.util.stream.Collectors.toSet());
+                        require(dragonTilesBefore.equals(dragonTilesAfter),
+                                "Dragon reveal replaced tile entities instead of recoloring them");
                         for (var material : List.of(Material.EMERALD_BLOCK, Material.TNT)) {
                             long count = revealedParts.stream().filter(BlockDisplay.class::isInstance)
                                     .map(BlockDisplay.class::cast)

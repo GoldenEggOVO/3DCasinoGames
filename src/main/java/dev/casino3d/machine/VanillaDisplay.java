@@ -2,6 +2,7 @@ package dev.casino3d.machine;
 
 import dev.casino3d.model.VanillaGeometry;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -46,12 +47,21 @@ final class VanillaDisplay {
         }
         String nextName = VanillaGeometry.name(carrier.getItemStack());
         if (!Objects.equals(name, nextName)) {
-            remove();
-            name = nextName;
-            var model = VanillaGeometry.get(name);
-            carrier.setVisibleByDefault(model == null);
-            if (model != null) build(model);
-            previous = null;
+            var model = VanillaGeometry.get(nextName);
+            if (sameBlockGeometry(VanillaGeometry.get(name), model)
+                    && children.size() == model.boxes().size()
+                    && children.stream().allMatch(part -> part.display instanceof BlockDisplay)) {
+                for (int i = 0; i < children.size(); i++)
+                    ((BlockDisplay) children.get(i).display)
+                            .setBlock(Material.valueOf(model.boxes().get(i).material()).createBlockData());
+                name = nextName;
+            } else {
+                remove();
+                name = nextName;
+                carrier.setVisibleByDefault(model == null);
+                if (model != null) build(model);
+                previous = null;
+            }
         }
         var matrix = VanillaGeometry.matrix(carrier.getTransformation());
         var nextLocation = carrier.getLocation();
@@ -74,6 +84,19 @@ final class VanillaDisplay {
         location = nextLocation;
         glowing = carrier.isGlowing();
         glowColor = carrier.getGlowColorOverride();
+        return true;
+    }
+
+    static boolean sameBlockGeometry(VanillaGeometry first, VanillaGeometry second) {
+        if (first == null || second == null || !first.labels().isEmpty()
+                || !second.labels().isEmpty() || first.boxes().size() != second.boxes().size()) return false;
+        for (int i = 0; i < first.boxes().size(); i++) {
+            var a = first.boxes().get(i);
+            var b = second.boxes().get(i);
+            if (!Arrays.equals(a.from(), b.from()) || !Arrays.equals(a.to(), b.to())
+                    || !Arrays.equals(a.matrix(), b.matrix())
+                    || a.roll() != b.roll() || a.pitch() != b.pitch()) return false;
+        }
         return true;
     }
 
