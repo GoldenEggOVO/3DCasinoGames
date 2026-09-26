@@ -244,11 +244,6 @@ if __name__=='__main__':
         for folder,suffix in [('models/item','json'),('items','json'),('textures/item','png')]:
             (ASSETS/f'{folder}/showcase_{retired}.{suffix}').unlink(missing_ok=True)
     cabinets();accessories()
-    lines=['items:']
-    for key in REPORT:
-        lines += [f'  casino:{key}:','    material: paper','    data:',f'      item_name: <!i>{key.removeprefix("showcase_").replace("_"," ").upper()}',
-                  f'    item-model: casino:{key}']
-    (old.PACK/'configuration/showcase.yml').write_text('\n'.join(lines)+'\n',encoding='utf-8')
     (ROOT/'reports').mkdir(exist_ok=True)
     (ROOT/'reports/showcase-model-manifest.json').write_text(json.dumps(REPORT,indent=2),encoding='utf-8')
     print(f'Generated {len(REPORT)} original model/texture pairs')

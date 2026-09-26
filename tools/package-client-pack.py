@@ -3,8 +3,8 @@ from pathlib import Path
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-ASSETS = ROOT / 'craftengine/resources/casino/resourcepack/assets'
-PACK_META = b'{"pack":{"min_format":[88,0],"max_format":[88,0],"description":"ServerCasino 26.2"}}'
+ASSETS = ROOT / 'resource-pack/assets'
+PACK_META = (ROOT / 'resource-pack/pack.mcmeta').read_bytes()
 
 
 def package(destination=None):

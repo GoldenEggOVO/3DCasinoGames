@@ -1,11 +1,11 @@
-"""Generate a rounded, low-entity-count Plinko ball in the existing CE pack."""
+"""Generate a rounded, low-entity-count Plinko ball in the optional native resource pack."""
 from pathlib import Path
 import json, math, shutil
 from PIL import Image, ImageDraw
 
 root = Path(__file__).resolve().parents[1]
-pack = root / 'craftengine/resources/casino'
-assets = pack / 'resourcepack/assets/casino'
+pack = root / 'resource-pack'
+assets = pack / 'assets/casino'
 for folder in ['models/item', 'items', 'textures/item']:
     (assets / folder).mkdir(parents=True, exist_ok=True)
 

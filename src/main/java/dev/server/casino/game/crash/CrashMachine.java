@@ -27,7 +27,7 @@ public final class CrashMachine extends PracticeMachine<CrashRound> {
         body("cabinet_crash");
         button("start", "cabinet_button_play");
         button("cash", "cabinet_button_cashout");
-        rocket = model("cabinet_rocket", -.55, 1.65, .57, 4);
+        rocket = model("cabinet_rocket", rocketX(), rocketY(round.multiplier()), .57, 4);
         readout = text(.53, 2.75, .64, .75);
     }
 
@@ -49,7 +49,7 @@ public final class CrashMachine extends PracticeMachine<CrashRound> {
     protected void refresh() {
         readout.text(
                 Component.text(String.format(Locale.ROOT, "%.2f×", round.multiplier() / 100.0)));
-        rocket.teleport(at(-.55, MachineGeometry.rocketHeight(round.multiplier()), .57));
+        rocket.teleport(at(rocketX(), rocketY(round.multiplier()), .57));
         rocket.setGlowing(round.active());
         if (wasActive && !round.active()) {
             origin.getWorld()
@@ -64,6 +64,14 @@ public final class CrashMachine extends PracticeMachine<CrashRound> {
                     .spawnParticle(Particle.SMOKE, rocket.getLocation(), 8, .12, .12, .08, .015);
         }
         wasActive = round.active();
+    }
+
+    private double rocketX() {
+        return -.55;
+    }
+
+    private double rocketY(int multiplier) {
+        return MachineGeometry.rocketHeight(multiplier);
     }
 
     @Override

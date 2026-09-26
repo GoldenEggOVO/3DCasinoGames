@@ -16,7 +16,9 @@ public final class ModelItems {
         if (vanilla) {
             if (reference.startsWith("material:"))
                 return new ItemStack(Material.valueOf(reference.substring(9)));
-            return new ItemStack(VanillaModels.material(reference));
+            var item = new ItemStack(VanillaModels.material(reference));
+            VanillaGeometry.mark(item, reference);
+            return item;
         }
         var provider = Bukkit.getServicesManager().load(MachineModelResolver.class);
         if (provider != null) {

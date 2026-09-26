@@ -1,0 +1,48 @@
+name: Build and test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/requirements-dev.txt
+      - name: Install asset test dependencies
+        run: python -m pip install -r tools/requirements-dev.txt
+      - name: Build plugin and run Java tests
+        run: mvn -B -ntp package
+      - name: Verify assets and packaging
+        run: python -m unittest discover -s tools -p "test_*.py"
+      - name: Verify checked-in vanilla geometry
+        run: |
+          python tools/export_vanilla_models.py
+          git diff --exit-code -- src/main/resources/vanilla-models.json
+      - name: Package public source
+        run: python tools/package-source.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: server-casino-build
+          path: |
+            target/server-casino-*-preview.jar
+            target/server-casino-source.zip
+          if-no-files-found: error

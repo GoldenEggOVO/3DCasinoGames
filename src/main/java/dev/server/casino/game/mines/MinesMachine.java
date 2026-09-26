@@ -3,11 +3,14 @@ package dev.server.casino.game.mines;
 import dev.server.casino.MachineGeometry;
 import dev.server.casino.machine.*;
 import dev.server.casino.model.MachineDefinition;
+import dev.server.casino.model.ButtonDefinition;
+import dev.server.casino.model.ModelTransform;
 
 import net.kyori.adventure.text.Component;
 
 import org.bukkit.*;
 import org.bukkit.entity.*;
+import org.bukkit.util.BoundingBox;
 
 import java.security.SecureRandom;
 import java.util.*;
@@ -18,27 +21,50 @@ public final class MinesMachine extends PracticeMachine<MinesDemoRound> {
     private final Map<ItemDisplay, Flip> flips = new HashMap<>();
     private TextDisplay setting;
     private boolean wasActive;
+    private final boolean refined;
+    private static final ModelTransform CONSOLE = new ModelTransform(0, .67, 1.96, -35, 0, 0, 1);
 
     public MinesMachine(
             MachineManager manager, UUID owner, Location origin, MachineDefinition definition) {
         super(manager, owner, origin, definition, new MinesDemoRound(new SecureRandom()));
+        refined = vanillaAppearance() && definition.equals(MachineDefinition.builtin("mines"));
+    }
+
+    public static ButtonDefinition vanillaButton(String action) {
+        boolean small = action.equals("minus") || action.equals("plus");
+        double x = (action.equals("minus") || action.equals("start") ? -1 : 1) * (small ? .78 : .60);
+        var point = CONSOLE.apply(x, small ? .51 : .075, .065);
+        return ButtonDefinition.at(point.x(), point.y(), point.z(), small ? .31 : 1.03, -35, small ? .34 : .86);
     }
 
     @Override
     protected void buildGame() {
-        body("cabinet_mines");
-        button("minus", "cabinet_button_minus");
-        button("plus", "cabinet_button_plus");
-        button("start", "cabinet_button_play");
-        button("cash", "cabinet_button_cashout");
+        body(refined ? "cabinet_mines_refined" : "cabinet_mines");
+        String[] actions = {"minus", "plus", "start", "cash"};
+        String[] models = {"minus", "plus", "play", "cashout"};
+        for (int i = 0; i < actions.length; i++)
+            button(actions[i], "cabinet_button_" + models[i], refined ? vanillaButton(actions[i]) : definition.button(actions[i]));
         for (int i = 0; i < 25; i++) {
             var point = MachineGeometry.mineCell(i);
-            var cell = model("mine_hidden", point.x(), point.y(), point.z(), .32);
+            var cell = model("mine_hidden", point.x(), refined ? 1.115 : point.y(), point.z(), .32);
+            if (refined) pose(cell, cellPose(0));
             cells.add(cell);
             faces.put(cell, "mine_hidden");
-            hit("cell:" + i, cell, point.x(), point.y() - .16, point.z(), .43, .33, -1);
+            if (refined) hitDisplay("cell:" + i, cell, new BoundingBox(-2, -2, -2, 2, 2, 2), -1);
+            else hit("cell:" + i, cell, point.x(), point.y() - .16, point.z(), .43, .33, -1);
         }
-        setting = text(-.55, 1.43, 1.62, .23);
+        if (refined) {
+            var point = CONSOLE.apply(0, .56, .04);
+            setting = text(point.x(), point.y(), point.z(), .30);
+            pose(setting, new org.bukkit.util.Transformation(new org.joml.Vector3f(), CONSOLE.rotation(),
+                    new org.joml.Vector3f(.30f), new org.joml.Quaternionf()));
+        } else setting = text(-.55, 1.43, 1.62, .23);
+    }
+
+    private org.bukkit.util.Transformation cellPose(double pitch) {
+        var pose = MachineGeometry.itemPose(.32, pitch, 0);
+        if (refined) pose.getScale().set(.48f, .13f, .46f);
+        return pose;
     }
 
     @Override
@@ -102,7 +128,7 @@ public final class MinesMachine extends PracticeMachine<MinesDemoRound> {
             var flip = entry.getValue();
             double t = Math.min(1, (age - flip.start) / 8.0);
             if (t >= .5) entry.getKey().setItemStack(model(flip.model));
-            pose(entry.getKey(), MachineGeometry.itemPose(.32, Math.sin(t * Math.PI) * 1.3, 0));
+            pose(entry.getKey(), cellPose(Math.sin(t * Math.PI) * 1.3));
             if (t >= 1) iterator.remove();
         }
     }

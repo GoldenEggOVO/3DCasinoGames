@@ -1,21 +1,33 @@
 # 资源与生成工具
 
-已提交的 JSON/PNG 是批准外观的发布输入。`tools/resource-baseline.json` 保存 0.3.3 基线 ZIP 中 875 个保留资源文件经命名替换后的 SHA-256。基线已去掉被删除的 Mines 菜单专用资源；其余摘要不变。测试逐文件验证保留资源的 PNG 字节、几何、UV、显示变换、字体和 CE 配置。
+## 原版机器
 
-## 确定性发布
+运行时直接读取 JAR 中的 `vanilla-models.json`，使用原版方块和文字 Display，无需下载资源。`tools/export_vanilla_models.py` 从原模型几何及批准的贴图生成 110 个内置模型，包含 52 张牌与牌背。
 
-在任意当前目录运行项目内 `tools/package-resources.py`，路径始终相对于项目根。无需字体、Pillow 或旁边项目；文件排序、时间戳、权限和无压缩 ZIP 编码固定。重复运行产生相同字节。发布包仅包含 casino 命名空间，不包含旧资源别名。
+```sh
+python -m pip install -r tools/requirements-dev.txt
+python tools/export_vanilla_models.py
+python -m unittest discover -s tools -p "test_*.py"
+```
 
-独立客户端资源包由 `tools/package-client-pack.py` 生成，输出 `target/casino-client-pack-26.2.zip`。它仅包含现有 `assets/casino` 与 26.2 的 `pack.mcmeta`，不包含 CraftEngine 配置；相同输入重复打包得到相同字节。可直接分发给客户端或将 `assets/casino` 合并进已有 26.2 资源包。CraftEngine 内容包仍由 `tools/package-resources.py` 生成；不要将该内容包直接作为客户端资源包。
+生成器先对照已提交的源模型验证几何，再导出原版模型；不会覆盖原始资源包素材。普通 Maven 构建直接使用已提交的导出文件，不要求 Python 或字体。Blender 预览脚本位于 `tools/vanilla-preview/`，运行时实体快照的生成见 [验证说明](verification.md)。
 
-源码交付使用 `python tools/package-source.py`，输出 `target/server-casino-source.zip`。仅包含源码、资源、文档、生成工具和固定测试基线；排除 target、reports、artwork 原始绘图、本地字体、字体配置及 Python 缓存。打包前先完成代码更改和测试，再重新运行以纳入最终文件。
+## 原有素材与可选客户端资源包
+
+批准的 JSON / PNG 现位于 `resource-pack/assets/casino/`。迁移保持所有文件字节不变，`tools/resource-baseline.json` 校验 871 个保留素材；原来 4 个 CraftEngine 配置已经移除。不要为了测试通过而重写基线。
+
+`python tools/package-client-pack.py` 生成 `target/casino-client-pack-26.2.zip`，只包含普通 Minecraft `assets/casino` 与 `pack.mcmeta`。固定排序、时间戳和 ZIP 编码使打包可重复。它只供主动选择 `resource-pack` 外观模式的管理员使用，默认安装不需要。
+
+`python tools/export_original_bbmodels.py <输出目录>` 将原始 JSON / PNG 导出为 Blockbench 文件，第二个可选参数为本地原版 assets 目录，用于引用原版贴图的模型。修改几何后须同步检查原版导出与布局，不应通过重绘改变已认可的素材。
+
+## 源码交付
+
+`python tools/package-source.py` 生成 `target/server-casino-source.zip`。包含源码、普通资源素材、文档、CI、生成工具和测试基线；排除构建产物、运行报告、本地字体、字体配置及 Python 缓存。打包不需要字体或第三方插件。
 
 ## 可选重绘
 
-项目 tools 包含原机器、弹珠、牌面和菜单生成器。它们是修改外观的开发工具，不是普通构建必经步骤。需要 Python 3 与 Pillow；改动前先备份资源。调用顺序通常为 `build-casino-artwork.py`、`build-casino-panels.py`、`build-machine-ball.py`、`build-casino-cabinets.py`、`build-showcase-machines.py`。公开源码包不包含 `artwork` 原始绘图；`build-casino-artwork.py` 与 `build-casino-panels.py` 的可选重绘需要自行提供有权使用的 `artwork/casino-icons-source.png` 与 `artwork/casino-panels-source.png` 输入。默认资源打包不需要这些文件。不同生成器覆盖各自对应资源，修改后必须审阅差异。Mines 菜单生成器、专用字体及纹理已移除；机器宝石与炸弹贴图仍保留。
+`build-casino-artwork.py`、`build-casino-panels.py`、`build-machine-ball.py`、`build-casino-cabinets.py` 和 `build-showcase-machines.py` 是美术开发工具，普通构建不调用它们。图像切片重绘需自行提供有权使用的 `artwork/casino-icons-source.png` 和 `artwork/casino-panels-source.png`；这些本地原图不包含在公开源码中。
 
-需要文字的生成器使用 `asset_fonts.py`。复制 `tools/fonts.example.json` 为 `tools/fonts.local.json`，指定自己有权使用的 bold、symbols、cjk 字体。配置内相对路径以配置文件目录为根；环境变量 `CASINO_FONT_CONFIG` 可以选择另一配置，其相对路径以项目根为根。没有字体配置时明确失败，不搜索 Windows 字体、不静默换字体。不要把字体文件或本地配置放进发布包。
+需要文字的重绘工具使用 `asset_fonts.py`。复制 `tools/fonts.example.json` 为 `tools/fonts.local.json`，配置自己有权使用的 bold、symbols、cjk 字体。相对路径以配置文件目录为根，`CASINO_FONT_CONFIG` 可指定另一配置。无配置时明确失败，不静默替换字体。历史纹理使用过 Arial Bold、Segoe UI Symbol、Microsoft YaHei，字体程序不随项目分发。
 
-历史批准纹理使用过 Arial Bold、Segoe UI Symbol、Microsoft YaHei；其字体程序不随项目分发。使用其他字体会改变字形及像素，不能宣称与历史 PNG 一致。对重绘结果要求可重复时，固定 Python/Pillow 版本和字体文件 SHA-256，并记录工具、输入和顺序。通常直接打包现有批准 PNG 即可精确复现发布包。
-
-重绘后运行资产测试并实际检查客户端效果。只有有意批准新的资源基线时才能更新基线摘要；不能为了测试通过而重写基线。
+重绘受字体、Python 和 Pillow 版本影响；需要精确复现时固定版本和字体 SHA-256。通常直接打包已提交的 PNG 即可复现原有资源包。每次有意修改素材后审阅差异并进服验收。

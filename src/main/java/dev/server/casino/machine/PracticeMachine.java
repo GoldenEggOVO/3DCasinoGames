@@ -15,6 +15,8 @@ import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
 import org.joml.Quaternionf;
+import org.joml.Matrix4d;
+import org.joml.Vector3d;
 import org.joml.Vector3f;
 
 import java.util.*;
@@ -33,8 +35,8 @@ public abstract class PracticeMachine<R extends PracticeRound> {
     private final Map<ItemDisplay, ButtonDefinition> buttons = new LinkedHashMap<>();
     private final Map<ItemDisplay, String> buttonActions = new LinkedHashMap<>();
     private final Map<ItemDisplay, Integer> pressed = new HashMap<>();
+    private final List<VanillaDisplay> vanillaDisplays = new ArrayList<>();
     private ItemDisplay highlighted;
-    private TextDisplay vanillaStatus;
     protected int age;
     private long lastClick;
 
@@ -85,11 +87,11 @@ public abstract class PracticeMachine<R extends PracticeRound> {
                             new Vector3f(),
                             transform.rotation(),
                             new Vector3f(
-                                    (float) ((vanillaAppearance() && !part.model().startsWith("material:")
-                                                    ? 1 : 4) * transform.scale() * scale())),
+                                    (float) (4 * transform.scale() * scale())),
                             new Quaternionf().rotateY((float) Math.PI)));
+            attachVanilla(display);
         }
-        var b = definition.settingsBounds();
+        var b = settingsBounds();
         double s = scale();
         plugin.machineSettings()
                 .register(
@@ -105,6 +107,7 @@ public abstract class PracticeMachine<R extends PracticeRound> {
                                 b.get(5) * s),
                         this::settings);
         refresh();
+        syncVanillaDisplays();
     }
 
     protected abstract void buildGame();
@@ -114,6 +117,10 @@ public abstract class PracticeMachine<R extends PracticeRound> {
     protected abstract boolean available(String action);
 
     protected abstract void refresh();
+
+    protected List<Double> settingsBounds() {
+        return definition.settingsBounds();
+    }
 
     protected void animate() {}
 
@@ -157,9 +164,17 @@ public abstract class PracticeMachine<R extends PracticeRound> {
             if (done) iterator.remove();
         }
         animate();
-        if (vanillaStatus != null && age % 4 == 0)
-            vanillaStatus.text(Component.text(round.result()));
         if (age % 4 == 0) hover();
+        syncVanillaDisplays();
+    }
+
+    private void syncVanillaDisplays() {
+        vanillaDisplays.removeIf(display -> !display.sync());
+    }
+
+    private void attachVanilla(ItemDisplay display) {
+        if (vanillaAppearance() && VanillaGeometry.name(display.getItemStack()) != null)
+            vanillaDisplays.add(new VanillaDisplay(display, this::common, parts));
     }
 
     protected final Location worldAt(double x, double y, double z) {
@@ -203,7 +218,7 @@ public abstract class PracticeMachine<R extends PracticeRound> {
 
     protected final ItemDisplay item(
             ItemStack stack, double x, double y, double z, double size, double pitch) {
-        return origin.getWorld()
+        var result = origin.getWorld()
                 .spawn(
                         at(x, y, z),
                         ItemDisplay.class,
@@ -214,55 +229,33 @@ public abstract class PracticeMachine<R extends PracticeRound> {
                             pose(display, MachineGeometry.itemPose(size, pitch, 0));
                             display.setInterpolationDuration(1);
                         });
+        attachVanilla(result);
+        return result;
     }
 
     protected final ItemDisplay model(String name, double x, double y, double z, double size) {
-        return item(model(name), x, y, z,
-                vanillaAppearance() ? size * VanillaModels.size(name) : size, 0);
+        return item(model(name), x, y, z, size, 0);
     }
 
     protected final void body(String name) {
-        if (vanillaAppearance()) {
-            vanillaBody();
-            return;
-        }
         var anchor = definition.anchor("body");
         var point = anchor.apply(0, 0, 0);
-        origin.getWorld()
+        var display = origin.getWorld()
                 .spawn(
                         worldAt(point.x(), point.y(), point.z()),
                         ItemDisplay.class,
-                        display -> {
-                            common(display);
-                            display.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
-                            display.setItemStack(model(name));
-                            display.setTransformation(
+                        entity -> {
+                            common(entity);
+                            entity.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
+                            entity.setItemStack(model(name));
+                            entity.setTransformation(
                                     new Transformation(
                                             new Vector3f(),
                                             anchor.rotation(),
                                             new Vector3f((float) (4 * scale() * anchor.scale())),
                                             new Quaternionf().rotateY((float) Math.PI)));
                         });
-    }
-
-    private void vanillaBody() {
-        double height = game().equals("plinko") ? 4.6 : 3.0;
-        vanillaBlock(Material.DEEPSLATE_TILES, -1.5, 0, -1.2, 3, .35, 2.7);
-        vanillaBlock(Material.BLACK_CONCRETE, -1.5, .35, -1.2, 3, height - .35, .16);
-        vanillaText(worldAt(0, height - .35, -.98), game().replace('_', ' ').toUpperCase(Locale.ROOT), .32f);
-        vanillaStatus = vanillaText(worldAt(0, height - .7, -.98), round.result(), .2f);
-    }
-
-    private void vanillaBlock(Material material, double x, double y, double z,
-            double width, double height, double depth) {
-        origin.getWorld().spawn(worldAt(x, y, z), BlockDisplay.class, display -> {
-            common(display);
-            display.setBlock(material.createBlockData());
-            display.setRotation(origin.getYaw(), 0);
-            display.setTransformation(new Transformation(new Vector3f(), new Quaternionf(),
-                    new Vector3f((float) (width * scale()), (float) (height * scale()),
-                            (float) (depth * scale())), new Quaternionf()));
-        });
+        attachVanilla(display);
     }
 
     protected final TextDisplay vanillaLabel(double x, double y, double z, String label, float size) {
@@ -327,11 +320,10 @@ public abstract class PracticeMachine<R extends PracticeRound> {
             double width,
             double height,
             int row) {
-        targets.add(
-                new Target(
+        target(
                         action,
                         visual,
-                        definition.anchor("playfield"),
+                        targetMatrix(definition.anchor("playfield")),
                         new BoundingBox(
                                 x - width / 2,
                                 y,
@@ -339,11 +331,14 @@ public abstract class PracticeMachine<R extends PracticeRound> {
                                 x + width / 2,
                                 y + height,
                                 z + width / 2),
-                        row));
+                        row);
     }
 
     protected final void button(String action, String modelName) {
-        var button = definition.button(action);
+        button(action, modelName, definition.button(action));
+    }
+
+    protected final void button(String action, String modelName, ButtonDefinition button) {
         var transform = button.transform();
         var visual =
                 origin.getWorld()
@@ -358,34 +353,13 @@ public abstract class PracticeMachine<R extends PracticeRound> {
                                     display.setTransformation(buttonPose(button, 0));
                                     display.setInterpolationDuration(1);
                                 });
-        if (vanillaAppearance()) {
-            String label = switch (action) {
-                case "start", "play" -> "PLAY";
-                case "cash" -> "CASH";
-                case "double" -> "×2";
-                case "stand" -> "STAND";
-                case "hit" -> "HIT";
-                case "minus" -> "−";
-                case "plus" -> "+";
-                case "step" -> "STEP";
-                case "under" -> "UNDER";
-                case "over" -> "OVER";
-                default -> action.startsWith("select:")
-                        ? Integer.toString(Integer.parseInt(action.substring(7)) + 1) : action;
-            };
-            if (modelName.startsWith("showcase_button_money_"))
-                label = new String[] {"2X", "3X", "5X", "10X"}[
-                        Integer.parseInt(action.substring(7))];
-            vanillaText(worldAt(transform.x(), transform.y() + .12, transform.z() + .12),
-                    label, .18f);
-        }
+        attachVanilla(visual);
         buttons.put(visual, button);
         buttonActions.put(visual, action);
-        targets.add(
-                new Target(
+        target(
                         action,
                         visual,
-                        transform,
+                        targetMatrix(transform),
                         new BoundingBox(
                                 -button.width() / 2,
                                 0,
@@ -393,7 +367,47 @@ public abstract class PracticeMachine<R extends PracticeRound> {
                                 button.width() / 2,
                                 button.height(),
                                 button.depth()),
-                        -1));
+                        -1);
+    }
+
+    private Matrix4d targetMatrix(ModelTransform transform) {
+        return new Matrix4d().translation(origin.getX(), origin.getY(), origin.getZ())
+                .rotateY(-Math.toRadians(origin.getYaw())).scale(scale())
+                .translate(transform.x(), transform.y(), transform.z())
+                .rotate(transform.rotation()).scale(transform.scale());
+    }
+
+    /** Physical model coordinates include the item's pose, including tilted/rotated cells. */
+    protected final void hitDisplay(String action, ItemDisplay visual, BoundingBox bounds, int row) {
+        var location = visual.getLocation();
+        var matrix = new Matrix4d().translation(location.getX(), location.getY(), location.getZ())
+                .rotateY(-Math.toRadians(location.getYaw()))
+                .mul(new Matrix4d(VanillaGeometry.matrix(visual.getTransformation())));
+        target(action, visual, matrix, bounds, row);
+    }
+
+    private void target(String action, ItemDisplay visual, Matrix4d matrix, BoundingBox bounds, int row) {
+        targets.add(new Target(action, visual, new Matrix4d(matrix).invert(), bounds, row));
+        var worldBounds = new BoundingBox();
+        boolean first = true;
+        for (double x : new double[] {bounds.getMinX(), bounds.getMaxX()})
+            for (double y : new double[] {bounds.getMinY(), bounds.getMaxY()})
+                for (double z : new double[] {bounds.getMinZ(), bounds.getMaxZ()}) {
+                    var p = matrix.transformPosition(new Vector3d(x, y, z));
+                    if (first) {
+                        worldBounds.resize(p.x, p.y, p.z, p.x, p.y, p.z);
+                        first = false;
+                    } else worldBounds.union(p.x, p.y, p.z);
+                }
+        // Interaction entities make empty-hand client clicks reach the server. Precise ray
+        // selection still uses the oriented bounds above, never this square broad hitbox.
+        var location = new Location(origin.getWorld(), worldBounds.getCenterX(), worldBounds.getMinY(), worldBounds.getCenterZ());
+        origin.getWorld().spawn(location, Interaction.class, entity -> {
+            common(entity);
+            entity.setInteractionWidth((float) Math.max(worldBounds.getWidthX(), worldBounds.getWidthZ()) + .002f);
+            entity.setInteractionHeight((float) worldBounds.getHeight() + .002f);
+            entity.setResponsive(true);
+        });
     }
 
     private Transformation buttonPose(ButtonDefinition button, double press) {
@@ -401,10 +415,6 @@ public abstract class PracticeMachine<R extends PracticeRound> {
         double factor = scale() * button.transform().scale();
         var translation = new Vector3f(0, 0, (float) (-press * factor));
         rotation.transform(translation);
-        if (vanillaAppearance())
-            return new Transformation(translation, rotation,
-                    new Vector3f((float) (button.width() * factor), (float) (.15 * factor),
-                            (float) (.15 * factor)), new Quaternionf().rotateY((float) Math.PI));
         return new Transformation(
                 translation,
                 rotation,
@@ -426,37 +436,21 @@ public abstract class PracticeMachine<R extends PracticeRound> {
     final TargetHit ray(Player player, double maximum) {
         var eye = player.getEyeLocation();
         var direction = eye.getDirection();
-        var start =
-                MachineGeometry.rotate(
-                        eye.getX() - origin.getX(),
-                        eye.getY() - origin.getY(),
-                        eye.getZ() - origin.getZ(),
-                        -origin.getYaw());
-        var end =
-                MachineGeometry.rotate(
-                        eye.getX() + direction.getX() - origin.getX(),
-                        eye.getY() + direction.getY() - origin.getY(),
-                        eye.getZ() + direction.getZ() - origin.getZ(),
-                        -origin.getYaw());
         TargetHit nearest = null;
         for (var target : targets) {
-            var a =
-                    target.transform.inverse(
-                            start.x() / scale(), start.y() / scale(), start.z() / scale());
-            var b =
-                    target.transform.inverse(
-                            end.x() / scale(), end.y() / scale(), end.z() / scale());
-            var vector = new Vector(b.x() - a.x(), b.y() - a.y(), b.z() - a.z()).normalize();
+            var a = target.inverse.transformPosition(new Vector3d(eye.getX(), eye.getY(), eye.getZ()));
+            var d = target.inverse.transformDirection(new Vector3d(direction.getX(), direction.getY(), direction.getZ()));
+            double factor = d.length();
+            var vector = new Vector(d.x, d.y, d.z).normalize();
             var hit =
                     target.bounds.rayTrace(
                             new Vector(a.x(), a.y(), a.z()),
                             vector,
-                            maximum / (scale() * target.transform.scale()));
+                            maximum * factor);
             if (hit == null) continue;
             double distance =
                     hit.getHitPosition().distance(new Vector(a.x(), a.y(), a.z()))
-                            * scale()
-                            * target.transform.scale();
+                            / factor;
             if (nearest == null || distance < nearest.distance)
                 nearest = new TargetHit(target, distance);
         }
@@ -472,6 +466,7 @@ public abstract class PracticeMachine<R extends PracticeRound> {
         lastClick = now;
         if (buttons.containsKey(hit.target.visual)) pressed.put(hit.target.visual, age + 4);
         action(hit.target.action);
+        syncVanillaDisplays();
         origin.getWorld().playSound(origin, Sound.BLOCK_STONE_BUTTON_CLICK_ON, .35f, 1.1f);
     }
 
@@ -531,7 +526,7 @@ public abstract class PracticeMachine<R extends PracticeRound> {
                         eye.getY() - origin.getY(),
                         eye.getZ() - origin.getZ(),
                         -origin.getYaw());
-        var bounds = definition.settingsBounds();
+        var bounds = settingsBounds();
         double[] point = {local.x() / scale(), local.y() / scale(), local.z() / scale()};
         double distanceSquared = 0;
         for (int axis = 0; axis < 3; axis++) {
@@ -546,6 +541,7 @@ public abstract class PracticeMachine<R extends PracticeRound> {
         plugin.machineSettings().unregister(this);
         for (Entity entity : parts) entity.remove();
         parts.clear();
+        vanillaDisplays.clear();
         targets.clear();
         buttons.clear();
         pressed.clear();
@@ -556,7 +552,7 @@ public abstract class PracticeMachine<R extends PracticeRound> {
     private record Target(
             String action,
             ItemDisplay visual,
-            ModelTransform transform,
+            Matrix4d inverse,
             BoundingBox bounds,
             int row) {}
 

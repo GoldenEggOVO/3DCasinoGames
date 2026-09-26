@@ -20,10 +20,20 @@ class ArchitectureTest {
                     YamlConfiguration.loadConfiguration(
                             new InputStreamReader(stream, StandardCharsets.UTF_8));
             assertTrue(plugin.getStringList("depend").isEmpty());
-            var otherPlugins = Set.of("ServerGames", "ServerBoards", "ServerMenu", "KaMenu");
+            var otherPlugins = Set.of("ServerGames", "ServerBoards", "ServerMenu", "KaMenu", "CraftEngine");
             assertTrue(
                     plugin.getStringList("softdepend").stream()
                             .noneMatch(otherPlugins::contains));
+        }
+    }
+
+    @Test
+    void freshInstallUsesVanillaMachinesWithoutAResourcePack() throws Exception {
+        try (var stream = getClass().getClassLoader().getResourceAsStream("config.yml")) {
+            assertNotNull(stream);
+            var config = YamlConfiguration.loadConfiguration(
+                    new InputStreamReader(stream, StandardCharsets.UTF_8));
+            assertEquals("vanilla", config.getString("machine-appearance"));
         }
     }
 

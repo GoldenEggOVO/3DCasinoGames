@@ -33,7 +33,7 @@ public final class CasinoPlugin extends JavaPlugin implements Listener {
     public void onEnable() {
         try {
             saveDefaultConfig();
-            String appearance = getConfig().getString("machine-appearance", "resource-pack");
+            String appearance = getConfig().getString("machine-appearance", "vanilla");
             if (!Set.of("resource-pack", "vanilla").contains(appearance))
                 throw new IllegalArgumentException("machine-appearance must be resource-pack or vanilla");
             vanillaAppearance = appearance.equals("vanilla");

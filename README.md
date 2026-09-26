@@ -1,51 +1,69 @@
-# ServerCasino 0.5.1-preview
+# 3DCasinoGames
 
-面向 Paper/Purpur 26.2、Java 25 的 Casino 插件。源码许可为 GPL-3.0，见 [LICENSE](LICENSE)。主命令 `/casino`；默认实体机器是免费练习，不扣款、不发放金币。不提供菜单新开金币局；已有金币记录仍可继续处理和核对。
+[![Build](https://github.com/GoldenEggOVO/3DCasinoGames/actions/workflows/ci.yml/badge.svg)](https://github.com/GoldenEggOVO/3DCasinoGames/actions/workflows/ci.yml)
 
-## 构建与安装
+面向 **Paper / Purpur 26.2、Java 25** 的独立 3D Casino 插件。运行时名称为 `ServerCasino`，主命令 `/casino`。当前版本 **0.5.6-preview**。
 
-在本项目目录运行 `mvn clean package`，使用 Java 25 与 Maven 3.9+。首次构建需要联网下载 `pom.xml` 中公开依赖；离线构建只适用于缓存已完整的环境。安装 `target/server-casino-*.jar`，不要安装 `original-*.jar`。
+**只安装一个 JAR，就能显示和操作完整的原版方块机器。无需 CraftEngine、客户端资源包或客户端模组。** 实体机器为免费练习，不扣款、不发放金币。
 
-停止服务器并备份 `plugins/ServerCasino` 后替换插件，同一插件仅保留一个 JAR。仅安装 ServerCasino JAR 即可运行命令、实体机器逻辑和 Paper 原生 Dialog；不需要 ServerGames、ServerBoards、ServerMenu、KaMenu、Vault、AuthMe 或 CraftEngine。`menu-enabled: true` 开启菜单，玩家还需 `casino.use` 权限。Shift＋F 统一入口由 ServerMenu 提供，不属于 Casino。没有经济提供者时仍可免费练习。
+![原版机器模型预览](docs/images/vanilla-machines.png)
 
-运行 `python tools/package-resources.py` 得到 `target/casino-craftengine.zip`。将其中 `resources/casino` 安装至 `plugins/CraftEngine/resources/casino`，重新生成并分发服务器合并资源包。不要覆盖其他内容包。ZIP 是 CraftEngine 内容包，不能直接作为客户端资源包 URL；管理员须使用合并后的有效资源包。
+*预览由服务器导出的 Display 几何在 Blender 中渲染；使用方块代表色，并非 Minecraft 客户端截图。*
 
-不使用 CraftEngine 时，运行 `python tools/package-client-pack.py` 得到 `target/casino-client-pack-26.2.zip`，将此客户端资源包分发给玩家，或把其中 `assets/casino` 合并到服务器现有的 26.2 资源包。机器即使没有资源包也能创建和操作，但客户端不会完整显示 `casino:*` 模型。菜单本身不依赖这些模型。两种资源分发方式择一使用，避免重复注册同一批物品模型。详见 [安装说明](docs/installation.md)。
+## 下载与安装
 
-完全不分发资源包时，可在 `plugins/ServerCasino/config.yml` 设置 `machine-appearance: vanilla` 并重启。12 种机器会改用原版方块、物品和文字标签显示，玩法、按钮命中区域及存档保持不变。默认值 `resource-pack` 保留现有批准外观；原版模式无法复刻自定义模型的形状与贴图。模式是全服设置，不按玩家分别选择。
+1. 从 [Releases](https://github.com/GoldenEggOVO/3DCasinoGames/releases) 下载 `server-casino-0.5.6-preview.jar`。
+2. 停服并备份 `plugins/ServerCasino` 与世界，将 JAR 放进 `plugins/`；同一插件只保留一个版本。
+3. 启动服务器，使用 `/casino` 打开原生 Dialog，或用 `/casino create blackjack` 创建机器。
 
-## 命令与配置
+新安装默认 `machine-appearance: vanilla`。**旧配置若写有 `machine-appearance: resource-pack`，请改成 `vanilla` 后重启**，才能切换到无资源包模型。存档目录与命令名保持不变。
 
-- `/casino`：机器管理菜单入口。Mines 仅通过实体机器游玩。
-- `/casino create <game> [skin-id]`：创建免费机器。
-- `/casino bet <game> <amount>`：修改自己的对应机器的练习下注，金额为 1～100 的整数；需要靠近机器，并等待当前对局或动画结束。
-- `/casino remove [game]`：删除自己对应类型的机器；不填游戏类型则删除自己的全部机器。
-- `/casino reload-models`：校验并重载机器定义。
-- `/casino-demo` 同样支持以上机器管理子命令。
-- `casino.use`、`casino.machine`：使用菜单与管理机器的权限。
+Vault 和 AuthMe 是可选集成。无需 ServerGames、ServerBoards、ServerMenu 或 KaMenu。完整配置、升级和备份步骤见 [安装说明](docs/installation.md)。
 
-`config.yml` 中 `menu-enabled: true` 默认开启原生菜单。设置为 `false` 并重启服务器后，`/casino` 和 Shift＋右键只显示指令帮助，不打开 Dialog。机器创建、下注设置、删除、模型重载与实体按钮仍可使用；已有对局的处理界面随菜单关闭。结算服务和控制台经济核对功能独立运行，不受菜单开关影响。
+## 游戏与外观
 
-例如 `/casino create mines`、`/casino bet mines 25`、`/casino remove mines`。实体机器始终为免费练习。
+包含 12 种实体机器：Blackjack、Mines、Crash、Plinko、Slots、Duck Race、Wheel of Fortune、Money Wheel、Penguin Cross、Keno、Hilo、Dragon Tower。
 
-模型配置、动作与坐标见 [自定义模型](docs/custom-models.md)。版本要求见 [安装说明](docs/installation.md)，资源生成与复现见 [资源工具](docs/resources.md)。
+- 由原有模型几何转换的机身、旋转片段圆边、纯色圆角按钮。
+- Blackjack 包含 52 张原版牌及牌背，右下角标记旋转 180°。
+- Mines 前倾控制台、窄立式红色龙塔、往返运动的 Hilo 指针。
+- 原生 Dialog 管理菜单、实体按钮、练习下注、自定义布局及持久机器。
+- 所有模型随 JAR 提供；普通资源包接口保留给高级自定义外观，详见 [自定义模型](docs/custom-models.md)。
 
-## 永久机器
+每位玩家每种游戏可同时放置一台机器。机器不会因离线或超时消失；创建、修改练习下注与删除会保存到 `placements.json`，在重启或区块重新加载后恢复。当前对局和动画不跨重启恢复。详情及预览见 [外观说明](docs/vanilla-visual-review.md)。
 
-每位玩家可同时放置 12 种游戏，每种一台，不再按游戏组互斥。机器不会因离线或放置超过 20 分钟被删除。
+## 命令与权限
 
-`plugins/ServerCasino/placements.json` 保存所有者、世界 UUID、位置、朝向、完整模型定义快照和练习下注。创建、改下注、删除时立即原子写入；重启后在世界与所在区块加载时恢复。卸载区块只清理显示实体，保留布置记录；未加载世界的记录也保留。备份插件时同时备份此文件和对应世界。
+| 命令 | 用途 |
+| --- | --- |
+| `/casino` | 原生管理菜单 |
+| `/casino create <game> [skin-id]` | 创建免费练习机器 |
+| `/casino bet <game> <1-100>` | 修改自己的机器练习下注；需靠近且处于空闲状态 |
+| `/casino remove [game]` | 删除自己指定类型或全部机器 |
+| `/casino reload-models` | 校验并重载自定义模型定义 |
 
-当前一局与动画不跨重启或区块卸载恢复，恢复后为新的一局。显式删除才移除布置记录；`/casino remove [game]` 也能删除未加载的自有机器。现有权限与菜单开关继续生效。
+`/casino-demo` 保留相同管理子命令。`casino.use` 默认允许；`casino.machine` 默认仅 OP 拥有。Shift＋右键机器打开设置。Shift＋F 不属于本插件。
 
-## 经济与存档
+`menu-enabled: false` 并重启可关闭 Dialog。命令、实体按钮、保存恢复和结算服务继续工作；菜单入口显示指令提示。
 
-金额使用整数 cents。练习不调用经济扣款或发奖。金币局的 `DEBIT_PENDING` / `CREDIT_PENDING` 表示经济操作需要核对；提供者不可用时不能伪造成功。备份并保护 `rounds` 数据，不删除记录以绕过待核对状态。
+## 经济与旧记录
 
-Mines 菜单移除后，已有资金记录仍保留控制台核对功能。管理员核对经济插件证据后，使用 `casino mines resolve <玩家UUID> <对局UUID> applied` 或 `not-applied` 标记实际结果。该命令自身不转账，不能猜测结果。其他菜单游戏使用 `casino resolve <玩家UUID> <对局UUID> applied` 或 `not-applied` 核对。
+实体机器始终免费，不调用经济扣款或发奖。保留 Vault / `EconomyProvider` 扩展及旧金币记录核对，不提供菜单新开金币局。金额使用整数 cents；不确定的转账保持待核对状态。
 
-## 验证
+管理员核对经济插件证据后，可在控制台执行 `casino resolve <玩家UUID> <对局UUID> applied|not-applied`；Mines 使用 `casino mines resolve ...`。命令本身不转账，不能猜测结果或删除存档绕过待核对状态。
 
-`mvn test` 运行 Java 回归测试。安装 Pillow 后运行 `python -m unittest discover -s tools -p "test_*.py"` 校验资源、几何、当前资源引用与确定性打包。自动检查不替代 Java/Bedrock 客户端默认外观、点击区域、按压和动画验收。
+## 开发与文档
 
-本项目不包含正式服配置、第三方插件 JAR 或私有字体；第三方来源与素材归属边界见 [THIRD_PARTY.md](THIRD_PARTY.md)。
+```sh
+mvn -B -ntp package
+python -m pip install -r tools/requirements-dev.txt
+python -m unittest discover -s tools -p "test_*.py"
+```
+
+使用 JDK 25、Maven 3.9+；首次构建需联网获取公开依赖。安装 `target/server-casino-*.jar`，不要安装 `original-*.jar`。不需要模型生成器、Blender 或本地字体就能构建 JAR。
+
+- [安装说明](docs/installation.md) · [验证与复现](docs/verification.md)
+- [自定义模型](docs/custom-models.md) · [扩展接口](docs/architecture.md)
+- [资源工具](docs/resources.md) · [更新记录](CHANGELOG.md) · [贡献说明](CONTRIBUTING.md)
+
+源码许可为 [GPL-3.0](LICENSE)。第三方来源与素材归属边界见 [THIRD_PARTY.md](THIRD_PARTY.md)。仓库不包含生产配置、第三方插件 JAR、私有字体或测试服务器二进制。

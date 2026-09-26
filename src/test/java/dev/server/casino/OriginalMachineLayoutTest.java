@@ -14,7 +14,7 @@ class OriginalMachineLayoutTest {
                 com.google.gson.JsonParser.parseString(
                                 java.nio.file.Files.readString(
                                         java.nio.file.Path.of(
-                                                "craftengine/resources/casino/resourcepack/assets/casino/models/item/cabinet_blackjack.json")))
+                                                "resource-pack/assets/casino/models/item/cabinet_blackjack.json")))
                         .getAsJsonObject();
         double bottom = Double.POSITIVE_INFINITY, top = Double.NEGATIVE_INFINITY;
         for (var element : model.getAsJsonArray("elements")) {

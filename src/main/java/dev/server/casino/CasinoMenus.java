@@ -224,14 +224,6 @@ final class CasinoMenus {
         var page = new Page(p, "Casino", "实体机器免费练习 · 机器布置永久保存");
         if (plugin.machineAllowed(p)) page.button("machines", "创建机器", v -> machines(p));
         if (recovery.pending(p)) page.button("resume", "处理已有对局", v -> recovery.open(p));
-        page.button(
-                "lobby",
-                "返回棋牌游戏",
-                v -> {
-                    forget(p.getUniqueId());
-                    p.closeDialog();
-                    p.performCommand("sg");
-                });
         page.show();
     }
 

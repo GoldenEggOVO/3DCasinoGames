@@ -2,29 +2,20 @@ from pathlib import Path
 import hashlib
 import importlib.util
 import json
-import re
 import tempfile
 import unittest
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-PACK = ROOT / 'craftengine/resources/casino'
-ASSETS = PACK / 'resourcepack/assets'
+PACK = ROOT / 'resource-pack'
+ASSETS = PACK / 'assets'
 
 
 class ResourcePackageTest(unittest.TestCase):
-    def test_craftengine_reuses_packaged_item_mappings(self):
-        for config in (PACK / 'configuration').glob('*.yml'):
-            text = config.read_text(encoding='utf-8')
-            self.assertNotRegex(text, r'(?m)^    model:', str(config))
-            ids = re.findall(r'^  (casino:[a-z0-9_]+):$', text, re.M)
-            references = re.findall(r'^    item-model: (casino:[a-z0-9_]+)$', text, re.M)
-            self.assertEqual(ids, references, str(config))
-            for reference in references:
-                name = reference.split(':', 1)[1]
-                path = ASSETS / 'casino/items' / (name + '.json')
-                self.assertTrue(path.is_file(), reference)
-                self.assert_reference(json.loads(path.read_text())['model']['model'], 'models', '.json')
+    def test_resource_pack_has_only_native_assets_and_metadata(self):
+        self.assertEqual({'assets', 'pack.mcmeta'}, {p.name for p in PACK.iterdir()})
+        self.assertFalse((ROOT / 'craftengine').exists())
+        self.assertFalse((ROOT / 'tools/package-resources.py').exists())
 
     def test_approved_baseline_is_unchanged_except_namespace(self):
         manifest = json.loads((ROOT / 'tools/resource-baseline.json').read_text())
@@ -57,16 +48,12 @@ class ResourcePackageTest(unittest.TestCase):
             for provider in data.get('providers', []):
                 if provider['type'] == 'bitmap':
                     self.assert_reference(provider['file'], 'textures', '')
-        for path in (PACK / 'configuration').glob('*.yml'):
-            for reference in re.findall(r'^\s+path: (\S+)', path.read_text(encoding='utf-8'), re.M):
-                self.assert_reference(reference, 'models', '.json')
 
     def test_only_current_namespace_is_packaged(self):
         self.assertEqual({'casino'}, {p.name for p in ASSETS.iterdir() if p.is_dir()})
-        self.assertFalse(list((PACK / 'configuration').glob('legacy-*.yml')))
 
     def test_packaging_is_reproducible(self):
-        spec = importlib.util.spec_from_file_location('packager', ROOT / 'tools/package-resources.py')
+        spec = importlib.util.spec_from_file_location('packager', ROOT / 'tools/package-client-pack.py')
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         with tempfile.TemporaryDirectory() as temporary:
@@ -102,9 +89,11 @@ class ResourcePackageTest(unittest.TestCase):
                 names = archive.namelist()
             self.assertIn('server-casino/LICENSE', names)
             self.assertIn('server-casino/tools/showcase-model-baseline.json', names)
+            self.assertIn('server-casino/resource-pack/pack.mcmeta', names)
+            self.assertIn('server-casino/.github/workflows/ci.yml', names)
             for name in names:
                 self.assertFalse(any(part in name.split('/') for part in
-                                     ('target', 'reports', 'artwork', '__pycache__', 'fonts', '.git')))
+                                     ('target', 'reports', 'artwork', '__pycache__', 'fonts', '.git', 'craftengine', 'craftengine-v3')))
                 self.assertFalse(name.endswith(('.jar', '.ttf', '.ttc', '.otf', '.pyc', 'fonts.local.json')))
 
 

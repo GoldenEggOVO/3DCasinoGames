@@ -3,7 +3,7 @@ from pathlib import Path
 import json
 from PIL import Image,ImageDraw,ImageFont,ImageOps
 root=Path(__file__).resolve().parents[1]
-pack=root/'craftengine/resources/casino/resourcepack/assets/casino'
+pack=root/'resource-pack/assets/casino'
 tex=pack/'textures/advanced';tex.mkdir(parents=True,exist_ok=True)
 providers=[{'type':'space','advances':{'\uefff':-1}}]
 def sliced(img,name,code):

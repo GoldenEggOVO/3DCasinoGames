@@ -3,7 +3,7 @@ from pathlib import Path
 from PIL import Image,ImageDraw,ImageOps
 import json
 root=Path(__file__).resolve().parents[1]
-pack=root/'craftengine/resources/casino/resourcepack/assets/casino'
+pack=root/'resource-pack/assets/casino'
 tex=pack/'textures/ui';tex.mkdir(parents=True,exist_ok=True)
 source=Image.open(root/'artwork/casino-icons-source.png').convert('RGBA')
 icons=[]

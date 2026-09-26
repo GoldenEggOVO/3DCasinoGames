@@ -294,6 +294,11 @@ public final class MachineManager implements Listener {
         click(event.getPlayer(), () -> event.setCancelled(true));
     }
 
+    @EventHandler
+    public void interactAtEntity(PlayerInteractAtEntityEvent event) {
+        interactEntity(event);
+    }
+
     private void click(Player player, Runnable cancel) {
         double nearest = blockDistance(player);
         PracticeMachine<?> chosen = null;

@@ -72,7 +72,9 @@ public final class WheelOfFortuneMachine extends AnimatedMachine<WheelOfFortuneR
 
     void rotateDisc(double angle) {
         discAngle = angle;
-        var transform = MachineGeometry.itemPose(vanillaAppearance() ? 4 * .4 : 4, 0, 0);
+        var transform = MachineGeometry.itemPose(
+                4,
+                0, 0);
         transform.getLeftRotation().rotateZ((float) angle);
         pose(disc, transform);
         disc.setInterpolationDelay(0);

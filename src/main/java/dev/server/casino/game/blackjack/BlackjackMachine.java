@@ -48,18 +48,15 @@ public final class BlackjackMachine extends PracticeMachine<BlackjackRound> {
     @Override
     protected void buildGame() {
         body("cabinet_blackjack");
-        var offset = MachineGeometry.panelPoint(0, -.03 * BLACKJACK_PANEL_SCALE / 4, 0, PITCH);
-        var panel =
-                model(
-                        "cabinet_control_panel",
-                        0,
-                        BLACKJACK_BUTTON_Y + offset.y(),
-                        1.45 + offset.z(),
-                        BLACKJACK_PANEL_SCALE);
-        pose(panel, MachineGeometry.itemPose(BLACKJACK_PANEL_SCALE, PITCH, 0));
+        {
+            var offset = MachineGeometry.panelPoint(0, -.03 * BLACKJACK_PANEL_SCALE / 4, 0, PITCH);
+            var panel = model("cabinet_control_panel", 0,
+                    BLACKJACK_BUTTON_Y + offset.y(), 1.45 + offset.z(), BLACKJACK_PANEL_SCALE);
+            pose(panel, MachineGeometry.itemPose(BLACKJACK_PANEL_SCALE, PITCH, 0));
+        }
         for (String action : List.of("double", "stand", "hit", "start"))
             button(action, "cabinet_button_" + (action.equals("start") ? "play" : action));
-        if (!vanillaAppearance()) model("cabinet_blackjack_screen", 0, 0, 0, 4);
+        model("cabinet_blackjack_screen", 0, 0, 0, 4);
         readout = text(0, 1.24, -.76, .25);
     }
 

@@ -14,7 +14,7 @@
 
 ## 模型解析接口
 
-注册 `dev.server.casino.api.MachineModelResolver`，实现 `ItemStack resolve(String namespacedModel)`。返回 `null` 时使用默认解析；返回的物品会复制，插件不修改提供者的缓存实例。默认解析使用原版 `item_model`，CraftEngine 不属于规则层依赖。
+注册 `dev.server.casino.api.MachineModelResolver`，实现 `ItemStack resolve(String namespacedModel)`。返回 `null` 时使用默认解析；返回的物品会复制，插件不修改提供者的缓存实例。此接口用于显式的 `resource-pack` 模式，默认解析使用原版 `item_model`。默认的 `vanilla` 模式直接使用内置 Display 几何，不调用物品解析服务。
 
 模型定义详见 [custom-models.md](custom-models.md)。注册服务和机器操作应在服务器主线程进行；不要在解析方法里阻塞网络或磁盘。API 目前是 preview，修改公共接口时需说明兼容影响。
 

@@ -1,6 +1,0 @@
-items:
-  casino:plinko_ball:
-    material: snowball
-    data:
-      item_name: <!i><aqua>弹珠
-    item-model: casino:plinko_ball

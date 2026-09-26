@@ -5,6 +5,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.*;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
@@ -18,6 +20,7 @@ public final class MachineSettingsTargets implements Listener {
 
     private final CasinoPlugin plugin;
     private final Map<Object, Target> targets = new HashMap<>();
+    private final Map<UUID, Long> lastOpen = new HashMap<>();
 
     public MachineSettingsTargets(CasinoPlugin plugin) {
         this.plugin = plugin;
@@ -34,7 +37,9 @@ public final class MachineSettingsTargets implements Listener {
     }
 
     public void unregister(Object machine) {
-        targets.remove(machine);
+        var removed = targets.remove(machine);
+        if (removed != null && targets.values().stream().noneMatch(t -> t.owner.equals(removed.owner)))
+            lastOpen.remove(removed.owner);
     }
 
     public static double distance(
@@ -60,13 +65,25 @@ public final class MachineSettingsTargets implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void interact(PlayerInteractEvent event) {
-        Player p = event.getPlayer();
         if (event.getHand() != EquipmentSlot.HAND
-                || !p.isSneaking()
-                || !plugin.allowed(p)
-                || !plugin.machineAllowed(p)
                 || event.getAction() != Action.RIGHT_CLICK_AIR
                         && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+        open(event.getPlayer(), () -> event.setCancelled(true));
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void interactEntity(PlayerInteractEntityEvent event) {
+        if (event.getHand() == EquipmentSlot.HAND)
+            open(event.getPlayer(), () -> event.setCancelled(true));
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void interactAtEntity(PlayerInteractAtEntityEvent event) {
+        interactEntity(event);
+    }
+
+    private void open(Player p, Runnable cancel) {
+        if (!p.isSneaking() || !plugin.allowed(p) || !plugin.machineAllowed(p)) return;
         var eye = p.getEyeLocation();
         var direction = eye.getDirection();
         double nearest = 5.001;
@@ -86,13 +103,17 @@ public final class MachineSettingsTargets implements Listener {
             }
         }
         if (chosen != null) {
-            event.setCancelled(true);
+            cancel.run();
+            long now = System.currentTimeMillis();
+            if (now - lastOpen.getOrDefault(p.getUniqueId(), 0L) < 150) return;
+            lastOpen.put(p.getUniqueId(), now);
             chosen.open.accept(p);
         }
     }
 
     public void close() {
         targets.clear();
+        lastOpen.clear();
         HandlerList.unregisterAll(this);
     }
 }

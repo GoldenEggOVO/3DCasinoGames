@@ -1,29 +1,52 @@
-# 0.5.1-preview 原版外观验证（2026-09-24）
+# 验证与复现
 
-- Java 回归：113 项通过，无失败、错误或跳过；Python 资源回归：21 项通过。
-- 全新隔离 Purpur 26.2 只加载 ServerCasino 与验证探针，没有 CraftEngine、ServerGames、ServerBoards、ServerMenu、KaMenu，也没有客户端资源包。`machine-appearance: vanilla` 下，12 种机器均完成创建、原版显示实体及无自定义 item-model 检查、按钮交互和删除；Keno 先选择数字再启动游戏。首次启动、机器恢复后的重启、删除后的再次重启均通过，退出码均为 0。
-- 默认 `machine-appearance: resource-pack` 的隔离服探针也通过：12 种机器、自定义模型接口与按钮、原生 Dialog、`menu-enabled: false`、存档恢复和删除后重启均通过，三次启动退出码均为 0。
-- 两种模式验证的 JAR SHA256 均为 `af643fcee29c0ca9cd10c0aceffd6e13038f74e3cf533fde52440e5d43bce6d2`。原版模式证据位于 `server-casino/reports/vanilla-runtime/run-20260924T184908797480Z/result.json` 及三个阶段日志；资源包模式证据位于工作区 `reports/casino-public-runtime/run-20260924T185036737597Z/result.json`、`restart-2.json`、`restart-3.json` 及日志。
+## 0.5.6-preview · 2026-09-26
 
-以上是服务端模拟玩家及实体状态验证；真实 Minecraft 客户端的原版外观、可读性、按钮位置与操作手感仍由玩家进服验收。未部署正式服。
+| 检查 | 结果 |
+| --- | --- |
+| JDK 25 / Maven package | 121 项测试通过，0 失败、0 错误、0 跳过 |
+| Python 资源、几何、打包回归 | 37 项通过 |
+| 原版模型重导出 | 110 个模型；文件摘要与 0.5.5 一致；不需要本地字体 |
+| 原资源素材 | 871 个文件通过原 SHA-256 基线校验 |
+| 干净 Purpur 26.2 | 首启与两次重启均正常退出，三阶段通过 |
+| 实体射线命中 | 1542 个按钮 / 格子取样通过，覆盖 0 / 37 / 90 / 180 度朝向 |
+| 实际 Display 表面审计 | 15 个机器 / 状态快照未发现同向共面重叠 |
 
-## 0.5.0-preview 独立安装复核
+测试 JAR SHA-256：`c346032a8fc6341cae452699ae939b27b7f4b3b4bc911b1d7a818ffbdbbee928`。
 
-- 结构回归确认插件管理器不再作为公共可写字段暴露，机器菜单不持有结算服务或定时任务。
-- Java 回归：110 项通过，无失败、错误或跳过。新增插件元数据回归，拒绝其他自研插件的硬依赖与软依赖。
-- Python 资源回归：21 项通过；新增独立客户端包的 26.2 格式、完整 Casino 资产及可重复打包检查。默认资源几何与像素除命名空间外保持基线一致。
-- 关闭菜单后实际重启确认菜单对象未创建，独立结算服务仍可推进已有对局；机器恢复及删除后再次重启检查通过。
-- 全新隔离 Purpur 26.2 仅加载 Casino 与验证探针；探针明确检查 Vault、AuthMe、CraftEngine、ServerGames、ServerBoards、ServerMenu、KaMenu 均不存在时正常启用。服务端首启与两次重启退出码均为 0。
-- `/casino` 入口正常；`/casino mines` 不再打开菜单，也不生成 Mines 的 `menu.yml`。旧 `/mines`、`/plinko-demo` 未注册；当前权限拒绝检查通过。
-- `menu-enabled: false` 下 `/casino` 与机器设置不弹窗；12 种机器的 create、bet、remove 指令及模型重载通过。非法金额与无权限修改被拒绝，Mines 对局中下注保持不变。
-- 12 种机器同时放置、离线保留、超过 20 分钟不清理、区块显示卸载与恢复通过。
-- 同一隔离服务器存档实际重启后，12 台机器的位置、朝向、下注与自定义模型快照一致；重复恢复不增加实体，未加载机器可删除；删除后再次重启确认不会重新出现。
-- 历史对局处理界面不再提供新开局、参数设置或金币模式切换入口。
-- 原生 Dialog 构造、12 种机器四方向放置、设置回调、旧会话拒绝与实体清理通过。
-- 自定义 Blackjack 皮肤验证了模型 ID、机壳/游戏区域挂点、按钮位置与三轴旋转、右键射线开局、沿表面法线按压及回弹。
-- 练习运行验证中经济服务调用次数为 0；持久化资金失败与待核对恢复通过单元回归。
+### 隔离服验证内容
 
-上述为自动化服务端验证。真实 Java/Bedrock 客户端的外观、字体及交互手感仍需进服验收；真实 Vault 经济提供者端到端测试和 Modrinth 发布审查不包含在此次结果中。该版本未部署到正式服。
+测试服只安装 ServerCasino 和专用探针，无 CraftEngine、Vault、AuthMe、ServerGames、ServerBoards、ServerMenu、KaMenu 或客户端资源包；只绑定回环地址。
 
-本次隔离服原始证据位于工作区 `reports/casino-public-runtime/run-20260924T181535009899Z/` 的 `result.json`、`restart-2.json`、`restart-3.json` 与服务端日志。探针使用模拟玩家验证 Dialog 构造和事件路由，不代表真实客户端成功加载资源包。客户端包已校验其内容，尚未通过真实客户端确认模型显示。
-Purpur 在受限本地环境中记录了系统指标读取和 Mojang 公钥联网警告；三个阶段均完成插件验证并正常退出。
+1. 不预写 Casino 配置，确认新安装自动使用 vanilla。创建、操作、删除全部 12 种机器，检查显示实体与清理；检查原生根菜单和机器设置各调用一次 Dialog。
+2. 保存 Slots、Mines、Dragon Tower 后重启。配置只写 `menu-enabled: false`，不写外观键，验证缺省值仍为 vanilla。三台机器恢复后按钮可操作，菜单不会调用 Dialog，随后删除机器。
+3. 再次重启，确认被删除的机器没有重新出现。
+
+探针还检查 Blackjack 发牌 / 盖牌、Keno 选中状态、按钮按压、变换矩阵及多朝向命中。规则差分、经济待核对与保存语义由 Java 回归覆盖。
+
+### 自动检查的边界
+
+这次未重复高级 `resource-pack` 模式的完整服务器流程；其通用接口保留并有相关单元及资源引用测试。Vault / AuthMe 的真实第三方集成、跨版本客户端与多人高密度性能未在本轮验收。
+
+本地服务端探针使用代理玩家，能检查 Dialog 构造与调用、交互事件和实体数据，不能证明真实客户端渲染或操作手感。模型预览为 Blender 几何渲染；Minecraft 实际画面与体验由维护者进服验收。本次未修改正式服。
+
+## 复现命令
+
+```sh
+mvn -B -ntp package
+python -m pip install -r tools/requirements-dev.txt
+python -m unittest discover -s tools -p "test_*.py"
+python tools/export_vanilla_models.py
+git diff --exit-code -- src/main/resources/vanilla-models.json
+```
+
+准备自己已接受 EULA 的 Purpur 26.2 模板目录：包含 `purpur-2622.jar`、`eula.txt`、`libraries/`、`cache/`、`versions/26.2/purpur-26.2.jar`。探针复制基础服务端文件，在本项目 `reports/vanilla-runtime/run-*` 创建独立测试服，不复制模板插件和世界，也不修改模板。设置 `JAVA_HOME` 为 JDK 25，运行：
+
+```sh
+python tools/vanilla-probe/run.py --server-template /path/to/prepared-purpur --port 25597
+python tools/vanilla-preview/audit_surfaces.py reports/vanilla-runtime/run-TIMESTAMP/plugins/CasinoVanillaProbe/preview-snapshots reports/vanilla-runtime/run-TIMESTAMP/surface-audit.json
+```
+
+将 `run-TIMESTAMP` 替换为探针输出的目录。查看 `result.json`、三个 `phase-*.log` 与 `surface-audit.json`；任一阶段失败都应先定位，不可只以服务端进程启动作为通过。
+
+GitHub Actions 自动运行 Maven、Python 回归及原版模型重导出检查。它不代替本地服务端探针或真实客户端验收。

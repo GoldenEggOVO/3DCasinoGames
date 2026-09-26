@@ -3,16 +3,16 @@ import argparse
 from datetime import datetime, timezone
 import hashlib
 import json
+import os
 from pathlib import Path
 import shutil
 import socket
 import subprocess
 import zipfile
+import xml.etree.ElementTree as ET
 
 HERE = Path(__file__).resolve().parent
 CASINO = HERE.parents[1]
-BASE = CASINO.parent / 'table-games-lab/verymcproto-26.2'
-JDK = Path('C:/Program Files/Eclipse Adoptium/jdk-25.0.2.10-hotspot/bin')
 MARKERS = ('CASINO_VANILLA_FIRST_PASS', 'CASINO_VANILLA_RESTART_PASS',
            'CASINO_VANILLA_DELETE_RESTART_PASS')
 
@@ -20,16 +20,27 @@ MARKERS = ('CASINO_VANILLA_FIRST_PASS', 'CASINO_VANILLA_RESTART_PASS',
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--port', type=int, default=25597)
+    parser.add_argument('--server-template', type=Path, required=True,
+                        help='Prepared Purpur 26.2 folder with accepted EULA, libraries, cache and versions')
+    parser.add_argument('--java-home', type=Path, default=os.environ.get('JAVA_HOME'))
     args = parser.parse_args()
+    if not args.java_home:
+        parser.error('Set JAVA_HOME or pass --java-home (JDK 25).')
+    base = args.server_template.resolve()
+    jdk = args.java_home / 'bin'
+    suffix = '.exe' if os.name == 'nt' else ''
+    if 'eula=true' not in (base / 'eula.txt').read_text(encoding='utf-8'):
+        parser.error('Accept the EULA in your server template before running this probe.')
     with socket.socket() as check:
         check.bind(('127.0.0.1', args.port))
-    plugin = CASINO / 'target/server-casino-0.5.1-preview.jar'
+    version = ET.parse(CASINO / 'pom.xml').findtext('{http://maven.apache.org/POM/4.0.0}version')
+    plugin = CASINO / f'target/server-casino-{version}.jar'
     classes = CASINO / 'target/vanilla-probe-classes'
     classes.mkdir(parents=True, exist_ok=True)
-    jars = [plugin, BASE / 'versions/26.2/purpur-26.2.jar',
-            *sorted((BASE / 'libraries').rglob('*.jar'))]
-    subprocess.run([str(JDK / 'javac.exe'), '-encoding', 'UTF-8', '-cp',
-                    ';'.join(map(str, jars)), '-d', str(classes),
+    jars = [plugin, base / 'versions/26.2/purpur-26.2.jar',
+            *sorted((base / 'libraries').rglob('*.jar'))]
+    subprocess.run([str(jdk / ('javac' + suffix)), '-encoding', 'UTF-8', '-cp',
+                    os.pathsep.join(map(str, jars)), '-d', str(classes),
                     str(HERE / 'CasinoVanillaProbe.java')], check=True)
     probe = CASINO / 'target/CasinoVanillaProbe.jar'
     with zipfile.ZipFile(probe, 'w', zipfile.ZIP_DEFLATED) as archive:
@@ -42,17 +53,15 @@ def main():
                                                 .strftime('%Y%m%dT%H%M%S%fZ'))
     run.mkdir(parents=True)
     for name in ('purpur-2622.jar', 'eula.txt'):
-        shutil.copy2(BASE / name, run / name)
+        shutil.copy2(base / name, run / name)
     for name in ('libraries', 'cache', 'versions'):
-        shutil.copytree(BASE / name, run / name)
+        shutil.copytree(base / name, run / name)
     plugins = run / 'plugins'
     plugins.mkdir()
     shutil.copy2(plugin, plugins / plugin.name)
     shutil.copy2(probe, plugins / probe.name)
     config = plugins / 'ServerCasino'
     config.mkdir()
-    (config / 'config.yml').write_text('menu-enabled: true\nmachine-appearance: vanilla\n',
-                                       encoding='utf-8')
     (run / 'server.properties').write_text(
         f'server-ip=127.0.0.1\nserver-port={args.port}\nonline-mode=false\n'
         'level-name=casino_vanilla_probe\nlevel-type=minecraft:flat\n'
@@ -62,9 +71,12 @@ def main():
     result = {'runtime': str(run), 'tested_jar_sha256': hashlib.sha256(plugin.read_bytes()).hexdigest(),
               'plugins': sorted(path.name for path in plugins.glob('*.jar')), 'phases': []}
     for phase, marker in enumerate(MARKERS, 1):
+        if phase == 2:
+            # Missing appearance key exercises upgrades as well as the fresh-install default.
+            (config / 'config.yml').write_text('menu-enabled: false\n', encoding='utf-8')
         log_path = run / f'phase-{phase}.log'
         with log_path.open('w', encoding='utf-8') as output:
-            process = subprocess.run([str(JDK / 'java.exe'), '-Xms512M', '-Xmx2G',
+            process = subprocess.run([str(jdk / ('java' + suffix)), '-Xms512M', '-Xmx2G',
                                       '-Dstdout.encoding=UTF-8', '-Dstderr.encoding=UTF-8',
                                       '-Dterminal.jline=false', '-Dterminal.ansi=false',
                                       '-jar', 'purpur-2622.jar', 'nogui'], cwd=run,
@@ -74,7 +86,7 @@ def main():
         phase_result = {'phase': phase, 'exit_code': process.returncode,
                         'pass': process.returncode == 0 and marker in log
                         and 'CASINO_VANILLA_FAIL' not in log,
-                        'evidence': [line for line in log.splitlines() if 'CASINO_VANILLA_' in line]}
+                        'evidence': [line for line in log.splitlines() if 'CASINO_VANILLA_' in line or 'CASINO_AIM_PASS' in line]}
         result['phases'].append(phase_result)
         (run / 'result.json').write_text(json.dumps(result, ensure_ascii=False, indent=2),
                                          encoding='utf-8')

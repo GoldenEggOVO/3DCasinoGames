@@ -9,8 +9,8 @@ class VanillaModelsTest {
     @Test
     void allGameplayVisualsHaveVisibleVanillaMaterials() {
         assertEquals(Material.PAPER, VanillaModels.material("casino:card_51"));
-        assertEquals(Material.LIME_CONCRETE, VanillaModels.material("casino:showcase_tile_selected"));
-        assertEquals(Material.LIGHT_GRAY_CONCRETE, VanillaModels.material("casino:showcase_tile"));
+        assertEquals(Material.ORANGE_CONCRETE, VanillaModels.material("casino:showcase_tile_selected"));
+        assertEquals(Material.BROWN_CONCRETE, VanillaModels.material("casino:showcase_tile"));
         assertEquals(Material.SLIME_BALL, VanillaModels.material("casino:plinko_ball"));
         assertEquals(Material.CLOCK, VanillaModels.material("casino:showcase_wheel_fortune"));
         assertEquals(Material.STONE_BUTTON, VanillaModels.material("casino:showcase_button_play"));
@@ -18,10 +18,9 @@ class VanillaModelsTest {
     }
 
     @Test
-    void oversizedCustomModelsAreReducedToUsableVanillaSizes() {
-        assertEquals(.07, VanillaModels.size("showcase_tile"), 1e-9);
-        assertEquals(.4, VanillaModels.size("showcase_wheel_fortune"), 1e-9);
-        assertEquals(1, VanillaModels.size("card_51"), 1e-9);
-        assertEquals(1, VanillaModels.size("plinko_ball"), 1e-9);
+    void gameplayModelsUseOriginalGeometryRatherThanShrunkenPlaceholderItems() {
+        for (String name : java.util.List.of("showcase_tile", "showcase_wheel_fortune",
+                "showcase_duck_1", "showcase_penguin", "cabinet_rocket", "showcase_hilo_panel"))
+            assertNotNull(VanillaGeometry.get(name), name);
     }
 }

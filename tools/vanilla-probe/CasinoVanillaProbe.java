@@ -1,11 +1,19 @@
 package dev.server.casino.probe;
 
+import com.google.gson.GsonBuilder;
 import dev.server.casino.CasinoPlugin;
+import dev.server.casino.MachineGeometry;
 import dev.server.casino.game.PracticeRound;
 import dev.server.casino.machine.MachineManager;
+import dev.server.casino.machine.PracticeMachine;
+import dev.server.casino.model.VanillaGeometry;
+import dev.server.casino.model.ModelItems;
+import dev.server.casino.model.MachineDefinition;
 import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -14,13 +22,16 @@ import java.util.logging.Level;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.entity.BlockDisplay;
+import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ItemDisplay;
+import org.bukkit.entity.Interaction;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TextDisplay;
-import org.bukkit.event.block.Action;
-import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.util.Transformation;
+import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -31,6 +42,9 @@ public final class CasinoVanillaProbe extends JavaPlugin {
             "slots", "duck_race", "wheel_of_fortune", "money_wheel", "penguin_cross",
             "keno", "hilo", "dragon_tower");
     private final AtomicReference<Location> eye = new AtomicReference<>();
+    private float placementYaw;
+    private boolean sneaking;
+    private int shownDialogs;
 
     @Override
     public void onEnable() {
@@ -51,15 +65,32 @@ public final class CasinoVanillaProbe extends JavaPlugin {
                     Bukkit.getWorlds().getFirst().getChunkAt(x, z).setForceLoaded(true);
             var marker = casino.getDataFolder().toPath().resolve("vanilla-probe-phase.txt");
             if (!Files.exists(marker)) {
+                checkMenus(casino, player, true);
                 for (String game : GAMES) {
                     manager.command(player, new String[] {"create", game});
                     var machines = (Map<?, ?>) field(manager, "machines");
                     require(machines.size() == 1, "Create failed: " + game);
                     Object machine = machines.values().iterator().next();
+                    if (game.equals("keno")) {
+                        var origin = (Location) field(machine, "origin");
+                        var target = ((List<?>) field(machine, "targets")).get(1);
+                        var matrix = new org.joml.Matrix4d((org.joml.Matrix4d) field(target, "inverse")).invert();
+                        var bounds = (org.bukkit.util.BoundingBox) field(target, "bounds");
+                        double high = Double.NEGATIVE_INFINITY;
+                        for (double x : new double[] {bounds.getMinX(), bounds.getMaxX()})
+                            for (double y : new double[] {bounds.getMinY(), bounds.getMaxY()})
+                                for (double z : new double[] {bounds.getMinZ(), bounds.getMaxZ()})
+                                    high = Math.max(high, matrix.transformPosition(new org.joml.Vector3d(x,y,z)).y);
+                        require(high - origin.getY() <= .89, "Keno click volume floats above the .885 tile surface: " + (high-origin.getY()));
+                    }
                     checkVisuals(machine, game);
+                    checkAim(machine, player, game);
+                    writePreview(machine, game);
                     if (game.equals("keno")) {
                         var tiles = (List<?>) field(machine, "tiles");
                         click(manager, player, (ItemDisplay) tiles.getFirst(), game);
+                        ((PracticeMachine<?>) machine).tick();
+                        writePreview(machine, "keno-selected");
                         Thread.sleep(170);
                     }
                     var buttons = (Map<?, ?>) field(machine, "buttonActions");
@@ -73,21 +104,83 @@ public final class CasinoVanillaProbe extends JavaPlugin {
                             || game.equals("plinko") && !((Map<?, ?>) field(machine, "balls")).isEmpty(),
                             "PLAY did not advance game: " + game);
                     checkVisuals(machine, game);
+                    if (game.equals("dragon_tower")) {
+                        Thread.sleep(170);
+                        click(manager, player, (ItemDisplay) ((List<?>) field(machine,"tiles")).getFirst(), game);
+                        ((PracticeMachine<?>) machine).tick();
+                        writePreview(machine, "dragon-revealed");
+                    }
+                    if (game.equals("blackjack")) {
+                        checkVanillaCards(machine);
+                        if (round.active()) {
+                            var cards = (List<?>) field(machine, "cards");
+                            require(VanillaGeometry.name(((ItemDisplay) cards.get(1)).getItemStack()).equals("card_52"),
+                                    "Dealer hole card is not hidden");
+                            Thread.sleep(170);
+                            var stand = buttons.entrySet().stream()
+                                    .filter(entry -> entry.getValue().equals("stand"))
+                                    .findFirst().orElseThrow();
+                            click(manager, player, (ItemDisplay) stand.getKey(), game);
+                            require(!VanillaGeometry.name(((ItemDisplay) cards.get(1)).getItemStack()).equals("card_52"),
+                                    "Dealer hole card did not turn face up");
+                            getLogger().info("CASINO_VANILLA_CARD_PASS dealt=" + cards.size()
+                                    + " hole_hidden_then_revealed=true");
+                        }
+                    }
+                    for (int frame = 1; frame <= (game.equals("hilo") ? 80 : 10); frame++) {
+                        ((PracticeMachine<?>) machine).tick();
+                        if (game.equals("hilo") && List.of(1,10,14,20,28,40,42,50,56,62,70,80).contains(frame))
+                            writePreview(machine, "hilo-motion/" + String.format("%02d",frame));
+                    }
+                    if (game.equals("blackjack")) {
+                        var dealt = (List<ItemDisplay>) field(machine, "cards");
+                        dealt.get(0).setItemStack(ModelItems.resolve("casino:card_47", true));
+                        ((PracticeMachine<?>) machine).tick();
+                        writePreview(machine, "blackjack-dealt");
+                    }
+                    checkSettings(casino, machine, player);
+                    var previousParts = new ArrayList<>((List<Entity>) field(machine, "parts"));
                     manager.command(player, new String[] {"remove", game});
+                    require(previousParts.stream().noneMatch(Entity::isValid), "Orphan display: " + game);
                     require(machines.isEmpty(), "Remove failed: " + game);
                     getLogger().info("CASINO_VANILLA_MACHINE_PASS game=" + game);
                 }
+                for (float yaw : new float[] {37, 90, 180}) {
+                    placementYaw = yaw;
+                    for (String game : List.of("wheel_of_fortune", "money_wheel", "dragon_tower", "keno", "mines")) {
+                        manager.command(player, new String[] {"create", game});
+                        var machine = ((Map<?, ?>) field(manager, "machines")).values().iterator().next();
+                        checkAim(machine, player, game);
+                        manager.command(player, new String[] {"remove", game});
+                    }
+                }
+                placementYaw = 0;
                 manager.command(player, new String[] {"create", "slots"});
+                manager.command(player, new String[] {"create", "mines"});
+                manager.command(player, new String[] {"create", "dragon_tower"});
                 Files.writeString(marker, "1");
                 getLogger().info("CASINO_VANILLA_FIRST_PASS games=12 pack=false");
             } else if (Files.readString(marker).equals("1")) {
+                checkMenus(casino, player, false);
                 var machines = (Map<?, ?>) field(manager, "machines");
-                require(machines.size() == 1, "Machine not restored");
-                checkVisuals(machines.values().iterator().next(), "slots");
-                manager.command(player, new String[] {"remove", "slots"});
+                require(machines.size() == 3, "Machines not restored");
+                for (var machine : List.copyOf(machines.values())) {
+                    String game = ((PracticeMachine<?>) machine).game();
+                    checkVisuals(machine, game);
+                    checkAim(machine, player, game);
+                    var buttons = (Map<ItemDisplay, String>) field(machine, "buttonActions");
+                    var play = buttons.entrySet().stream().filter(entry ->
+                            List.of("start", "play").contains(entry.getValue())).findFirst().orElseThrow();
+                    var round = (PracticeRound) field(machine, "round");
+                    String before = round.result();
+                    click(manager, player, play.getKey(), game);
+                    require(!round.result().equals(before) || round.active() || round.finished(),
+                            "Menu-disabled PLAY failed: " + game);
+                    manager.command(player, new String[] {"remove", game});
+                }
                 require(machines.isEmpty(), "Restored machine not removed");
                 Files.writeString(marker, "2");
-                getLogger().info("CASINO_VANILLA_RESTART_PASS restored=true removed=true");
+                getLogger().info("CASINO_VANILLA_RESTART_PASS restored=true removed=true menus=false played=true");
             } else {
                 require(((Map<?, ?>) field(manager, "machines")).isEmpty(), "Deleted machine returned");
                 getLogger().info("CASINO_VANILLA_DELETE_RESTART_PASS");
@@ -99,19 +192,117 @@ public final class CasinoVanillaProbe extends JavaPlugin {
         }
     }
 
+    private void checkMenus(CasinoPlugin casino, Player player, boolean enabled) throws Exception {
+        require(casino.menusEnabled() == enabled, "Wrong menu setting");
+        require((field(casino, "menus") != null) == enabled, "Wrong menu lifecycle");
+        int before = shownDialogs;
+        casino.onCommand(player, casino.getCommand("casino"), "casino", new String[0]);
+        casino.openMachineSettings(player, "slots", () -> 1, value -> {}, () -> true, () -> true, () -> {});
+        require(shownDialogs - before == (enabled ? 2 : 0), "Native Dialog switch failed");
+        getLogger().info("CASINO_VANILLA_MENU_PASS enabled=" + enabled + " dialogs=" + (shownDialogs - before));
+    }
+
     private void click(MachineManager manager, Player player, ItemDisplay visual, String game) {
-        Location target = visual.getLocation().add(0, .1, 0);
-        Location from = target.clone().add(0, 0, 2);
+        String name = VanillaGeometry.name(visual.getItemStack());
+        var matrix = VanillaGeometry.matrix(visual.getTransformation());
+        var local = matrix.transformPosition(new org.joml.Vector3f(0,
+                name != null && name.contains("button") ? .2f : 0, .13f));
+        var direction = matrix.transformDirection(new org.joml.Vector3f(0, 0, 1)).normalize();
+        var offset = MachineGeometry.rotate(local.x, local.y, local.z, visual.getLocation().getYaw());
+        var normal = MachineGeometry.rotate(direction.x, direction.y, direction.z, visual.getLocation().getYaw());
+        Location target = visual.getLocation().add(offset.x(), offset.y(), offset.z());
+        Location from = target.clone().add(normal.x()*2, normal.y()*2, normal.z()*2);
         from.setDirection(target.toVector().subtract(from.toVector()));
         eye.set(from);
-        var event = new PlayerInteractEvent(player, Action.RIGHT_CLICK_AIR,
-                null, null, null, EquipmentSlot.HAND);
-        manager.interact(event);
+        var picked = from.getWorld().rayTraceEntities(from, from.getDirection(), 3,
+                entity -> entity instanceof Interaction);
+        require(picked != null, "Client cannot pick an Interaction: " + game);
+        var event = new PlayerInteractAtEntityEvent(player, picked.getHitEntity(),
+                picked.getHitPosition().subtract(picked.getHitEntity().getLocation().toVector()), EquipmentSlot.HAND);
+        Bukkit.getPluginManager().callEvent(event);
         require(event.isCancelled(), "Button did not receive ray: " + game);
+    }
+
+    private void checkAim(Object machine, Player player, String game) throws Exception {
+        var ray = PracticeMachine.class.getDeclaredMethod("ray", Player.class, double.class);
+        ray.setAccessible(true);
+        var buttons = (Map<ItemDisplay, String>) field(machine, "buttonActions");
+        int samples = 0;
+        for (var entry : buttons.entrySet())
+            for (float x : new float[] {-.16f, 0, .16f})
+                for (float y : new float[] {.12f, .20f, .28f}) {
+                    aim(entry.getKey(), new org.joml.Vector3f(x, y, .133f));
+                    assertAim(ray, machine, player, entry.getValue());
+                    samples++;
+                }
+        if (game.equals("dragon_tower") || game.equals("keno")) {
+            var tiles = (List<ItemDisplay>) field(machine, "tiles");
+            for (int index = 0; index < tiles.size(); index++)
+                for (float x : new float[] {-.94f, 0, .94f}) {
+                    float size = game.equals("keno") ? .12f : .14f;
+                    aim(tiles.get(index), new org.joml.Vector3f(x*size, size*.7f,
+                            game.equals("keno") ? .035f : .09f));
+                    assertAim(ray, machine, player, "select:" + (game.equals("keno") ? index+1 : index%4));
+                    if (game.equals("dragon_tower"))
+                        require(field(field(ray.invoke(machine, player, 3d), "target"), "row").equals(index/4),
+                                "Dragon aimed at the wrong floor");
+                    samples++;
+                }
+        }
+        if (game.equals("keno")) {
+            var origin = ((PracticeMachine<?>) machine).origin();
+            var offset = MachineGeometry.rotate(-1.15, .96, 3, origin.getYaw());
+            var direction = MachineGeometry.rotate(0, 0, -1, origin.getYaw());
+            var from = origin.clone().add(offset.x(), offset.y(), offset.z());
+            from.setDirection(new org.bukkit.util.Vector(direction.x(), direction.y(), direction.z()));
+            eye.set(from);
+            require(ray.invoke(machine, player, 4d) == null, "Keno still hits empty air above tiles");
+        }
+        getLogger().info("CASINO_AIM_PASS game=" + game + " yaw=" + placementYaw + " samples=" + samples);
+    }
+
+    private void checkSettings(CasinoPlugin casino, Object machine, Player player) throws Exception {
+        var settings = casino.machineSettings();
+        var target = ((Map<?, ?>) field(settings, "targets")).get(machine);
+        var opened = new int[] {0};
+        settings.register(machine, OWNER, (Location) field(target, "origin"),
+                (org.bukkit.util.BoundingBox) field(target, "bounds"), p -> opened[0]++);
+        var button = ((Map<ItemDisplay, ?>) field(machine, "buttonActions")).keySet().iterator().next();
+        aim(button, new org.joml.Vector3f(0, .2f, .13f));
+        var picked = eye.get().getWorld().rayTraceEntities(eye.get(), eye.get().getDirection(), 3, e -> e instanceof Interaction);
+        require(picked != null, "Missing settings interaction entity");
+        sneaking = true;
+        Bukkit.getPluginManager().callEvent(new PlayerInteractAtEntityEvent(player, picked.getHitEntity(), new org.bukkit.util.Vector(), EquipmentSlot.HAND));
+        Bukkit.getPluginManager().callEvent(new org.bukkit.event.player.PlayerInteractEntityEvent(player, picked.getHitEntity(), EquipmentSlot.HAND));
+        sneaking = false;
+        require(opened[0] == 1, "Shift entity click must open settings exactly once: " + opened[0]);
+    }
+
+    private void aim(ItemDisplay visual, org.joml.Vector3f point) {
+        var matrix = VanillaGeometry.matrix(visual.getTransformation());
+        var p = matrix.transformPosition(point);
+        var n = matrix.transformDirection(new org.joml.Vector3f(0, 0, 1)).normalize();
+        var offset = MachineGeometry.rotate(p.x, p.y, p.z, visual.getLocation().getYaw());
+        var normal = MachineGeometry.rotate(n.x, n.y, n.z, visual.getLocation().getYaw());
+        var target = visual.getLocation().add(offset.x(), offset.y(), offset.z());
+        var from = target.clone().add(normal.x()*2, normal.y()*2, normal.z()*2);
+        from.setDirection(target.toVector().subtract(from.toVector()));
+        eye.set(from);
+    }
+
+    private void assertAim(java.lang.reflect.Method ray, Object machine, Player player, String action) throws Exception {
+        var picked = eye.get().getWorld().rayTraceEntities(eye.get(), eye.get().getDirection(), 3, e -> e instanceof Interaction);
+        require(picked != null, "Visible surface has no client hitbox: " + action);
+        var hit = ray.invoke(machine, player, 3d);
+        require(hit != null && field(field(hit, "target"), "action").equals(action),
+                "Visible surface picked wrong action: " + ((PracticeMachine<?>) machine).game() + " " + action);
     }
 
     private void checkVisuals(Object machine, String game) throws Exception {
         var parts = (List<?>) field(machine, "parts");
+        require(parts.stream().filter(org.bukkit.entity.Interaction.class::isInstance).count()
+                        >= ((List<?>) field(machine, "targets")).size(),
+                "Missing client click hitboxes: " + game);
         require(parts.stream().anyMatch(BlockDisplay.class::isInstance), "No vanilla cabinet: " + game);
         require(parts.stream().anyMatch(TextDisplay.class::isInstance), "No text labels: " + game);
         for (Object part : parts) {
@@ -126,7 +317,107 @@ public final class CasinoVanillaProbe extends JavaPlugin {
         var texts = parts.stream().filter(TextDisplay.class::isInstance).map(TextDisplay.class::cast)
                 .map(display -> PlainTextComponentSerializer.plainText().serialize(display.text()))
                 .toList();
-        require(texts.stream().anyMatch(s -> s.equals("PLAY")), "PLAY label missing: " + game);
+        require(texts.stream().anyMatch(s -> s.equals("PLAY") || s.equals("SPIN")), "PLAY/SPIN label missing: " + game);
+        require(texts.stream().noneMatch(s -> s.startsWith("FREE PLAY")), "Floating status label remains: " + game);
+        var buttons = (Map<?, ?>) field(machine, "buttonActions");
+        var origin = (Location) field(machine, "origin");
+        double scale = game.equals("plinko") ? .75 : MachineGeometry.machineScale(game);
+        for (var entry : buttons.entrySet()) {
+            var expected = (game.equals("mines")
+                    ? dev.server.casino.game.mines.MinesMachine.vanillaButton((String) entry.getValue())
+                    : game.equals("dragon_tower")
+                    ? dev.server.casino.game.dragon_tower.DragonTowerMachine.vanillaButton((String) entry.getValue())
+                    : MachineDefinition.builtin(game).button((String) entry.getValue())).transform();
+            var delta = ((ItemDisplay) entry.getKey()).getLocation().subtract(origin).toVector();
+            var local = MachineGeometry.rotate(delta.getX(), delta.getY(), delta.getZ(), -origin.getYaw());
+            require(Math.abs(local.x() - expected.x()*scale) < .001
+                    && Math.abs(local.y() - expected.y()*scale) < .001
+                    && Math.abs(local.z() - expected.z()*scale) < .001, "Original button position: " + game);
+        }
+        for (Object part : parts) {
+            if (part instanceof ItemDisplay item && VanillaGeometry.name(item.getItemStack()) != null)
+                require(!item.isVisibleByDefault(), "Placeholder carrier is visible: " + game);
+        }
+        for (Object group : (List<?>) field(machine, "vanillaDisplays")) {
+            var carrier = (ItemDisplay) field(group, "carrier");
+            var parent = VanillaGeometry.matrix(carrier.getTransformation());
+            for (Object child : (List<?>) field(group, "children")) {
+                var display = (Display) field(child, "display");
+                var expected = new org.joml.Matrix4f(parent).mul((org.joml.Matrix4f) field(child, "local"));
+                var pose = display.getTransformation();
+                var actual = new org.joml.Matrix4f().translation(pose.getTranslation())
+                        .rotate(pose.getLeftRotation()).scale(pose.getScale()).rotate(pose.getRightRotation());
+                for (int corner = 0; corner < 8; corner++) {
+                    var point = new org.joml.Vector3f(corner & 1, (corner >> 1) & 1, (corner >> 2) & 1);
+                    float error = expected.transformPosition(new org.joml.Vector3f(point))
+                            .distance(actual.transformPosition(point));
+                    require(error < .0001, "Display geometry distorted: " + game + " / "
+                            + VanillaGeometry.name(carrier.getItemStack()) + " error=" + error);
+                }
+            }
+        }
+    }
+
+    private void checkVanillaCards(Object machine) throws Exception {
+        var cards = (List<?>) field(machine, "cards");
+        require(cards.size() >= 4, "Blackjack did not deal vanilla cards");
+        var parts = (List<?>) field(machine, "parts");
+        require(cards.stream().map(ItemDisplay.class::cast)
+                .allMatch(c -> VanillaGeometry.name(c.getItemStack()).startsWith("card_")),
+                "Blackjack composite card geometry missing");
+        require(parts.stream().filter(BlockDisplay.class::isInstance)
+                .map(BlockDisplay.class::cast)
+                .filter(display -> display.getBlock().getMaterial() == Material.WHITE_CONCRETE)
+                .count() >= 4, "Blackjack card bases missing");
+    }
+
+    private void writePreview(Object machine, String game) throws Exception {
+        var origin = (Location) field(machine, "origin");
+        var parts = (List<?>) field(machine, "parts");
+        var entries = new ArrayList<Map<String, Object>>();
+        var childIds = new java.util.HashSet<UUID>();
+        for (Object group : (List<?>) field(machine, "vanillaDisplays"))
+            for (Object child : (List<?>) field(group, "children"))
+                childIds.add(((Entity) field(child, "display")).getUniqueId());
+        for (Object part : parts) {
+            if (!(part instanceof Display display)) continue;
+            var location = display.getLocation();
+            var local = MachineGeometry.rotate(location.getX() - origin.getX(),
+                    location.getY() - origin.getY(), location.getZ() - origin.getZ(),
+                    -origin.getYaw());
+            Transformation pose = display.getTransformation();
+            var entry = new LinkedHashMap<String, Object>();
+            entry.put("kind", display.getClass().getSimpleName());
+            entry.put("visible", display.isVisibleByDefault());
+            entry.put("vanillaChild", childIds.contains(display.getUniqueId()));
+            entry.put("position", List.of(local.x(), local.y(), local.z()));
+            entry.put("translation", List.of(pose.getTranslation().x,
+                    pose.getTranslation().y, pose.getTranslation().z));
+            entry.put("scale", List.of(pose.getScale().x, pose.getScale().y,
+                    pose.getScale().z));
+            entry.put("leftRotation", List.of(pose.getLeftRotation().x,
+                    pose.getLeftRotation().y, pose.getLeftRotation().z,
+                    pose.getLeftRotation().w));
+            entry.put("rightRotation", List.of(pose.getRightRotation().x,
+                    pose.getRightRotation().y, pose.getRightRotation().z,
+                    pose.getRightRotation().w));
+            if (display instanceof BlockDisplay block)
+                entry.put("material", block.getBlock().getMaterial().name());
+            else if (display instanceof ItemDisplay item) {
+                entry.put("material", item.getItemStack().getType().name());
+                entry.put("model", VanillaGeometry.name(item.getItemStack()));
+            }
+            else if (display instanceof TextDisplay text) {
+                entry.put("text", PlainTextComponentSerializer.plainText().serialize(text.text()));
+                entry.put("color", text.text().color() == null ? 0xffffff : text.text().color().value());
+            }
+            entries.add(entry);
+        }
+        var folder = getDataFolder().toPath().resolve("preview-snapshots");
+        Files.createDirectories(folder);
+        Files.createDirectories(folder.resolve(game + ".json").getParent());
+        Files.writeString(folder.resolve(game + ".json"),
+                new GsonBuilder().setPrettyPrinting().create().toJson(entries));
     }
 
     private Player player() {
@@ -134,9 +425,11 @@ public final class CasinoVanillaProbe extends JavaPlugin {
                 (proxy, method, args) -> switch (method.getName()) {
                     case "getUniqueId" -> OWNER;
                     case "isOnline", "hasPermission", "isPermissionSet" -> true;
-                    case "isDead", "isSneaking" -> false;
+                    case "isDead" -> false;
+                    case "isSneaking" -> sneaking;
+                    case "showDialog" -> { shownDialogs++; yield null; }
                     case "getWorld" -> Bukkit.getWorlds().getFirst();
-                    case "getLocation" -> new Location(Bukkit.getWorlds().getFirst(), 0, 90, 0, 0, 0);
+                    case "getLocation" -> new Location(Bukkit.getWorlds().getFirst(), 0, 90, 0, placementYaw, 0);
                     case "getEyeLocation" -> eye.get() == null
                             ? new Location(Bukkit.getWorlds().getFirst(), 0, 91.6, 0, 0, 0) : eye.get();
                     case "getName", "getDisplayName", "getPlayerListName" -> "VanillaCasinoProbe";

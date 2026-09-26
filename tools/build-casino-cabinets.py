@@ -10,8 +10,8 @@ import random
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parents[1]
-PACK = ROOT / 'craftengine/resources/casino'
-ASSETS = PACK / 'resourcepack/assets/casino'
+PACK = ROOT / 'resource-pack'
+ASSETS = PACK / 'assets/casino'
 FACES = ('up', 'down', 'north', 'south', 'east', 'west')
 PALETTES = {
     'plinko': ['#761d30', '#db3444', '#ffcc62', '#30192a', '#ffe6a4', '#f28655', '#b0c8d4', '#963749'],
@@ -163,7 +163,7 @@ class Body:
             assert set(e['faces']) == set(FACES)
             assert all(f['texture'] == '#atlas' and all(0 <= v <= 16 for v in f['uv']) for f in e['faces'].values())
         report['models'][name] = {'elements': len(model['elements']), 'faces': sum(len(e['faces']) for e in model['elements']), 'physical_min': lows, 'physical_max': highs, 'physical_size': [round(b-a, 4) for a,b in zip(lows, highs)], 'asset_kb': round(sum(p.stat().st_size for p in (path, item, ASSETS / f'textures/item/{name}.png')) / 1024, 2), 'body_entities': 1}
-        preview['models'][name] = {'texture': f'../craftengine/resources/casino/resourcepack/assets/casino/textures/item/{name}.png', 'boxes': [{'min': lo, 'max': hi, 'color': PALETTES[self.name][int(e['faces']['up']['uv'][1] // 4) * 4 + int(e['faces']['up']['uv'][0] // 4)], 'faces': e['faces']} for (lo, hi), e in zip(self.bounds, self.elements)]}
+        preview['models'][name] = {'texture': f'../resource-pack/assets/casino/textures/item/{name}.png', 'boxes': [{'min': lo, 'max': hi, 'color': PALETTES[self.name][int(e['faces']['up']['uv'][1] // 4) * 4 + int(e['faces']['up']['uv'][0] // 4)], 'faces': e['faces']} for (lo, hi), e in zip(self.bounds, self.elements)]}
 
 
 def plinko():
@@ -319,10 +319,6 @@ if __name__ == '__main__':
     blackjack_screen()
     crash()
     accessories()
-    config = ['items:']
-    for name in PALETTES:
-        config += [f'  casino:cabinet_{name}:', '    material: paper', '    data:', f'      item_name: <!i>{LABELS[name] or "Rocket"}', f'    item-model: casino:cabinet_{name}']
-    (PACK / 'configuration/cabinets.yml').write_text('\n'.join(config) + '\n', encoding='utf-8')
     report['alignment'] = {'plinko': {'peg_count': 78, 'rows': 12, 'peg_centres': '(col-row/2)*.36, 4.5-row*.27-.13, .43', 'slots': 13, 'slot_centres': '(i-6)*.36, 1.04, .43'}, 'mines': {'tile_centres': '(col-2)*.53, 1.29, -1.02+row*.51', 'clear_tile_size': [.46, .36], 'table_top': 1.02}, 'blackjack': {'table_y': .92, 'card_z': [-.32, .35], 'clear_card_x': [-1.2, 1.2]}, 'crash': {'screen_z': .4, 'rocket_x': -.55, 'rocket_bottom_y': [1.6, 2.65], 'rocket_z': .55}}
     report['validation'] = 'PASS: source bounds, item references, texture decoding and UVs, exact physical dimensions, bottom origins, height limits, 25 Mines tile clearances, Blackjack card plane; visual acceptance requires Minecraft'
     (ROOT / 'reports').mkdir(exist_ok=True)

@@ -3,9 +3,10 @@ from pathlib import Path
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-DIRECTORIES = ('src', 'craftengine', 'tools', 'docs')
-TOP_LEVEL = ('pom.xml', 'README.md', 'LICENSE', 'THIRD_PARTY.md', '.gitignore', '.gitattributes')
-EXTENSIONS = {'.java', '.xml', '.yml', '.yaml', '.json', '.png', '.py', '.md'}
+DIRECTORIES = ('src', 'resource-pack', 'tools', 'docs', '.github')
+TOP_LEVEL = ('pom.xml', 'README.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'LICENSE',
+             'THIRD_PARTY.md', '.gitignore', '.gitattributes')
+EXTENSIONS = {'.java', '.xml', '.yml', '.yaml', '.json', '.mcmeta', '.png', '.py', '.md', '.txt'}
 
 
 def source_files():

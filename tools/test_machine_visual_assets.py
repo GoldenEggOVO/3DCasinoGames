@@ -3,7 +3,7 @@ import json,unittest,collections,importlib.util,math
 from PIL import Image
 spec=importlib.util.spec_from_file_location("showcase",Path(__file__).with_name("build-showcase-machines.py"))
 showcase=importlib.util.module_from_spec(spec);spec.loader.exec_module(showcase)
-A=Path(__file__).resolve().parents[1]/'craftengine/resources/casino/resourcepack/assets/casino'
+A=Path(__file__).resolve().parents[1]/'resource-pack/assets/casino'
 class VisualAssetsTest(unittest.TestCase):
  def test_showcase_dynamic_piece_contracts(self):
   panel=json.loads((A/'models/item/showcase_hilo_panel.json').read_text(encoding='utf-8'))
@@ -43,10 +43,9 @@ class VisualAssetsTest(unittest.TestCase):
   for name in ['poker','baccarat','street_craps','dice','duck','button_draw','button_next','button_previous','tile_safe','tile_trap','roulette','roulette_panel','roulette_disc',*[f'bet_{n}' for n in range(49)]]:
    for folder,ext in [('models/item','json'),('items','json'),('textures/item','png')]:
     self.assertFalse((A/f'{folder}/showcase_{name}.{ext}').exists())
- def test_roulette_registration_is_removed(self):
-  config=(showcase.old.PACK/'configuration/showcase.yml').read_text(encoding='utf-8')
-  self.assertNotIn('roulette',config)
-  self.assertNotIn('showcase_bet_',config)
+ def test_retired_item_mappings_are_removed(self):
+  names={p.stem for p in (A/'items').glob('*.json')}
+  self.assertFalse(any('roulette' in n or n.startswith('showcase_bet_') for n in names))
  def test_keno_tiles_have_rounded_solid_corners(self):
   for name in ['tile','tile_selected']:
    elements=json.loads((A/f'models/item/showcase_{name}.json').read_text(encoding='utf-8'))['elements']
@@ -69,8 +68,9 @@ class VisualAssetsTest(unittest.TestCase):
    elements=json.loads((A/f'models/item/cabinet_button_{name}.json').read_text(encoding='utf-8'))['elements']
    self.assertTrue(any(e['faces'].get('south',{}).get('uv')==[0,8,16,16] for e in elements))
    self.assertTrue((A/f'items/cabinet_button_{name}.json').exists())
-  config=(showcase.old.PACK/'configuration/cabinets.yml').read_text(encoding='utf-8')
-  for name in ['blackjack_screen','button_minus','button_plus']:self.assertIn('casino:cabinet_'+name+':',config)
+  for name in ['blackjack_screen','button_minus','button_plus']:
+   mapping=json.loads((A/f'items/cabinet_{name}.json').read_text(encoding='utf-8'))
+   self.assertEqual('casino:item/cabinet_'+name,mapping['model']['model'])
  def test_dragon_background_tracks_cylindrical_tiles(self):
   elements=json.loads((A/'models/item/showcase_dragon_tower.json').read_text(encoding='utf-8'))['elements']
   for angle in [-18,-6,6,18]:

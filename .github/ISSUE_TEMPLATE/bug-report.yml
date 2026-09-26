@@ -1,0 +1,22 @@
+name: Bug report
+description: Report a plugin, model, or interaction problem.
+body:
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: Plugin, Paper/Purpur build, Java, and client version.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps and expected behavior
+      description: Include the game, appearance mode, machine scale, and placement direction.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Logs and screenshots
+      description: Remove tokens, passwords, and private server details before uploading.

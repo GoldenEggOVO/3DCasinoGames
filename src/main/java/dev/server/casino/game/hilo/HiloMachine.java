@@ -34,10 +34,9 @@ public final class HiloMachine extends AnimatedMachine<HiloRound> {
         body("showcase_hilo");
         for (String action : List.of("under", "over", "play"))
             button(action, "showcase_button_" + action);
-        item(model("showcase_hilo_panel"), 0, 1.1, 0,
-                vanillaAppearance() ? 4 * .4 : 4, PITCH);
+        item(model("showcase_hilo_panel"), 0, 1.1, 0, 4, PITCH);
         figures.add(item(model("showcase_slider"), 0, 1.16, .082,
-                vanillaAppearance() ? 4 * .08 : 4, PITCH));
+                4, PITCH));
         for (int i = 0; i < 12; i++)
             hit("slider", figures.getFirst(), -1.1 + i * .2, 1.04, .08, .2, .20, -1);
         sliderLabel = text(0, 1.03, .22, .25);
@@ -77,7 +76,14 @@ public final class HiloMachine extends AnimatedMachine<HiloRound> {
 
     @Override
     protected void animateFrame(double progress, double ease) {
-        showHiloResult(round.rolls().getFirst() * ease);
+        showHiloResult(revealValue(progress, round.rolls().getFirst()));
+    }
+
+    /** Traverse the complete rail, return, then settle on the round's unchanged roll. */
+    public static double revealValue(double progress, int roll) {
+        if (progress <= .7) return 50 * (1 - Math.cos(2 * Math.PI * progress / .7));
+        double settle = (progress - .7) / .3;
+        return roll * settle * settle * (3 - 2 * settle);
     }
 
     void updateRail() {
@@ -101,9 +107,9 @@ public final class HiloMachine extends AnimatedMachine<HiloRound> {
     void showHiloResult(double value) {
         var point =
                 MachineGeometry.panelPoint(
-                        ShowcaseGeometry.sliderX((int) Math.round(value)), -.24, .065, PITCH);
+                        ShowcaseGeometry.sliderX((int) Math.round(value)), .14, .165, PITCH);
         resultArrow.teleport(at(point.x(), 1.1 + point.y(), point.z()));
-        resultArrow.text(Component.text(String.format(Locale.ROOT, "▲\n%.1f%%", value)));
+        resultArrow.text(Component.text(String.format(Locale.ROOT, "▼ %.1f%%", value)));
     }
 
     void adjustSlider() {

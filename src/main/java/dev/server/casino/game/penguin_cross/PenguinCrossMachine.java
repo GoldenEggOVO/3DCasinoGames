@@ -64,7 +64,7 @@ public final class PenguinCrossMachine extends AnimatedMachine<PenguinCrossRound
                                 -1.1 + 2.2 * (round.steps() + (fallen ? 1 : 0)) / 8.0,
                                 fallen ? .55 : 1.08,
                                 0));
-        var pose = MachineGeometry.itemPose(fallen ? 0 : vanillaAppearance() ? 4 * .12 : 4, 0, 0);
+        var pose = MachineGeometry.itemPose(fallen ? 0 : 4, 0, 0);
         pose.getLeftRotation().rotateY((float) (Math.PI / 2));
         pose(figures.getFirst(), pose);
         for (int i = 0; i < ice.size(); i++)
@@ -88,7 +88,7 @@ public final class PenguinCrossMachine extends AnimatedMachine<PenguinCrossRound
                                 -1.1 + 2.2 * step / 8,
                                 1.08 + Math.sin(hop * Math.PI) * .22 - sink * .65,
                                 0));
-        var pose = MachineGeometry.itemPose(vanillaAppearance() ? 4 * .12 : 4, 0, 0);
+        var pose = MachineGeometry.itemPose(4, 0, 0);
         pose.getLeftRotation().rotateY((float) (Math.PI / 2));
         pose(figures.getFirst(), pose);
         if (fallen)
