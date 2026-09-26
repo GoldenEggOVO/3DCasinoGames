@@ -201,7 +201,7 @@ final class CasinoMenus {
             config.set("Bottom.type", "multi");
             config.set("Bottom.columns", 2);
             config.set("Bottom.exit.text", text("menu.close"));
-            config.set("Bottom.exit.width", 380);
+            config.set("Bottom.exit.width", 230);
             config.set("Bottom.exit.actions", List.of("3dcasino:" + token + " close"));
             actions.put(
                     "close",
