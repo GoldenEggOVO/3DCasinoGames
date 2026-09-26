@@ -13,7 +13,6 @@ import io.papermc.paper.registry.data.dialog.type.DialogType;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickCallback;
 import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 
 import org.bukkit.Bukkit;
@@ -157,13 +156,11 @@ public final class PaperMenus {
                                 options());
         String caption = config.getString(path + ".text", Language.text("menu.close"));
         if (path.equals("Bottom.exit")) {
-            if (caption.equals("Close")) caption = "&8[ &cClose Menu &8]";
-            else if (caption.equals("关闭")) caption = "&8[ &c关闭菜单 &8]";
+            if (caption.equals("Close")) caption = "<dark_gray>[ <red>Close Menu <dark_gray>]";
+            else if (caption.equals("关闭")) caption = "<dark_gray>[ <red>关闭菜单 <dark_gray>]";
         }
         return ActionButton.create(
-                path.equals("Bottom.exit") && !caption.contains("<")
-                        ? LegacyComponentSerializer.legacyAmpersand().deserialize(caption.replace('§', '&'))
-                        : text(caption),
+                text(caption),
                 null,
                 config.getInt(path + ".width", 150),
                 action);

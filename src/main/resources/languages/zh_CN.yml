@@ -101,7 +101,7 @@
 "menu.blackjack.double-body": "追加 {amount} {currency}，只再发一张牌后自动停牌。\n总投注 {total}"
 "menu.blackjack.hit": "要牌"
 "menu.blackjack.stand": "停牌"
-"menu.close": "&8[ &c关闭菜单 &8]"
+"menu.close": "<dark_gray>[ <red>关闭菜单 <dark_gray>]"
 "menu.crash.cash-out": "按当前服务端倍率领取"
 "menu.crash.finished": "Crash 已结束 · 奖励 {amount} · 点击刷新查看"
 "menu.crash.running": "Crash {multiplier}× · 自动领取 {target}×"
