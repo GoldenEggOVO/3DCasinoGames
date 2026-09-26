@@ -115,7 +115,7 @@
 "menu.game.plinko": "Plinko 弹珠"
 "menu.home.body": "实体机器免费练习 · 机器布置永久保存"
 "menu.home.resume": "处理已有对局"
-"menu.home.title": "Casino"
+"menu.home.title": "3D Casino Games"
 "menu.log.action-paused": "游乐场操作暂停 player={player}"
 "menu.machine-settings.body": "&f练习下注：{amount}\n&7免费练习，不扣款、不发放余额。\n{status}"
 "menu.machine-settings.busy": "当前对局或动画进行中，结束后可修改金额。"

@@ -115,7 +115,7 @@
 "menu.game.plinko": "Plinko"
 "menu.home.body": "Free practice on physical machines · Machine layouts are saved permanently"
 "menu.home.resume": "Manage an existing round"
-"menu.home.title": "Casino"
+"menu.home.title": "3D Casino Games"
 "menu.log.action-paused": "Casino action paused player={player}"
 "menu.machine-settings.body": "&fPractice stake: {amount}\n&7Free practice; no balance is charged or awarded.\n{status}"
 "menu.machine-settings.busy": "A round or animation is in progress. Change the amount when it ends."
