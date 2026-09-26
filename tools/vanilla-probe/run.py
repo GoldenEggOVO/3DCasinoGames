@@ -34,8 +34,8 @@ def main():
     with socket.socket() as check:
         check.bind(('127.0.0.1', args.port))
     version = ET.parse(CASINO / 'pom.xml').findtext('{http://maven.apache.org/POM/4.0.0}version')
-    plugin = CASINO / f'target/server-casino-{version}.jar'
-    classes = CASINO / 'target/vanilla-probe-classes'
+    plugin = CASINO / f'target/3dcasino-{version}.jar'
+    classes = CASINO / 'target/3dcasino-probe-classes'
     classes.mkdir(parents=True, exist_ok=True)
     jars = [plugin, base / 'versions/26.2/purpur-26.2.jar',
             *sorted((base / 'libraries').rglob('*.jar'))]
@@ -45,8 +45,8 @@ def main():
     probe = CASINO / 'target/CasinoVanillaProbe.jar'
     with zipfile.ZipFile(probe, 'w', zipfile.ZIP_DEFLATED) as archive:
         archive.writestr('plugin.yml', 'name: CasinoVanillaProbe\nversion: 1\n'
-                         "api-version: '26.2'\nmain: dev.server.casino.probe.CasinoVanillaProbe\n"
-                         'depend: [ServerCasino]\n')
+                         "api-version: '26.2'\nmain: dev.threedcasino.probe.CasinoVanillaProbe\n"
+                         'depend: [3dcasino]\n')
         for file in sorted(classes.rglob('*.class')):
             archive.write(file, file.relative_to(classes).as_posix())
     run = CASINO / 'reports/vanilla-runtime' / ('run-' + datetime.now(timezone.utc)
@@ -60,7 +60,7 @@ def main():
     plugins.mkdir()
     shutil.copy2(plugin, plugins / plugin.name)
     shutil.copy2(probe, plugins / probe.name)
-    config = plugins / 'ServerCasino'
+    config = plugins / '3dcasino'
     config.mkdir()
     (run / 'server.properties').write_text(
         f'server-ip=127.0.0.1\nserver-port={args.port}\nonline-mode=false\n'
@@ -73,7 +73,9 @@ def main():
     for phase, marker in enumerate(MARKERS, 1):
         if phase == 2:
             # Missing appearance key exercises upgrades as well as the fresh-install default.
-            (config / 'config.yml').write_text('menu-enabled: false\n', encoding='utf-8')
+            (config / 'config.yml').write_text('menu-enabled: false\nlanguage: custom\n', encoding='utf-8')
+            (config / 'languages/custom.yml').write_text(
+                '"models.showcase_button_play.0": "CUSTOM PLAY"\n', encoding='utf-8')
         log_path = run / f'phase-{phase}.log'
         with log_path.open('w', encoding='utf-8') as output:
             process = subprocess.run([str(jdk / ('java' + suffix)), '-Xms512M', '-Xmx2G',
@@ -86,7 +88,7 @@ def main():
         phase_result = {'phase': phase, 'exit_code': process.returncode,
                         'pass': process.returncode == 0 and marker in log
                         and 'CASINO_VANILLA_FAIL' not in log,
-                        'evidence': [line for line in log.splitlines() if 'CASINO_VANILLA_' in line or 'CASINO_AIM_PASS' in line]}
+                        'evidence': [line for line in log.splitlines() if 'CASINO_VANILLA_' in line or 'CASINO_AIM_PASS' in line or 'CASINO_NAMESPACE_TAB_PASS' in line]}
         result['phases'].append(phase_result)
         (run / 'result.json').write_text(json.dumps(result, ensure_ascii=False, indent=2),
                                          encoding='utf-8')

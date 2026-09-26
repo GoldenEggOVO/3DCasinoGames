@@ -1,14 +1,14 @@
-package dev.server.casino.probe;
+package dev.threedcasino.probe;
 
 import com.google.gson.GsonBuilder;
-import dev.server.casino.CasinoPlugin;
-import dev.server.casino.MachineGeometry;
-import dev.server.casino.game.PracticeRound;
-import dev.server.casino.machine.MachineManager;
-import dev.server.casino.machine.PracticeMachine;
-import dev.server.casino.model.VanillaGeometry;
-import dev.server.casino.model.ModelItems;
-import dev.server.casino.model.MachineDefinition;
+import dev.threedcasino.CasinoPlugin;
+import dev.threedcasino.MachineGeometry;
+import dev.threedcasino.game.PracticeRound;
+import dev.threedcasino.machine.MachineManager;
+import dev.threedcasino.machine.PracticeMachine;
+import dev.threedcasino.model.VanillaGeometry;
+import dev.threedcasino.model.ModelItems;
+import dev.threedcasino.model.MachineDefinition;
 import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
 import java.nio.file.Files;
@@ -45,6 +45,7 @@ public final class CasinoVanillaProbe extends JavaPlugin {
     private float placementYaw;
     private boolean sneaking;
     private int shownDialogs;
+    private boolean permissions = true;
 
     @Override
     public void onEnable() {
@@ -53,13 +54,43 @@ public final class CasinoVanillaProbe extends JavaPlugin {
 
     private void check() {
         try {
-            var casino = (CasinoPlugin) Bukkit.getPluginManager().getPlugin("ServerCasino");
+            var casino = (CasinoPlugin) Bukkit.getPluginManager().getPlugin("3dcasino");
             require(casino != null && casino.isEnabled(), "Casino disabled");
             require(casino.vanillaAppearance(), "Vanilla appearance not enabled");
+            require(Files.isRegularFile(casino.getDataFolder().toPath().resolve("languages/en_US.yml"))
+                    && Files.isRegularFile(casino.getDataFolder().toPath().resolve("languages/zh_CN.yml")),
+                    "Language files were not generated");
             for (String absent : List.of("CraftEngine", "ServerGames", "ServerBoards", "ServerMenu", "KaMenu"))
                 require(Bukkit.getPluginManager().getPlugin(absent) == null, absent + " was installed");
             var manager = (MachineManager) field(casino, "machines");
             Player player = player();
+            require(casino.getDataFolder().getName().equals("3dcasino"), "Wrong data namespace");
+            for (String old : List.of("casino", "casino-demo", "servercasino"))
+                require(Bukkit.getPluginCommand(old) == null, "Old command remains: " + old);
+            var command = casino.getCommand("3dcasino");
+            require(command != null, "New command missing");
+            require(casino.onTabComplete(player, command, "3dcasino", new String[]{"CR"})
+                    .equals(List.of("create")), "Root completion failed");
+            require(casino.onTabComplete(player, command, "3dcasino", new String[]{"create", "d"})
+                    .equals(List.of("dragon_tower", "duck_race")), "Game completion failed");
+            permissions = false;
+            require(casino.onTabComplete(player, command, "3dcasino", new String[]{""}).isEmpty(),
+                    "Permission-denied player received completion");
+            permissions = true;
+            var consoleMessages = new ArrayList<String>();
+            var console = (org.bukkit.command.ConsoleCommandSender) Proxy.newProxyInstance(
+                    getClass().getClassLoader(), new Class<?>[]{org.bukkit.command.ConsoleCommandSender.class},
+                    (proxy, method, arguments) -> {
+                        if (method.getName().equals("sendMessage")) {
+                            for (Object argument : arguments) if (argument instanceof String value)
+                                consoleMessages.add(value);
+                        }
+                        return null;
+                    });
+            casino.onCommand(console, command, "3dcasino", new String[]{"resolve", "invalid", "invalid", "applied"});
+            require(consoleMessages.size() == 1 && consoleMessages.getFirst().contains("<player-uuid>"),
+                    "Invalid reconciliation UUID should display usage");
+            getLogger().info("CASINO_NAMESPACE_TAB_PASS old_aliases=false filtered=true");
             for (int x = -1; x <= 1; x++)
                 for (int z = -1; z <= 1; z++)
                     Bukkit.getWorlds().getFirst().getChunkAt(x, z).setForceLoaded(true);
@@ -85,6 +116,20 @@ public final class CasinoVanillaProbe extends JavaPlugin {
                     }
                     checkVisuals(machine, game);
                     checkAim(machine, player, game);
+                    if (game.equals("blackjack")) {
+                        var displays = (List<Entity>) field(machine, "parts");
+                        require(displays.stream().filter(ItemDisplay.class::isInstance)
+                                .map(ItemDisplay.class::cast).noneMatch(display ->
+                                        "cabinet_control_panel".equals(VanillaGeometry.name(display.getItemStack()))),
+                                "Blackjack sloped button panel remains");
+                    }
+                    if (game.equals("dragon_tower")) {
+                        var displays = (List<Entity>) field(machine, "parts");
+                        long grayCubes = displays.stream().filter(BlockDisplay.class::isInstance)
+                                .map(BlockDisplay.class::cast)
+                                .filter(display -> display.getBlock().getMaterial() == Material.GRAY_TERRACOTTA).count();
+                        require(grayCubes == 24, "Dragon hidden tiles must be 24 gray terracotta cubes");
+                    }
                     writePreview(machine, game);
                     if (game.equals("keno")) {
                         var tiles = (List<?>) field(machine, "tiles");
@@ -108,6 +153,15 @@ public final class CasinoVanillaProbe extends JavaPlugin {
                         Thread.sleep(170);
                         click(manager, player, (ItemDisplay) ((List<?>) field(machine,"tiles")).getFirst(), game);
                         ((PracticeMachine<?>) machine).tick();
+                        var revealedParts = (List<Entity>) field(machine, "parts");
+                        for (var material : List.of(Material.EMERALD_BLOCK, Material.TNT)) {
+                            long count = revealedParts.stream().filter(BlockDisplay.class::isInstance)
+                                    .map(BlockDisplay.class::cast)
+                                    .filter(display -> display.getBlock().getMaterial() == material).count();
+                            require(count == (material == Material.TNT ? 1 : 3),
+                                    "Dragon reveal should show three emerald blocks and one TNT: " + material);
+                        }
+                        checkVisuals(machine, game);
                         writePreview(machine, "dragon-revealed");
                     }
                     if (game.equals("blackjack")) {
@@ -134,7 +188,7 @@ public final class CasinoVanillaProbe extends JavaPlugin {
                     }
                     if (game.equals("blackjack")) {
                         var dealt = (List<ItemDisplay>) field(machine, "cards");
-                        dealt.get(0).setItemStack(ModelItems.resolve("casino:card_47", true));
+                        dealt.get(0).setItemStack(ModelItems.resolve("3dcasino:card_47", true));
                         ((PracticeMachine<?>) machine).tick();
                         writePreview(machine, "blackjack-dealt");
                     }
@@ -147,7 +201,8 @@ public final class CasinoVanillaProbe extends JavaPlugin {
                 }
                 for (float yaw : new float[] {37, 90, 180}) {
                     placementYaw = yaw;
-                    for (String game : List.of("wheel_of_fortune", "money_wheel", "dragon_tower", "keno", "mines")) {
+                    for (String game : List.of("wheel_of_fortune", "money_wheel", "dragon_tower", "keno", "mines",
+                            "duck_race", "penguin_cross")) {
                         manager.command(player, new String[] {"create", game});
                         var machine = ((Map<?, ?>) field(manager, "machines")).values().iterator().next();
                         checkAim(machine, player, game);
@@ -155,18 +210,25 @@ public final class CasinoVanillaProbe extends JavaPlugin {
                     }
                 }
                 placementYaw = 0;
-                manager.command(player, new String[] {"create", "slots"});
-                manager.command(player, new String[] {"create", "mines"});
-                manager.command(player, new String[] {"create", "dragon_tower"});
+                for (String game : List.of("slots", "mines", "dragon_tower", "hilo", "duck_race", "penguin_cross"))
+                    manager.command(player, new String[] {"create", game});
                 Files.writeString(marker, "1");
                 getLogger().info("CASINO_VANILLA_FIRST_PASS games=12 pack=false");
             } else if (Files.readString(marker).equals("1")) {
                 checkMenus(casino, player, false);
                 var machines = (Map<?, ?>) field(manager, "machines");
-                require(machines.size() == 3, "Machines not restored");
+                require(machines.size() == 6, "Machines not restored");
                 for (var machine : List.copyOf(machines.values())) {
                     String game = ((PracticeMachine<?>) machine).game();
                     checkVisuals(machine, game);
+                    if (game.equals("duck_race")) {
+                        var parts = (List<Entity>) field(machine, "parts");
+                        require(parts.stream().filter(TextDisplay.class::isInstance).map(TextDisplay.class::cast)
+                                .anyMatch(display -> PlainTextComponentSerializer.plainText()
+                                        .serialize(display.text()).equals("CUSTOM PLAY")),
+                                "Edited language was not applied to restored button");
+                        getLogger().info("CASINO_VANILLA_LANGUAGE_PASS custom_button=true fallback=true");
+                    }
                     checkAim(machine, player, game);
                     var buttons = (Map<ItemDisplay, String>) field(machine, "buttonActions");
                     var play = buttons.entrySet().stream().filter(entry ->
@@ -196,7 +258,7 @@ public final class CasinoVanillaProbe extends JavaPlugin {
         require(casino.menusEnabled() == enabled, "Wrong menu setting");
         require((field(casino, "menus") != null) == enabled, "Wrong menu lifecycle");
         int before = shownDialogs;
-        casino.onCommand(player, casino.getCommand("casino"), "casino", new String[0]);
+        casino.onCommand(player, casino.getCommand("3dcasino"), "3dcasino", new String[0]);
         casino.openMachineSettings(player, "slots", () -> 1, value -> {}, () -> true, () -> true, () -> {});
         require(shownDialogs - before == (enabled ? 2 : 0), "Native Dialog switch failed");
         getLogger().info("CASINO_VANILLA_MENU_PASS enabled=" + enabled + " dialogs=" + (shownDialogs - before));
@@ -241,7 +303,7 @@ public final class CasinoVanillaProbe extends JavaPlugin {
                 for (float x : new float[] {-.94f, 0, .94f}) {
                     float size = game.equals("keno") ? .12f : .14f;
                     aim(tiles.get(index), new org.joml.Vector3f(x*size, size*.7f,
-                            game.equals("keno") ? .035f : .09f));
+                            game.equals("keno") ? .035f : .14f));
                     assertAim(ray, machine, player, "select:" + (game.equals("keno") ? index+1 : index%4));
                     if (game.equals("dragon_tower"))
                         require(field(field(ray.invoke(machine, player, 3d), "target"), "row").equals(index/4),
@@ -317,22 +379,32 @@ public final class CasinoVanillaProbe extends JavaPlugin {
         var texts = parts.stream().filter(TextDisplay.class::isInstance).map(TextDisplay.class::cast)
                 .map(display -> PlainTextComponentSerializer.plainText().serialize(display.text()))
                 .toList();
-        require(texts.stream().anyMatch(s -> s.equals("PLAY") || s.equals("SPIN")), "PLAY/SPIN label missing: " + game);
+        require(texts.stream().noneMatch(value -> value.codePoints().anyMatch(code ->
+                Character.UnicodeScript.of(code) == Character.UnicodeScript.HAN)),
+                "Default machine text is not English: " + game);
+        require(texts.stream().anyMatch(s -> s.equals("PLAY") || s.equals("SPIN") || s.equals("CUSTOM PLAY")), "PLAY/SPIN label missing: " + game);
         require(texts.stream().noneMatch(s -> s.startsWith("FREE PLAY")), "Floating status label remains: " + game);
         var buttons = (Map<?, ?>) field(machine, "buttonActions");
         var origin = (Location) field(machine, "origin");
         double scale = game.equals("plinko") ? .75 : MachineGeometry.machineScale(game);
         for (var entry : buttons.entrySet()) {
             var expected = (game.equals("mines")
-                    ? dev.server.casino.game.mines.MinesMachine.vanillaButton((String) entry.getValue())
+                    ? dev.threedcasino.game.mines.MinesMachine.vanillaButton((String) entry.getValue())
                     : game.equals("dragon_tower")
-                    ? dev.server.casino.game.dragon_tower.DragonTowerMachine.vanillaButton((String) entry.getValue())
+                    ? dev.threedcasino.game.dragon_tower.DragonTowerMachine.vanillaButton((String) entry.getValue())
                     : MachineDefinition.builtin(game).button((String) entry.getValue())).transform();
+            double expectedX = expected.x(), expectedY = expected.y(), expectedZ = expected.z();
+            if (game.equals("penguin_cross")) expectedZ += .20;
+            if (game.equals("duck_race")) {
+                if (entry.getValue().equals("play")) {
+                    expectedX = 0; expectedY = .31; expectedZ = 1.73;
+                } else expectedZ += .22;
+            }
             var delta = ((ItemDisplay) entry.getKey()).getLocation().subtract(origin).toVector();
             var local = MachineGeometry.rotate(delta.getX(), delta.getY(), delta.getZ(), -origin.getYaw());
-            require(Math.abs(local.x() - expected.x()*scale) < .001
-                    && Math.abs(local.y() - expected.y()*scale) < .001
-                    && Math.abs(local.z() - expected.z()*scale) < .001, "Original button position: " + game);
+            require(Math.abs(local.x() - expectedX*scale) < .001
+                    && Math.abs(local.y() - expectedY*scale) < .001
+                    && Math.abs(local.z() - expectedZ*scale) < .001, "Approved button position: " + game);
         }
         for (Object part : parts) {
             if (part instanceof ItemDisplay item && VanillaGeometry.name(item.getItemStack()) != null)
@@ -424,10 +496,18 @@ public final class CasinoVanillaProbe extends JavaPlugin {
         return (Player) Proxy.newProxyInstance(Player.class.getClassLoader(), new Class<?>[] {Player.class},
                 (proxy, method, args) -> switch (method.getName()) {
                     case "getUniqueId" -> OWNER;
-                    case "isOnline", "hasPermission", "isPermissionSet" -> true;
+                    case "isOnline" -> true;
+                    case "hasPermission", "isPermissionSet" -> permissions;
                     case "isDead" -> false;
                     case "isSneaking" -> sneaking;
                     case "showDialog" -> { shownDialogs++; yield null; }
+                    case "sendMessage" -> {
+                        for (Object value : args) if (value instanceof String message)
+                            require(message.codePoints().noneMatch(code ->
+                                    Character.UnicodeScript.of(code) == Character.UnicodeScript.HAN),
+                                    "Default command message is not English: " + message);
+                        yield null;
+                    }
                     case "getWorld" -> Bukkit.getWorlds().getFirst();
                     case "getLocation" -> new Location(Bukkit.getWorlds().getFirst(), 0, 90, 0, placementYaw, 0);
                     case "getEyeLocation" -> eye.get() == null

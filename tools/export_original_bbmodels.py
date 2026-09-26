@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 ASSETS = Path(__file__).resolve().parents[1] / "resource-pack/assets"
-MODELS = ASSETS / "casino/models/item"
+MODELS = ASSETS / "3dcasino/models/item"
 FACES = ("north", "east", "south", "west", "up", "down")
 
 
@@ -38,7 +38,7 @@ def convert(path, vanilla_assets=None):
             entry = {
                 "name": texture_path.name,
                 "id": str(index),
-                "uuid": str(uuid.uuid5(uuid.NAMESPACE_URL, f"casino:{path.stem}:texture:{key}")),
+                "uuid": str(uuid.uuid5(uuid.NAMESPACE_URL, f"3dcasino:{path.stem}:texture:{key}")),
                 "uv_width": 16,
                 "uv_height": 16,
                 "particle": key == "atlas",
@@ -72,7 +72,7 @@ def convert(path, vanilla_assets=None):
         elements.append({
             "name": f"part_{index + 1:03d}",
             "type": "cube",
-            "uuid": str(uuid.uuid5(uuid.NAMESPACE_URL, f"casino:{path.stem}:part:{index}")),
+            "uuid": str(uuid.uuid5(uuid.NAMESPACE_URL, f"3dcasino:{path.stem}:part:{index}")),
             "from": part["from"],
             "to": part["to"],
             "origin": [(a + b) / 2 for a, b in zip(part["from"], part["to"])],

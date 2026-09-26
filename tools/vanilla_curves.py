@@ -188,6 +188,12 @@ def hilo(parts):
     for x in (-1.32,1.32):
         result.append(cuboid((x,(low+high)/2,0),(.12,length,thickness),
                              'OAK_PLANKS',pitch=-angle))
+    # Rear uprights meet the table; the tilted crossbar sits flush with the panel back.
+    for x in (-.98,.98):
+        result.append(cuboid((x,.955,-.34),(.10,.89,.10),'GRAY_CONCRETE'))
+    result.append(cuboid((0,1.1+.42*math.cos(angle)-.075*math.sin(angle),
+                         -.42*math.sin(angle)-.075*math.cos(angle)),
+                        (2.2,.12,.08),'GRAY_CONCRETE',pitch=-angle))
     return result
 
 

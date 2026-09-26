@@ -23,7 +23,7 @@ class ResourcePackageTest(unittest.TestCase):
             with self.subTest(file=name):
                 data = (ROOT / name).read_bytes()
                 if name.endswith(('.json', '.yml')):
-                    data = data.decode('utf-8').replace('\r\n', '\n').encode('utf-8')
+                    data = data.decode('utf-8').replace('\r\n', '\n').replace('3dcasino:', 'casino:').encode('utf-8')
                 self.assertEqual(digest, hashlib.sha256(data).hexdigest())
 
     def assert_reference(self, value, folder, extension):
@@ -32,7 +32,7 @@ class ResourcePackageTest(unittest.TestCase):
         namespace, path = value.split(':', 1)
         if namespace == 'minecraft':
             return
-        self.assertEqual(namespace, 'casino')
+        self.assertEqual(namespace, '3dcasino')
         self.assertTrue((ASSETS / namespace / folder / (path + extension)).is_file(), value)
 
     def test_all_model_font_item_references_resolve(self):
@@ -50,7 +50,7 @@ class ResourcePackageTest(unittest.TestCase):
                     self.assert_reference(provider['file'], 'textures', '')
 
     def test_only_current_namespace_is_packaged(self):
-        self.assertEqual({'casino'}, {p.name for p in ASSETS.iterdir() if p.is_dir()})
+        self.assertEqual({'3dcasino'}, {p.name for p in ASSETS.iterdir() if p.is_dir()})
 
     def test_packaging_is_reproducible(self):
         spec = importlib.util.spec_from_file_location('packager', ROOT / 'tools/package-client-pack.py')
@@ -76,8 +76,8 @@ class ResourcePackageTest(unittest.TestCase):
                 self.assertEqual(expected | {'pack.mcmeta'}, names)
                 self.assertEqual([88, 0], json.loads(archive.read('pack.mcmeta'))['pack']['min_format'])
                 self.assertEqual([88, 0], json.loads(archive.read('pack.mcmeta'))['pack']['max_format'])
-                self.assertEqual((ASSETS / 'casino/items/cabinet_blackjack.json').read_bytes(),
-                                 archive.read('assets/casino/items/cabinet_blackjack.json'))
+                self.assertEqual((ASSETS / '3dcasino/items/cabinet_blackjack.json').read_bytes(),
+                                 archive.read('assets/3dcasino/items/cabinet_blackjack.json'))
 
     def test_source_package_excludes_build_outputs_and_local_records(self):
         spec = importlib.util.spec_from_file_location('source_packager', ROOT / 'tools/package-source.py')
@@ -87,10 +87,10 @@ class ResourcePackageTest(unittest.TestCase):
             output = module.package(Path(temporary) / 'source.zip')
             with zipfile.ZipFile(output) as archive:
                 names = archive.namelist()
-            self.assertIn('server-casino/LICENSE', names)
-            self.assertIn('server-casino/tools/showcase-model-baseline.json', names)
-            self.assertIn('server-casino/resource-pack/pack.mcmeta', names)
-            self.assertIn('server-casino/.github/workflows/ci.yml', names)
+            self.assertIn('3dcasino/LICENSE', names)
+            self.assertIn('3dcasino/tools/showcase-model-baseline.json', names)
+            self.assertIn('3dcasino/resource-pack/pack.mcmeta', names)
+            self.assertIn('3dcasino/.github/workflows/ci.yml', names)
             for name in names:
                 self.assertFalse(any(part in name.split('/') for part in
                                      ('target', 'reports', 'artwork', '__pycache__', 'fonts', '.git', 'craftengine', 'craftengine-v3')))

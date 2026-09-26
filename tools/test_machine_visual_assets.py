@@ -3,7 +3,7 @@ import json,unittest,collections,importlib.util,math
 from PIL import Image
 spec=importlib.util.spec_from_file_location("showcase",Path(__file__).with_name("build-showcase-machines.py"))
 showcase=importlib.util.module_from_spec(spec);spec.loader.exec_module(showcase)
-A=Path(__file__).resolve().parents[1]/'resource-pack/assets/casino'
+A=Path(__file__).resolve().parents[1]/'resource-pack/assets/3dcasino'
 class VisualAssetsTest(unittest.TestCase):
  def test_showcase_dynamic_piece_contracts(self):
   panel=json.loads((A/'models/item/showcase_hilo_panel.json').read_text(encoding='utf-8'))
@@ -70,7 +70,7 @@ class VisualAssetsTest(unittest.TestCase):
    self.assertTrue((A/f'items/cabinet_button_{name}.json').exists())
   for name in ['blackjack_screen','button_minus','button_plus']:
    mapping=json.loads((A/f'items/cabinet_{name}.json').read_text(encoding='utf-8'))
-   self.assertEqual('casino:item/cabinet_'+name,mapping['model']['model'])
+   self.assertEqual('3dcasino:item/cabinet_'+name,mapping['model']['model'])
  def test_dragon_background_tracks_cylindrical_tiles(self):
   elements=json.loads((A/'models/item/showcase_dragon_tower.json').read_text(encoding='utf-8'))['elements']
   for angle in [-18,-6,6,18]:
@@ -116,7 +116,7 @@ class VisualAssetsTest(unittest.TestCase):
   for i in range(53):
    data=json.loads((A/f'models/item/card_{i}.json').read_text(encoding='utf-8'))
    for value in data['textures'].values():
-    self.assertTrue(value.startswith('casino:item/'),value)
+    self.assertTrue(value.startswith('3dcasino:item/'),value)
     self.assertTrue((A/'textures'/f'{value.split(":")[1]}.png').exists())
  def test_no_overlapping_coplanar_cabinet_faces(self):
   axes={'up':(1,1),'down':(1,0),'east':(0,1),'west':(0,0),'south':(2,1),'north':(2,0)}

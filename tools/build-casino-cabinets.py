@@ -11,7 +11,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parents[1]
 PACK = ROOT / 'resource-pack'
-ASSETS = PACK / 'assets/casino'
+ASSETS = PACK / 'assets/3dcasino'
 FACES = ('up', 'down', 'north', 'south', 'east', 'west')
 PALETTES = {
     'plinko': ['#761d30', '#db3444', '#ffcc62', '#30192a', '#ffe6a4', '#f28655', '#b0c8d4', '#963749'],
@@ -135,16 +135,16 @@ class Body:
 
     def write(self):
         name = 'cabinet_' + self.name
-        model = {'ambientocclusion': False, 'textures': {'atlas': f'casino:item/{name}', 'particle': f'casino:item/{name}'}, 'elements': exposed_faces(self.elements), 'display': {'fixed': {'rotation': [0, 0, 0], 'translation': [0, 0, 0], 'scale': [1, 1, 1]}}}
+        model = {'ambientocclusion': False, 'textures': {'atlas': f'3dcasino:item/{name}', 'particle': f'3dcasino:item/{name}'}, 'elements': exposed_faces(self.elements), 'display': {'fixed': {'rotation': [0, 0, 0], 'translation': [0, 0, 0], 'scale': [1, 1, 1]}}}
         path = ASSETS / f'models/item/{name}.json'
         path.write_text(json.dumps(model, separators=(',', ':')), encoding='utf-8')
         item = ASSETS / f'items/{name}.json'
-        item.write_text(json.dumps({'model': {'type': 'minecraft:model', 'model': f'casino:item/{name}'}}), encoding='utf-8')
+        item.write_text(json.dumps({'model': {'type': 'minecraft:model', 'model': f'3dcasino:item/{name}'}}), encoding='utf-8')
         lows = [min(v[0][i] for v in self.bounds) for i in range(3)]
         highs = [max(v[1][i] for v in self.bounds) for i in range(3)]
         assert all(-16 <= c <= 32 for e in self.elements for k in ('from', 'to') for c in e[k])
         assert highs[1] <= 5.5 and abs(lows[1]-(1.05 if self.name=='blackjack_screen' else 0))<1e-6
-        assert json.loads(item.read_text())['model']['model'] == f'casino:item/{name}'
+        assert json.loads(item.read_text())['model']['model'] == f'3dcasino:item/{name}'
         expected = {'plinko': [4.9, 5.4, .9], 'mines': [3.3, 1.105, 3.5], 'blackjack': [3.6, .92, 2.1], 'control_panel': [2.7, .46, .07], 'crash': [2.8, 3.8, 1.15], 'button': [.6, .4, .18], 'rocket': [.22, .5, .138]}
         expected['blackjack_screen']=[1.35,.6,.07]
         assert all(abs(b - a - size) < 1e-6 for a, b, size in zip(lows, highs, expected['button' if self.name.startswith('button') else self.name]))
@@ -163,7 +163,7 @@ class Body:
             assert set(e['faces']) == set(FACES)
             assert all(f['texture'] == '#atlas' and all(0 <= v <= 16 for v in f['uv']) for f in e['faces'].values())
         report['models'][name] = {'elements': len(model['elements']), 'faces': sum(len(e['faces']) for e in model['elements']), 'physical_min': lows, 'physical_max': highs, 'physical_size': [round(b-a, 4) for a,b in zip(lows, highs)], 'asset_kb': round(sum(p.stat().st_size for p in (path, item, ASSETS / f'textures/item/{name}.png')) / 1024, 2), 'body_entities': 1}
-        preview['models'][name] = {'texture': f'../resource-pack/assets/casino/textures/item/{name}.png', 'boxes': [{'min': lo, 'max': hi, 'color': PALETTES[self.name][int(e['faces']['up']['uv'][1] // 4) * 4 + int(e['faces']['up']['uv'][0] // 4)], 'faces': e['faces']} for (lo, hi), e in zip(self.bounds, self.elements)]}
+        preview['models'][name] = {'texture': f'../resource-pack/assets/3dcasino/textures/item/{name}.png', 'boxes': [{'min': lo, 'max': hi, 'color': PALETTES[self.name][int(e['faces']['up']['uv'][1] // 4) * 4 + int(e['faces']['up']['uv'][0] // 4)], 'faces': e['faces']} for (lo, hi), e in zip(self.bounds, self.elements)]}
 
 
 def plinko():

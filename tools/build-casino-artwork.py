@@ -3,7 +3,7 @@ from pathlib import Path
 from PIL import Image,ImageDraw,ImageOps
 import json
 root=Path(__file__).resolve().parents[1]
-pack=root/'resource-pack/assets/casino'
+pack=root/'resource-pack/assets/3dcasino'
 tex=pack/'textures/ui';tex.mkdir(parents=True,exist_ok=True)
 source=Image.open(root/'artwork/casino-icons-source.png').convert('RGBA')
 icons=[]
@@ -13,9 +13,9 @@ for i,name in enumerate(['gem','bomb','dice','multiplier','cards','plinko']):
  cell=source.crop((x0,y0,x1,y1));cell=cell.crop((0,55,cell.width,cell.height-38))
  icon=Image.new('RGBA',(256,256),'#0e202c');fit=ImageOps.contain(cell,(248,248),Image.Resampling.LANCZOS);icon.alpha_composite(fit,((256-fit.width)//2,(256-fit.height)//2))
  icon.save(tex/f'icon_{name}.png');icons.append(icon)
-font={'providers':[{'type':'bitmap','file':f'casino:ui/icon_{name}.png','height':24,'ascent':20,'chars':[chr(0xE200+i)]} for i,name in enumerate(['gem','bomb','dice','multiplier','cards','plinko'])]}
+font={'providers':[{'type':'bitmap','file':f'3dcasino:ui/icon_{name}.png','height':24,'ascent':20,'chars':[chr(0xE200+i)]} for i,name in enumerate(['gem','bomb','dice','multiplier','cards','plinko'])]}
 (pack/'font/icons.json').write_text(json.dumps(font,ensure_ascii=False,indent=2),encoding='utf-8')
-# Preserve old glyph definitions for compatibility; replace only board tile pixels.
+# Update board tile pixels used by the existing font definitions.
 for name,index in [('hidden',None),('gem',0),('mine',1)]:
  tile=Image.new('RGBA',(144,144),'#0e202c');d=ImageDraw.Draw(tile)
  d.rounded_rectangle((6,6,137,137),radius=20,fill='#1b3344')

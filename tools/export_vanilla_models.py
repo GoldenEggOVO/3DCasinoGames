@@ -14,7 +14,7 @@ from PIL import Image
 import vanilla_curves as curves
 
 ROOT = Path(__file__).resolve().parents[1]
-ASSETS = ROOT / 'resource-pack/assets/casino'
+ASSETS = ROOT / 'resource-pack/assets/3dcasino'
 PALETTE = {
     'BLACK_CONCRETE': '#101116', 'GRAY_CONCRETE': '#373a3e',
     'LIGHT_GRAY_CONCRETE': '#7d7d73', 'WHITE_CONCRETE': '#d6d6ce',
@@ -167,11 +167,9 @@ def compact_dragon(original):
 
 def dragon_tiles():
     models={}
-    for state,material in [('hidden','GRAY_CONCRETE'),('safe','LIME_CONCRETE'),('trap','RED_CONCRETE')]:
-        parts=curves.rounded_key(0,0,.28,.28,.05,-.09,.09,material)
-        text=[] if state=='hidden' else [{'text':'+' if state=='safe' else 'X',
-                  'position':[0,0,.093],'width':.14,'height':.13,'color':0xffffff}]
-        models['dragon_tile_'+state]={'boxes':parts,'labels':text}
+    for state,material in [('hidden','GRAY_TERRACOTTA'),('safe','EMERALD_BLOCK'),('trap','TNT')]:
+        models['dragon_tile_'+state]={
+            'boxes':[box((-.14,-.14,-.14),(.14,.14,.14),material)],'labels':[]}
     return models
 
 

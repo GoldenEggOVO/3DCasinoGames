@@ -1,5 +1,5 @@
 from asset_fonts import load_font
-"""Original low-entity cabinets for the free ServerCasino test machines."""
+"""Original low-entity cabinets for the free 3dcasino test machines."""
 from pathlib import Path
 import importlib.util
 import json
@@ -56,10 +56,10 @@ def texture(name, label='', color='#31616b', button=False):
 def emit(name, elements, model_texture=None, clipped=False):
     item='showcase_'+name
     model_texture=model_texture or item
-    model={'ambientocclusion':False,'textures':{'atlas':f'casino:item/{model_texture}','particle':f'casino:item/{model_texture}'},
+    model={'ambientocclusion':False,'textures':{'atlas':f'3dcasino:item/{model_texture}','particle':f'3dcasino:item/{model_texture}'},
            'elements':elements if clipped else old.exposed_faces(elements)}
     (ASSETS/f'models/item/{item}.json').write_text(json.dumps(model,separators=(',',':')),encoding='utf-8')
-    (ASSETS/f'items/{item}.json').write_text(json.dumps({'model':{'type':'minecraft:model','model':f'casino:item/{item}'}}),encoding='utf-8')
+    (ASSETS/f'items/{item}.json').write_text(json.dumps({'model':{'type':'minecraft:model','model':f'3dcasino:item/{item}'}}),encoding='utf-8')
     bounds=[[min(e['from'][i] for e in elements)/4-2 for i in range(3)],
             [max(e['to'][i] for e in elements)/4-2 for i in range(3)]]
     REPORT[item]={'elements':len(model['elements']),'bounds':bounds,'entities':1}

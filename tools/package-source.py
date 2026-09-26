@@ -24,11 +24,11 @@ def source_files():
 
 
 def package(destination=None):
-    destination = Path(destination) if destination else ROOT / 'target/server-casino-source.zip'
+    destination = Path(destination) if destination else ROOT / 'target/3dcasino-source.zip'
     destination.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(destination, 'w', compression=zipfile.ZIP_STORED) as archive:
         for path in source_files():
-            info = zipfile.ZipInfo('server-casino/' + path.relative_to(ROOT).as_posix(), (2026, 1, 1, 0, 0, 0))
+            info = zipfile.ZipInfo('3dcasino/' + path.relative_to(ROOT).as_posix(), (2026, 1, 1, 0, 0, 0))
             info.external_attr = 0o100644 << 16
             archive.writestr(info, path.read_bytes())
     return destination

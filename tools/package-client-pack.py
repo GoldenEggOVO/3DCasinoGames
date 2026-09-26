@@ -8,7 +8,7 @@ PACK_META = (ROOT / 'resource-pack/pack.mcmeta').read_bytes()
 
 
 def package(destination=None):
-    destination = Path(destination) if destination else ROOT / 'target/casino-client-pack-26.2.zip'
+    destination = Path(destination) if destination else ROOT / 'target/3dcasino-client-pack-26.2.zip'
     destination.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(destination, 'w', compression=zipfile.ZIP_STORED) as archive:
         files = [('pack.mcmeta', PACK_META)]

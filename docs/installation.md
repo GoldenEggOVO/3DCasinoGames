@@ -1,54 +1,57 @@
-# 安装与升级
+# Installation and upgrade
 
-## 必需文件
+## Requirements
 
-- Paper / Purpur 26.2，Java 25。
-- `plugins/server-casino-0.5.6-preview.jar`。
+- Paper / Purpur 26.2, Java 25.
+- `plugins/3dcasino-0.6.0-beta.1.jar`.
 
-新安装使用内置原版 BlockDisplay / TextDisplay / Interaction 机器，模型随 JAR 提供。**无需 CraftEngine、资源包、客户端模组或其他自研插件。** 原生 Dialog 需要支持相应协议的客户端；跨版本代理或 Bedrock 桥接客户端的显示由管理员实测。
+The JAR includes vanilla BlockDisplay/TextDisplay/Interaction machines. No resource pack, CraftEngine, client mod or other custom plugin is required. Native Dialog requires a compatible Minecraft client. Cross-version proxies and Bedrock bridges need their own client acceptance tests.
 
-## 新安装
+## Fresh install
 
-1. 停服并备份插件数据与世界；只保留一个 ServerCasino JAR。
-2. 放入 JAR 并启动。默认配置如下：
+Stop the server, back up existing data/worlds, install one JAR and start. The generated `plugins/3dcasino/config.yml` selects:
 
-   ```yaml
-   menu-enabled: true
-   machine-appearance: vanilla
-   ```
+```yaml
+menu-enabled: true
+machine-appearance: vanilla
+language: en_US
+```
 
-3. `/casino` 打开机器管理菜单，`/casino create <game>` 创建机器。创建权限 `casino.machine` 默认仅 OP 拥有；管理者可用自己的权限插件授予。
-4. 右键按钮操作；Shift＋右键打开设置。没有任何 Shift＋F 依赖。
+Use `/3dcasino` or `/3dcasino create <game>`. Operators have `3dcasino.machine`; grant this with your permissions plugin for other builders. Players also need `3dcasino.use` (default true). Right-click buttons to play; Shift + right-click opens settings.
 
-支持的游戏 ID：`blackjack`、`mines`、`crash`、`plinko`、`slots`、`duck_race`、`wheel_of_fortune`、`money_wheel`、`penguin_cross`、`keno`、`hilo`、`dragon_tower`。
+Game IDs: `blackjack`, `mines`, `crash`, `plinko`, `slots`, `duck_race`, `wheel_of_fortune`, `money_wheel`, `penguin_cross`, `keno`, `hilo`, `dragon_tower`.
 
-## 从旧版本升级
+## Breaking change from 0.5.x
 
-停服，备份原 JAR、`plugins/ServerCasino` 和对应世界后替换 JAR。**已有配置中显式的 `machine-appearance: resource-pack` 会保留；要使用原版模型，改为 `vanilla` 后重启。** 未设置该键时使用新的 vanilla 默认值。
+The runtime identity is now `3dcasino`. The old `ServerCasino` data folder is neither imported nor overwritten. Old `/casino`, `/casino-demo`, permissions and Java package names are removed. Existing API consumers must recompile against `dev.threedcasino`.
 
-无需删除或手工转换 `placements.json`。现有默认机器在恢复时采用新版原版几何；默认龙塔采用窄立式布局；自定义定义保留其布局快照。当前一局或动画不跨重启恢复。
+For a fresh installation, remove the old JAR while stopped and keep its data backup. Create new machines in the new namespace. There is no migration command or compatibility adapter.
 
-本插件已去掉 CraftEngine 依赖及专用内容包。若旧服务器仍通过 CraftEngine 提供其他内容，应自行保留它们；本次插件升级不会修改其他插件或已分发资源包。
+If you need existing placements, work on a backup in an isolated server first. After the new plugin has generated its data folder, stop it. Copy the old `placements.json` and `machines/` into `plugins/3dcasino/` only after updating explicit model references from `casino:` to `3dcasino:`. Do not overwrite existing new placements. Preserve ownership UUIDs, world UUIDs and stakes. Built-in definitions without explicit model overrides use the new namespace directly.
 
-## 菜单开关
+Financial records need separate care: preserve `rounds/` unchanged; the former `casino-rounds/` directory is now `game-rounds/`. Copy records only while both versions are stopped, preserve their bytes, and do not merge competing records or discard pending transfers. Keep the original backup. Confirm restored machines and settlement states before installing on a live server.
 
-`menu-enabled: false` 并重启会关闭 Dialog，`/casino` 与机器设置入口改为命令提示。创建、下注设置、删除、模型重载、实体游戏、保存恢复及结算服务继续运行。已有资金记录的对局菜单随开关关闭，控制台核对功能仍可使用。
+Config files are not migrated. Use the freshly generated config and explicitly reapply your chosen settings. This release does not change other plugins or their resource packs.
 
-## 可选集成
+## Optional integrations
 
-| 集成 | 用途 | 缺少时 |
+| Integration | Purpose | When absent |
 | --- | --- | --- |
-| Vault + 经济插件 | 经济接口与旧金币记录 | 免费机器照常运行；不伪造经济成功 |
-| AuthMe | 已安装时检查玩家登录状态 | 不阻止使用 |
-| `EconomyProvider` | 自定义经济服务 | 使用可用的 Vault 适配或返回不可用 |
-| `MachineModelResolver` | 高级资源包模式的物品解析 | 使用原版 `item_model` |
+| Vault + economy provider | Economy API / settlement records | Free machines work; unavailable transactions do not report success |
+| AuthMe | Enforce login when installed | No login restriction from this integration |
+| `EconomyProvider` | Custom economy service | Vault adapter or unavailable result |
+| `MachineModelResolver` | Custom item resolution in resource-pack mode | Native `item_model` resolution |
 
-模型插件不是安装条件。若主动选用 `machine-appearance: resource-pack`，必须给客户端提供相应模型的普通 Minecraft 26.2 资源包。源码的 `python tools/package-client-pack.py` 可生成原有 Casino 客户端资源包。这是高级兼容选项，默认原版模式不使用它。
+Advanced `machine-appearance: resource-pack` needs a matching Minecraft 26.2 client pack. `python tools/package-client-pack.py` packages the retained models under `3dcasino`. This mode is optional; vanilla mode does not use it. Text baked into PNG textures requires editing those images; editable language files control runtime text.
 
-## 保存与验收
+## Files and settings
 
-备份 `placements.json`、`rounds/`、`casino-rounds/` 及对应世界。机器布局持久化；单局进度不持久化。模型定义重载只影响新创建的机器，已保存机器保留定义快照。
+- `config.yml`: menu switch, appearance and language selection.
+- `languages/en_US.yml`, `languages/zh_CN.yml`: editable runtime messages; see [language configuration](languages.md).
+- `machines/*.yml`: optional custom machine definitions; built-in machines need no files.
+- `placements.json`: saved machines, owners, transforms, definition snapshots and practice stakes.
+- `rounds/`, `game-rounds/`: persisted settlement records when present.
 
-实体机器免费练习，不扣款、不发放余额。旧资金记录不可删除以绕过核对；命令见 README。
+Set `menu-enabled: false` and restart to disable Dialog. Commands, buttons, persistence and console reconciliation remain available. Definition reload affects new machines; saved machines retain their definition snapshots. Active rounds and animations are not restored after restart.
 
-先在本地或隔离服验证菜单、创建、交互、删除、重启恢复，再由管理员安装至目标服。原版曲面由多个旋转方块实体组成，大量机器的客户端帧率、材质、字体与操作手感需要实际客户端验收。
+Physical machines never deduct or award economy balances. Back up all plugin data and the matching worlds. Validate creation, interaction, deletion and restart recovery in an isolated server first. Minecraft visuals, fonts, frame rate and interaction feel require client acceptance.

@@ -1,6 +1,7 @@
 """Render the actual server Display snapshots; compare identical poses with resource models.
 
 Usage: blender -b -t 4 --python render_runtime.py -- <snapshots> <output>
+Optional: --vanilla-assets <assets-directory> supplies dragon tile block textures.
 These are entity-geometry previews, not Minecraft screenshots. Vanilla materials
 use measured palette colours; client textures/font rasterization are not simulated.
 """
@@ -19,11 +20,17 @@ ASSETS = ROOT / 'resource-pack/assets'
 source = Path(sys.argv[sys.argv.index('--')+1])
 output = Path(sys.argv[sys.argv.index('--')+2]).resolve(); output.mkdir(parents=True, exist_ok=True)
 selected = sys.argv[sys.argv.index('--')+3:]
+vanilla_assets = None
+if '--vanilla-assets' in selected:
+ index=selected.index('--vanilla-assets'); vanilla_assets=Path(selected[index+1]).resolve(); del selected[index:index+2]
 before = None
 if '--before' in selected:
  index=selected.index('--before'); before=Path(selected[index+1]); del selected[index:index+2]
 vanilla_only = '--vanilla-only' in selected
 if vanilla_only: selected.remove('--vanilla-only')
+rear = '--rear' in selected
+if rear: selected.remove('--rear')
+view_direction = Vector((7,10,6) if rear else (7,-10,7))
 BASIS = Matrix(((1,0,0,0),(0,0,-1,0),(0,1,0,0),(0,0,0,1)))
 SIDES = {
  'up': ((0,1,0),(1,1,0),(1,1,1),(0,1,1)),
@@ -80,15 +87,21 @@ def mesh(name, vertices, faces, materials, indices=None, uvs=None):
 
 
 def cube(matrix,name):
- vertices=[];faces=[]
- for corners in SIDES.values():
+ vertices=[];faces=[];uvs=[];indices=[];mats=[]
+ block_textures={'GRAY_TERRACOTTA':('gray_terracotta',)*3,
+                 'EMERALD_BLOCK':('emerald_block',)*3,'TNT':('tnt_top','tnt_bottom','tnt_side')}
+ if vanilla_assets and name in block_textures:
+  mats=[textured(vanilla_assets/'minecraft/textures/block'/f'{texture}.png') for texture in block_textures[name]]
+ for side,corners in SIDES.items():
   start=len(vertices);vertices += [tuple(BASIS @ matrix @ Vector((*p,1)))[:3] for p in corners]
   faces.append(tuple(range(start,start+4)))
- return mesh(name,vertices,faces,[material(name)])
+  indices.append(0 if side=='up' else 1 if side=='down' else 2)
+  uvs.append([(0,1),(1,1),(1,0),(0,0)] if side=='north' else [(0,0),(1,0),(1,1),(0,1)])
+ return mesh(name,vertices,faces,mats or [material(name)],indices if mats else None,uvs if mats else None)
 
 
 def original_model(entry):
- name=entry['model'].replace('cabinet_mines_refined','cabinet_mines');data=json.loads((ASSETS/'casino/models/item'/f'{name}.json').read_text())
+ name=entry['model'].replace('cabinet_mines_refined','cabinet_mines');data=json.loads((ASSETS/'3dcasino/models/item'/f'{name}.json').read_text())
  matrix=pose(entry) @ Matrix.Rotation(math.pi,4,'Y')
  textures={};mats=[]
  for key,value in data['textures'].items():
@@ -159,7 +172,7 @@ for path in sorted(source.glob('*.json')):
   vertices=[obj.matrix_world @ Vector(v) for obj in bpy.context.scene.objects if obj.type=='MESH' for v in obj.bound_box]
   lo=Vector(tuple(min(v[i] for v in vertices) for i in range(3)));hi=Vector(tuple(max(v[i] for v in vertices) for i in range(3)))
   focus=(lo+hi)/2
-  view_rotation=Vector((-7,10,-7)).to_track_quat('-Z','Y').inverted()
+  view_rotation=(-view_direction).to_track_quat('-Z','Y').inverted()
   projected=[view_rotation @ (v-focus) for v in vertices]
   framing=max(max(abs(v.x),abs(v.y)) for v in projected)*2.16
  for name,data,mode in variants:
@@ -170,9 +183,10 @@ for path in sorted(source.glob('*.json')):
    vertices=[obj.matrix_world @ Vector(v) for obj in bpy.context.scene.objects if obj.type=='MESH' for v in obj.bound_box]
    lo=Vector(tuple(min(v[i] for v in vertices) for i in range(3)));hi=Vector(tuple(max(v[i] for v in vertices) for i in range(3)))
    focus=(lo+hi)/2
-   view_rotation=Vector((-7,10,-7)).to_track_quat('-Z','Y').inverted()
+   view_rotation=(-view_direction).to_track_quat('-Z','Y').inverted()
    projected=[view_rotation @ (v-focus) for v in vertices]
    framing=max(max(abs(v.x),abs(v.y)) for v in projected)*2.16
-  camera(focus+Vector((7,-10,7)),focus,framing)
-  scene.render.filepath=str(output/f'{path.stem}-{name}.png');bpy.ops.render.render(write_still=True)
+  camera(focus+view_direction,focus,framing)
+  suffix='-rear' if rear else ''
+  scene.render.filepath=str(output/f'{path.stem}-{name}{suffix}.png');bpy.ops.render.render(write_still=True)
   print(path.stem,mode,flush=True)

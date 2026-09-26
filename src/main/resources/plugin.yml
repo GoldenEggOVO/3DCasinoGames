@@ -1,17 +1,14 @@
-name: ServerCasino
-version: 0.5.6-preview
-main: dev.server.casino.CasinoPlugin
+name: 3dcasino
+version: 0.6.0-beta.1
+main: dev.threedcasino.CasinoPlugin
 api-version: '26.2'
 softdepend: [Vault, AuthMe]
 commands:
-  casino-demo:
-    description: 创建或清除实体游乐机
-    usage: /casino-demo create <game> [skin-id] 或 remove [game] 或 reload-models
-  casino:
-    description: 金币游乐场
-    usage: /casino [create <game> [skin-id] | bet <game> <1-100> | remove [game] | reload-models]
+  3dcasino:
+    description: Manage free-play 3D casino machines
+    usage: /3dcasino [create <game> [skin-id] | bet <game> <1-100> | remove [game] | reload-models]
 permissions:
-  casino.machine:
+  3dcasino.machine:
     default: op
-  casino.use:
+  3dcasino.use:
     default: true

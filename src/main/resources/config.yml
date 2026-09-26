@@ -1,3 +1,6 @@
+# Language file in languages/ (without .yml). Restart after editing.
+language: en_US
+
 # Optional native Paper dialogs. Commands and physical buttons work when disabled.
 menu-enabled: true
 

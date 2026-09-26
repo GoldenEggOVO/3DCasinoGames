@@ -1,36 +1,57 @@
-# 验证与复现
+# Verification — 0.6.0-beta.1
 
-## 0.5.6-preview · 2026-09-26
+## Results
 
-| 检查 | 结果 |
+| Check | Result |
 | --- | --- |
-| JDK 25 / Maven package | 121 项测试通过，0 失败、0 错误、0 跳过 |
-| Python 资源、几何、打包回归 | 37 项通过 |
-| 原版模型重导出 | 110 个模型；文件摘要与 0.5.5 一致；不需要本地字体 |
-| 原资源素材 | 871 个文件通过原 SHA-256 基线校验 |
-| 干净 Purpur 26.2 | 首启与两次重启均正常退出，三阶段通过 |
-| 实体射线命中 | 1542 个按钮 / 格子取样通过，覆盖 0 / 37 / 90 / 180 度朝向 |
-| 实际 Display 表面审计 | 15 个机器 / 状态快照未发现同向共面重叠 |
+| JDK 25 / Maven package | 135 tests passed; no failures, errors or skipped tests |
+| Python assets, geometry and packaging | 39 tests passed |
+| Resource baseline | 871 files verified; namespace-only normalization for JSON, identical PNG bytes |
+| Vanilla geometry exporter | 110 models; checked-in output reproduced |
+| Clean Purpur 26.2 | Startup and two restarts passed; all processes exited normally |
+| Ray targeting | 1857 samples passed across 0 / 37 / 90 / 180 degree placements |
+| Display surface audit | 15 snapshots, zero same-facing coplanar overlaps |
+| Namespace and Tab | Only new command, permission-filtered suggestions; invalid console UUID gives usage |
+| Language | English default, generated files, edited machine label applied after restart, English fallback |
 
-测试 JAR SHA-256：`c346032a8fc6341cae452699ae939b27b7f4b3b4bc911b1d7a818ffbdbbee928`。
+Release JAR SHA-256: `6248ab0d6e6b45d419af8f725510e5e7adf97dfae1bd7e43d3055aff3213d09d`.
 
-### 隔离服验证内容
+The isolated server contains only the plugin and disposable test probe. CraftEngine, Vault, AuthMe, ServerGames, ServerBoards, ServerMenu and KaMenu are absent. It binds only to loopback and uses a copied test template, not a production server.
 
-测试服只安装 ServerCasino 和专用探针，无 CraftEngine、Vault、AuthMe、ServerGames、ServerBoards、ServerMenu、KaMenu 或客户端资源包；只绑定回环地址。
+1. Fresh startup without pre-written config: vanilla default, both language files generated, native root and machine settings Dialog calls succeed. Create, operate and remove all 12 machines, check card dealing/hole-card reveal, display matrices, button positions and cleanup.
+2. Save six machines: Slots, Mines, Dragon Tower, Hilo, Duck Race and Penguin Cross. Restart with menus disabled and a custom language file overriding one PLAY label. All six restore and play; the edited label is shown and missing keys fall back to English. Remove them.
+3. Restart again; deleted machines remain absent.
 
-1. 不预写 Casino 配置，确认新安装自动使用 vanilla。创建、操作、删除全部 12 种机器，检查显示实体与清理；检查原生根菜单和机器设置各调用一次 Dialog。
-2. 保存 Slots、Mines、Dragon Tower 后重启。配置只写 `menu-enabled: false`，不写外观键，验证缺省值仍为 vanilla。三台机器恢复后按钮可操作，菜单不会调用 Dialog，随后删除机器。
-3. 再次重启，确认被删除的机器没有重新出现。
+Java regressions retain the frozen game-rule comparisons and economy/persistence tests. New checks cover language fallback, malformed YAML, placeholders, key coverage, validation messages, translation-independent outcomes, command suggestions and metadata. Visual changes also have geometry regressions.
 
-探针还检查 Blackjack 发牌 / 盖牌、Keno 选中状态、按钮按压、变换矩阵及多朝向命中。规则差分、经济待核对与保存语义由 Java 回归覆盖。
+## Display counts
 
-### 自动检查的边界
+Idle/default snapshots; totals include hidden item carriers and text displays, exclude Interaction entities. A Blackjack hand adds card entities while playing.
 
-这次未重复高级 `resource-pack` 模式的完整服务器流程；其通用接口保留并有相关单元及资源引用测试。Vault / AuthMe 的真实第三方集成、跨版本客户端与多人高密度性能未在本轮验收。
+| Machine | Unique model IDs | BlockDisplays | All Displays |
+| --- | ---: | ---: | ---: |
+| Blackjack | 6 | 328 | 340 |
+| Mines | 5 | 232 | 267 |
+| Crash | 4 | 154 | 162 |
+| Plinko | 2 | 277 | 294 |
+| Slots | 2 | 70 | 84 |
+| Duck Race | 10 | 323 | 338 |
+| Wheel of Fortune | 4 | 744 | 770 |
+| Money Wheel | 8 | 932 | 966 |
+| Penguin Cross | 5 | 171 | 187 |
+| Keno | 3 | 660 | 754 |
+| Hilo | 6 | 257 | 281 |
+| Dragon Tower | 4 | 274 | 304 |
 
-本地服务端探针使用代理玩家，能检查 Dialog 构造与调用、交互事件和实体数据，不能证明真实客户端渲染或操作手感。模型预览为 Blender 几何渲染；Minecraft 实际画面与体验由维护者进服验收。本次未修改正式服。
+Dragon Tower now uses 1056 fewer BlockDisplays than the earlier rounded hidden tiles. This count is not a measured client FPS improvement.
 
-## 复现命令
+## Limits
+
+The probe uses a proxy player and real server entities. It verifies server-side Dialog construction, events, placement recovery, geometry and ray selection. It does not verify actual client rendering, latency, fonts, FPS or interaction feel. Blender previews use representative colors for most blocks and local vanilla textures for Dragon Tower tile blocks; they are not Minecraft screenshots.
+
+Actual third-party Vault/AuthMe integration, cross-version clients, high-density multiplayer load and the complete advanced resource-pack server workflow were not retested. Their interfaces and packaged resource references have automated coverage. Minecraft visual and interaction acceptance remains with the maintainer. No production server was modified.
+
+## Reproduce
 
 ```sh
 mvn -B -ntp package
@@ -40,13 +61,11 @@ python tools/export_vanilla_models.py
 git diff --exit-code -- src/main/resources/vanilla-models.json
 ```
 
-准备自己已接受 EULA 的 Purpur 26.2 模板目录：包含 `purpur-2622.jar`、`eula.txt`、`libraries/`、`cache/`、`versions/26.2/purpur-26.2.jar`。探针复制基础服务端文件，在本项目 `reports/vanilla-runtime/run-*` 创建独立测试服，不复制模板插件和世界，也不修改模板。设置 `JAVA_HOME` 为 JDK 25，运行：
+Prepare a Purpur 26.2 template whose EULA you have accepted. It needs `purpur-2622.jar`, `eula.txt`, `libraries/`, `cache/` and `versions/26.2/purpur-26.2.jar`. Set `JAVA_HOME` to JDK 25, then:
 
 ```sh
 python tools/vanilla-probe/run.py --server-template /path/to/prepared-purpur --port 25597
 python tools/vanilla-preview/audit_surfaces.py reports/vanilla-runtime/run-TIMESTAMP/plugins/CasinoVanillaProbe/preview-snapshots reports/vanilla-runtime/run-TIMESTAMP/surface-audit.json
 ```
 
-将 `run-TIMESTAMP` 替换为探针输出的目录。查看 `result.json`、三个 `phase-*.log` 与 `surface-audit.json`；任一阶段失败都应先定位，不可只以服务端进程启动作为通过。
-
-GitHub Actions 自动运行 Maven、Python 回归及原版模型重导出检查。它不代替本地服务端探针或真实客户端验收。
+Use the printed run directory. Inspect all three `phase-*.log` files, `result.json` and `surface-audit.json`. A running Java process alone is not a passing test. GitHub Actions additionally runs Maven, Python checks and exporter consistency for the pushed commit.

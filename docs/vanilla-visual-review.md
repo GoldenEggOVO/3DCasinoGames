@@ -1,22 +1,22 @@
-# 原版机器外观
+# Vanilla machine previews
 
-![主要模型预览](images/vanilla-machines.png)
+![0.6.0-beta.1 changes](images/vanilla-machines.png)
 
-这张图来自 0.5.5 的干净服 Display 实体快照，用 Blender 按方块代表色渲染。0.5.6 沿用相同模型几何，调整默认配置、移除 CraftEngine 集成并整理交付。预览不是 Minecraft 客户端截图，真实材质、字体和操作体验以进服验收为准。
+These are Blender renders of actual isolated-server Display snapshots. Most blocks use representative colors; Dragon Tower tile blocks use local Minecraft 26.2 textures. This is not a Minecraft screenshot. The final JAR has the same model geometry as the preview capture.
 
-## 当前模型
+## This release
 
-- 原机身轮廓转成原版方块，圆边使用旋转片段；曲面仍有有限分段。
-- 通用按钮统一为黑灰底框与纯色圆角键帽，修复伸缩后的圆角变形。
-- Blackjack 为纯色桌面，52 张牌与牌背均由原版 Display 构成；放大花色，右下角倒转。
-- Mines 为橙色前倾控制台，上排减号 / 数量 / 加号，下排 PLAY / CASH OUT。
-- Keno 选中格为橙色混凝土，点击区域贴合格子。
-- Slots 移除按钮底托；Dragon Tower 去掉大桌面，采用红色窄立式机身和深色格子。
-- Hilo 指针向右、返回，再停到本局实际结果；概率和资金行为保持不变。
-- 移除每台机器上方的 `FREE PLAY - LOCAL RULES` 及该位置的动态说明。
+- Dragon Tower: hidden tiles are single gray terracotta blocks; revealed tiles are emerald/TNT blocks. The red upright body and buttons remain. Gray terracotta naturally has a warm brown-gray appearance in Minecraft.
+- Hilo: two rear posts and a crossbar connect the panel to the table. The preview shows the rear so the support is visible.
+- Penguin Cross: controls move 0.20 model units outward from the table.
+- Duck Race: selection buttons move 0.22 units outward; PLAY is centered in a second row below buttons 2 and 3.
+- Blackjack: the inclined panel behind the controls is removed; controls remain in place.
+- Runtime text defaults to English and can be edited in YAML. Model label translations are fitted to their label area.
 
-## 检查边界
+![Revealed Dragon Tower](images/dragon-revealed.png)
 
-自动检查包含模型矩阵、表面共面冲突、轮盘 / 龙塔 / Keno / Mines 多朝向射线命中、按钮按压和重启清理。它不能证明客户端帧率或实际画面没有所有视觉问题。旋转方块数量较多，建议按目标服务器预计的机器密度验收。
+The delivery ZIP includes full-resolution before/after comparisons. Reviewed the rear support connection, table/button clearance, second-row position and removed panel against those comparisons. Earlier accepted styling—rotated curved segments, solid-color controls, larger card patterns, inverted lower card corner, Mines layout and Hilo pointer animation—is retained.
 
-更详细的对照图、卡牌和局部预览随 Release 的交付 ZIP 提供。
+## Verification boundary
+
+Server checks cover matrix transforms, same-facing coplanar surfaces, multiple machine orientations, button interactions and restart cleanup. They cannot establish real client frame rate or rule out every visual artifact. See [verification](verification.md) for results and current entity counts. Minecraft appearance and interaction feel still need client acceptance.

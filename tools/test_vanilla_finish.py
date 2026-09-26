@@ -40,6 +40,14 @@ class VanillaFinishTest(unittest.TestCase):
         self.assertEqual({'ORANGE_CONCRETE'},
                          {p['material'] for p in self.models['showcase_tile_selected']['boxes']})
 
+    def test_dragon_tiles_are_textured_vanilla_cubes(self):
+        for state,material in [('hidden','GRAY_TERRACOTTA'),('safe','EMERALD_BLOCK'),('trap','TNT')]:
+            with self.subTest(state=state):
+                model=self.models['dragon_tile_'+state]
+                self.assertEqual([],model['labels'])
+                self.assertEqual([{'from':[-.14,-.14,-.14],
+                                   'to':[.14,.14,.14],'material':material}],model['boxes'])
+
     def test_blackjack_has_plain_felt_and_no_wood_or_metal_textures(self):
         materials={p['material'] for p in self.models['cabinet_blackjack']['boxes']}
         self.assertIn('GREEN_CONCRETE',materials)
@@ -48,6 +56,27 @@ class VanillaFinishTest(unittest.TestCase):
     def test_slots_front_ledge_is_absent(self):
         for p in self.models['showcase_slots']['boxes']:
             self.assertFalse(all(a<v<b for a,v,b in zip(p['from'],(0,.97,.63),p['to'])))
+
+    def test_hilo_rear_support_connects_table_to_panel_without_poking_through(self):
+        supports=[p for p in self.models['showcase_hilo']['boxes'] if p['material']=='GRAY_CONCRETE']
+        self.assertTrue(supports,'Missing rear panel support')
+        self.assertLessEqual(len(supports),3)
+        matrices=[np.array(p['matrix']).reshape(4,4) for p in supports]
+        def contains(point):
+            return any(np.all((q:=np.linalg.solve(m,np.array([*point,1])))[:3]>=-1e-6)
+                       and np.all(q[:3]<=1+1e-6) for m in matrices)
+        for x in (-.98,.98):
+            for y in (.515,1.1,1.36):
+                self.assertTrue(contains((x,y,-.34)),(x,y))
+        angle=np.radians(35);c,s=np.cos(angle),np.sin(angle)
+        for x in (-.98,0,.98):
+            self.assertTrue(contains((x,1.1+.42*c-.075*s,-.42*s-.075*c)))
+        for m in matrices:
+            for x in (0,1):
+                for y in (0,1):
+                    for z in (0,1):
+                        p=m@np.array([x,y,z,1])
+                        self.assertLessEqual((p[1]-1.1)*s+p[2]*c,-.035+1e-6)
 
     def test_dragon_nameplate_text_is_in_front_of_the_top_cap(self):
         model=self.models['showcase_dragon_tower_compact']
