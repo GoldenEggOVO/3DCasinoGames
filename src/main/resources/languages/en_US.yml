@@ -101,7 +101,7 @@
 "menu.blackjack.double-body": "Add {amount} {currency}, receive one more card, then stand automatically.\nTotal stake {total}"
 "menu.blackjack.hit": "Hit"
 "menu.blackjack.stand": "Stand"
-"menu.close": "Close"
+"menu.close": "&8[ &cClose Menu &8]"
 "menu.crash.cash-out": "Cash out at the current server multiplier"
 "menu.crash.finished": "Crash ended · Reward {amount} · Click refresh to view"
 "menu.crash.running": "Crash {multiplier}× · Auto cash out {target}×"
