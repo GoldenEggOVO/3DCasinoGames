@@ -3,7 +3,7 @@
 ## Requirements
 
 - Paper / Purpur 26.2, Java 25.
-- `plugins/3dcasino-0.6.0-beta.1.jar`.
+- One `3dcasino-*.jar`. Changes after the published `0.6.0-beta.1` asset require a build from current source until a newer release is published.
 
 The JAR includes vanilla BlockDisplay/TextDisplay/Interaction machines. No resource pack, CraftEngine, client mod or other custom plugin is required. Native Dialog requires a compatible Minecraft client. Cross-version proxies and Bedrock bridges need their own client acceptance tests.
 
@@ -13,7 +13,6 @@ Stop the server, back up existing data/worlds, install one JAR and start. The ge
 
 ```yaml
 menu-enabled: true
-machine-appearance: vanilla
 language: en_US
 ```
 
@@ -40,13 +39,13 @@ Config files are not migrated. Use the freshly generated config and explicitly r
 | Vault + economy provider | Economy API / settlement records | Free machines work; unavailable transactions do not report success |
 | AuthMe | Enforce login when installed | No login restriction from this integration |
 | `EconomyProvider` | Custom economy service | Vault adapter or unavailable result |
-| `MachineModelResolver` | Custom item resolution in resource-pack mode | Native `item_model` resolution |
+| `MachineModelResolver` | Explicitly configured external custom item references | Vanilla material fallback |
 
-Advanced `machine-appearance: resource-pack` needs a matching Minecraft 26.2 client pack. `python tools/package-client-pack.py` packages the retained models under `3dcasino`. This mode is optional; vanilla mode does not use it. Text baked into PNG textures requires editing those images; editable language files control runtime text.
+Built-in models always use geometry bundled in the JAR. Existing `machine-appearance` entries in old configs are ignored; remove them when updating the file. An explicitly configured external custom item may need its own client assets, managed by its provider.
 
 ## Files and settings
 
-- `config.yml`: menu switch, appearance and language selection.
+- `config.yml`: menu switch and language selection.
 - `languages/en_US.yml`, `languages/zh_CN.yml`: editable runtime messages; see [language configuration](languages.md).
 - `machines/*.yml`: optional custom machine definitions; built-in machines need no files.
 - `placements.json`: saved machines, owners, transforms, definition snapshots and practice stakes.

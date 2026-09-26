@@ -1,4 +1,4 @@
-"""Render the actual server Display snapshots; compare identical poses with resource models.
+"""Render the actual server Display snapshots.
 
 Usage: blender -b -t 4 --python render_runtime.py -- <snapshots> <output>
 Optional: --vanilla-assets <assets-directory> supplies dragon tile block textures.
@@ -14,9 +14,7 @@ from mathutils import Matrix, Quaternion, Vector
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'tools'))
-# Do not import the exporter: Blender does not need Pillow.
 PALETTE = json.loads((ROOT / 'tools/vanilla-preview/palette.json').read_text())
-ASSETS = ROOT / 'resource-pack/assets'
 source = Path(sys.argv[sys.argv.index('--')+1])
 output = Path(sys.argv[sys.argv.index('--')+2]).resolve(); output.mkdir(parents=True, exist_ok=True)
 selected = sys.argv[sys.argv.index('--')+3:]
@@ -100,28 +98,7 @@ def cube(matrix,name):
  return mesh(name,vertices,faces,mats or [material(name)],indices if mats else None,uvs if mats else None)
 
 
-def original_model(entry):
- name=entry['model'].replace('cabinet_mines_refined','cabinet_mines');data=json.loads((ASSETS/'3dcasino/models/item'/f'{name}.json').read_text())
- matrix=pose(entry) @ Matrix.Rotation(math.pi,4,'Y')
- textures={};mats=[]
- for key,value in data['textures'].items():
-  if ':' not in value:continue
-  namespace,path=value.split(':',1);textures['#'+key]=len(mats);mats.append(textured(ASSETS/namespace/'textures'/(path+'.png')))
- vertices=[];faces=[];uvs=[];indices=[]
- for e in data['elements']:
-  for side,face in e['faces'].items():
-   start=len(vertices)
-   for corner in SIDES[side]:
-    p=Vector(tuple((e['to' if corner[i] else 'from'][i]-8)/16 for i in range(3)))
-    vertices.append(tuple(BASIS @ matrix @ p.to_4d())[:3])
-   faces.append(tuple(range(start,start+4)));indices.append(textures[face['texture']])
-   u0,v0,u1,v1=face.get('uv',[0,0,16,16]);uvs.append([(u0/16,1-v1/16),(u1/16,1-v1/16),(u1/16,1-v0/16),(u0/16,1-v0/16)])
- return mesh(name,vertices,faces,mats,indices,uvs)
-
-
 def entity(entry,mode):
- if mode=='resource' and entry.get('vanillaChild'):return
- if mode=='resource' and entry.get('model'):return original_model(entry)
  if not entry.get('visible',True):return
  matrix=pose(entry);kind=entry['kind'];name=entry.get('material','GRAY_CONCRETE')
  if kind.endswith('TextDisplay'):
@@ -162,8 +139,6 @@ for path in sorted(source.glob('*.json')):
  variants=[('vanilla',entries,'vanilla')]
  if before and (before/path.name).exists():
   variants.insert(0,('before',json.loads((before/path.name).read_text(encoding='utf-8')),'vanilla'))
- elif not vanilla_only and not before:
-  variants.append(('resource',entries,'resource'))
  if before:
   for obj in list(bpy.data.objects):
    if obj.type in ('MESH','FONT'):bpy.data.objects.remove(obj,do_unlink=True)

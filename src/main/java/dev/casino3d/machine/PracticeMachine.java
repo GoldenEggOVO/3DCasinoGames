@@ -81,7 +81,7 @@ public abstract class PracticeMachine<R extends PracticeRound> {
                                     ItemDisplay.class,
                                     entity -> {
                                         common(entity);
-                                        initializeItem(entity, ModelItems.resolve(part.model(), vanillaAppearance()));
+                                        initializeItem(entity, ModelItems.resolve(part.model()));
                                         entity.setTransformation(
                                                 new Transformation(
                                                         new Vector3f(),
@@ -173,7 +173,7 @@ public abstract class PracticeMachine<R extends PracticeRound> {
     }
 
     private void attachVanilla(ItemDisplay display) {
-        if (vanillaAppearance() && VanillaGeometry.name(display.getItemStack()) != null)
+        if (VanillaGeometry.name(display.getItemStack()) != null)
             vanillaDisplays.add(new VanillaDisplay(display, this::common, parts));
     }
 
@@ -209,17 +209,13 @@ public abstract class PracticeMachine<R extends PracticeRound> {
                     case "mine_bomb" -> "material:TNT";
                     default -> "3dcasino:" + name;
                 };
-        return ModelItems.resolve(definition.models().getOrDefault(name, fallback), vanillaAppearance());
-    }
-
-    protected final boolean vanillaAppearance() {
-        return plugin.vanillaAppearance();
+        return ModelItems.resolve(definition.models().getOrDefault(name, fallback));
     }
 
     private void initializeItem(ItemDisplay display, ItemStack stack) {
         display.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
         display.setItemStack(stack);
-        display.setVisibleByDefault(!vanillaAppearance() || VanillaGeometry.name(stack) == null);
+        display.setVisibleByDefault(VanillaGeometry.name(stack) == null);
     }
 
     protected final ItemDisplay item(

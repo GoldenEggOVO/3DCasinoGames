@@ -16,6 +16,8 @@
 
 Release JAR SHA-256: `6f869119e091e117ea7f5b5c2cd3eaf4d44d8388cde091655ac28b5e2d1f1899`.
 
+The published beta asset predates the current source cleanup. Its resource-pack checks below are historical release evidence, not current installation requirements.
+
 The isolated server contains only the plugin and disposable test probe. CraftEngine, Vault, AuthMe, ServerGames, ServerBoards, ServerMenu and KaMenu are absent. It binds only to loopback and uses a copied test template, not a production server.
 
 1. Fresh startup without pre-written config: vanilla default, both language files generated, native root and machine settings Dialog calls succeed. Create, operate and remove all 12 machines, check card dealing/hole-card reveal, display matrices, button positions and cleanup.
@@ -35,6 +37,10 @@ The source build now passes 140 Java tests (zero failures, errors or skips). The
 - All 12 machines run through 80 update ticks, followed by geometry checks, removal, and the existing restart checks.
 
 The controller audit covered Blackjack, Mines, Crash, Plinko, Slots, Duck Race, Wheel of Fortune, Money Wheel, Penguin Cross, Keno, Hilo and Dragon Tower. Deliberate dealing, spinning, falling and racing animations remain enabled. These checks validate server entities and their initialization; client animation appearance still requires Minecraft acceptance. The published beta asset is separate from this newer source build.
+
+## Current source: vanilla-only cleanup
+
+The current source build passes 140 Java tests and 18 Python tests. The source archive contains `vanilla-models.json` and no client resource-pack files. A clean local Purpur 26.2 probe passed all three phases: all 12 machines created and interacted with, six saved machines restored and played with Dialog disabled, then deleted machines stayed absent after another restart. Phase two deliberately included the obsolete `machine-appearance: resource-pack` config key; the built-in machines still used vanilla geometry. No other custom plugin or client pack was installed. Local phase evidence is in `reports/vanilla-runtime/run-20260926T225410846298Z/result.json` (ignored by Git).
 
 ## Display counts
 
@@ -61,7 +67,7 @@ Dragon Tower now uses 1056 fewer BlockDisplays than the earlier rounded hidden t
 
 The probe uses a proxy player and real server entities. It verifies server-side Dialog construction, events, placement recovery, geometry and ray selection. It does not verify actual client rendering, latency, fonts, FPS or interaction feel. Blender previews use representative colors for most blocks and local vanilla textures for Dragon Tower tile blocks; they are not Minecraft screenshots.
 
-Actual third-party Vault/AuthMe integration, cross-version clients, high-density multiplayer load and the complete advanced resource-pack server workflow were not retested. Their interfaces and packaged resource references have automated coverage. Minecraft visual and interaction acceptance remains with the maintainer. No production server was modified.
+Actual third-party Vault/AuthMe integration, cross-version clients and high-density multiplayer load were not retested. Minecraft visual and interaction acceptance remains with the maintainer. No production server was modified.
 
 ## Reproduce
 
@@ -69,8 +75,6 @@ Actual third-party Vault/AuthMe integration, cross-version clients, high-density
 mvn -B -ntp package
 python -m pip install -r tools/requirements-dev.txt
 python -m unittest discover -s tools -p "test_*.py"
-python tools/export_vanilla_models.py
-git diff --exit-code -- src/main/resources/vanilla-models.json
 ```
 
 Prepare a Purpur 26.2 template whose EULA you have accepted. It needs `purpur-2622.jar`, `eula.txt`, `libraries/`, `cache/` and `versions/26.2/purpur-26.2.jar`. Set `JAVA_HOME` to JDK 25, then:
@@ -80,4 +84,4 @@ python tools/vanilla-probe/run.py --server-template /path/to/prepared-purpur --p
 python tools/vanilla-preview/audit_surfaces.py reports/vanilla-runtime/run-TIMESTAMP/plugins/CasinoVanillaProbe/preview-snapshots reports/vanilla-runtime/run-TIMESTAMP/surface-audit.json
 ```
 
-Use the printed run directory. Inspect all three `phase-*.log` files, `result.json` and `surface-audit.json`. A running Java process alone is not a passing test. GitHub Actions additionally runs Maven, Python checks and exporter consistency for the pushed commit.
+Use the printed run directory. Inspect all three `phase-*.log` files, `result.json` and `surface-audit.json`. A running Java process alone is not a passing test. GitHub Actions additionally runs Maven and Python checks for the pushed commit.

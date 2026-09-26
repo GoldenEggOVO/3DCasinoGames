@@ -10,20 +10,10 @@ import org.junit.jupiter.api.Test;
 class OriginalMachineLayoutTest {
     @Test
     void blackjackTableIsJustAboveControlsAndStillMeetsTheFloor() throws Exception {
-        var model =
-                com.google.gson.JsonParser.parseString(
-                                java.nio.file.Files.readString(
-                                        java.nio.file.Path.of(
-                                                "resource-pack/assets/3dcasino/models/item/cabinet_blackjack.json")))
-                        .getAsJsonObject();
-        double bottom = Double.POSITIVE_INFINITY, top = Double.NEGATIVE_INFINITY;
-        for (var element : model.getAsJsonArray("elements")) {
-            var box = element.getAsJsonObject();
-            bottom = Math.min(bottom, (box.getAsJsonArray("from").get(1).getAsDouble() - 8) / 4);
-            top = Math.max(top, (box.getAsJsonArray("to").get(1).getAsDouble() - 8) / 4);
-        }
+        var bounds = dev.casino3d.model.VanillaGeometry.get("cabinet_blackjack").bounds();
+        double bottom = bounds.getMinY(), top = bounds.getMaxY();
         assertEquals(0, bottom, 1e-9);
-        assertEquals(.92, top, 1e-9);
+        assertEquals(.92, top, 1e-6);
         var button = MachineDefinition.builtin("blackjack").button("start");
         var buttonTop = button.transform().apply(0, .4 * button.size(), .18 * button.size());
         assertTrue(top > buttonTop.y());

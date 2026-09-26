@@ -46,7 +46,7 @@ class ArchitectureTest {
             assertNotNull(stream);
             var config = YamlConfiguration.loadConfiguration(
                     new InputStreamReader(stream, StandardCharsets.UTF_8));
-            assertEquals("vanilla", config.getString("machine-appearance"));
+            assertFalse(config.contains("machine-appearance"));
         }
     }
 

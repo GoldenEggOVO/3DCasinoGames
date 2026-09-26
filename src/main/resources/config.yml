@@ -3,7 +3,3 @@ language: en_US
 
 # Optional native Paper dialogs. Commands and physical buttons work when disabled.
 menu-enabled: true
-
-# Built-in 3D machines work without a resource pack or a model plugin.
-# Advanced custom item models can opt into resource-pack mode.
-machine-appearance: vanilla

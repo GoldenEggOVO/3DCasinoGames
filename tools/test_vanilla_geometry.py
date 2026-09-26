@@ -2,7 +2,6 @@
 import json
 from pathlib import Path
 import unittest
-from export_vanilla_models import box, disjoint
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -19,15 +18,6 @@ class VanillaGeometryTest(unittest.TestCase):
                 boxes = models[name]['boxes']
                 self.assertTrue(any(p.get('matrix') for p in boxes), 'Missing rotated curve: '+name)
                 self.assertLessEqual(len(boxes), budget, name)
-
-    def test_solid_split_preserves_union_volume_and_later_material(self):
-        result = disjoint([box((0, 0, 0), (2, 2, 2), 'GRAY_CONCRETE'),
-                           box((1, 1, 1), (3, 3, 3), 'GOLD_BLOCK')])
-        volume = sum((p['to'][0]-p['from'][0])*(p['to'][1]-p['from'][1])
-                     *(p['to'][2]-p['from'][2]) for p in result)
-        self.assertEqual(15, volume)
-        covering = [p for p in result if all(a < 1.5 < b for a, b in zip(p['from'], p['to']))]
-        self.assertEqual(['GOLD_BLOCK'], [p['material'] for p in covering])
 
     def test_refined_mines_has_an_orange_sloped_console(self):
         models = json.loads((ROOT / 'src/main/resources/vanilla-models.json').read_text())

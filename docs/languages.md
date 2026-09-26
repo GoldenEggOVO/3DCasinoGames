@@ -37,4 +37,4 @@ The English file shipped in the JAR is the complete key reference. New keys adde
 
 Editable strings cover menus, command feedback, machine labels/readouts, game result text and expected user errors. Numbers, card ranks/suits and game/action IDs are identifiers or symbols. Language changes do not change odds, stakes, payouts, saved ownership or action availability.
 
-Advanced resource-pack models can contain lettering painted into PNG textures. Those pixels are not runtime text and require editing the texture separately. The default vanilla machines use editable TextDisplay labels.
+Built-in machines use editable TextDisplay labels. External custom models may contain painted lettering that language files cannot change.

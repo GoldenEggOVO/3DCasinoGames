@@ -8,7 +8,7 @@ python -m pip install -r tools/requirements-dev.txt
 python -m unittest discover -s tools -p "test_*.py"
 ```
 
-After changing models, run `python tools/export_vanilla_models.py` and review the changes to `src/main/resources/vanilla-models.json`. Preserve the resource baseline; update its hashes only when intentionally changing approved assets.
+After changing models, review `src/main/resources/vanilla-models.json`, run the Java and Python regressions, and inspect a fresh server Display snapshot and Minecraft client preview.
 
 ## Changes and pull requests
 

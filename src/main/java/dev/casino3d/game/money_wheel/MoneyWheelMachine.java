@@ -29,13 +29,11 @@ public final class MoneyWheelMachine extends AnimatedMachine<MoneyWheelRound> {
         for (int i = 0; i < 4; i++) button("select:" + i, "showcase_button_money_" + i);
         disc = model("showcase_wheel_money", 0, 2, .25, 4);
         model("showcase_pointer", 0, 2.93, .36, 4);
-        if (vanillaAppearance()) {
-            int[] segments = MoneyWheelRound.segments(), multipliers = MoneyWheelRound.multipliers();
-            for (int segment : segments) {
-                var label = text(0, 2, .30, .30);
-                label.text(net.kyori.adventure.text.Component.text(multipliers[segment] + "X"));
-                wheelLabels.add(label);
-            }
+        int[] segments = MoneyWheelRound.segments(), multipliers = MoneyWheelRound.multipliers();
+        for (int segment : segments) {
+            var label = text(0, 2, .30, .30);
+            label.text(net.kyori.adventure.text.Component.text(multipliers[segment] + "X"));
+            wheelLabels.add(label);
         }
     }
 

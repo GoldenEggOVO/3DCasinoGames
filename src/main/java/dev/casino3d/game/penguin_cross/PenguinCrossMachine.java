@@ -26,7 +26,7 @@ public final class PenguinCrossMachine extends AnimatedMachine<PenguinCrossRound
     @Override
     protected void buildGame() {
         body("showcase_penguin_cross");
-        boolean builtin = vanillaAppearance() && definition.equals(MachineDefinition.builtin("penguin_cross"));
+        boolean builtin = definition.equals(MachineDefinition.builtin("penguin_cross"));
         for (String action : List.of("play", "step", "cash")) {
             var original = definition.button(action);
             var pose = original.transform();

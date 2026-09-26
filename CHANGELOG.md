@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Remove the bundled client resource pack and its appearance switch. Built-in machines always use the JAR's vanilla Display geometry; old `machine-appearance` config entries are ignored.
+- Keep optional model resolution only for explicitly configured external custom item references. Remove pack-only generators, baselines and packaging checks.
+
 ## 0.6.0-beta.1
 
 - Breaking rename: plugin/data folder, command, permissions and models use `3dcasino`; Java API uses `dev.casino3d`. Old aliases and automatic compatibility adapters are removed.
@@ -27,7 +32,7 @@
 - Hilo 指针往返后落在真实结果；移除机器上方悬浮说明。
 - 保留原有玩法、概率、免费练习资金行为、存档及经济扩展。
 
-升级时保留 `plugins/ServerCasino`。旧配置显式使用 `resource-pack` 的，需改为 `vanilla` 并重启才会切换到原版机器。
+升级时保留旧数据备份。当前版本已移除 `machine-appearance` 配置，旧配置项会被忽略。
 
 ## 0.5.1-preview
 

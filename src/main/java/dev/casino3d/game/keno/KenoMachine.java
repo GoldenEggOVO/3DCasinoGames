@@ -36,12 +36,10 @@ public final class KenoMachine extends AnimatedMachine<KenoRound> {
                     4, -Math.PI / 2);
             tiles.add(tile);
             hitDisplay("select:" + i, tile, new BoundingBox(-.12, -.12, -.035, .12, .12, .035), -1);
-            if (vanillaAppearance()) {
-                var label = text(x, .889, z + .035, .32);
-                label.text(net.kyori.adventure.text.Component.text(Integer.toString(i)));
-                pose(label, new Transformation(new Vector3f(), new Quaternionf().rotateX((float) -Math.PI / 2),
-                        new Vector3f(.32f), new Quaternionf()));
-            }
+            var label = text(x, .889, z + .035, .32);
+            label.text(net.kyori.adventure.text.Component.text(Integer.toString(i)));
+            pose(label, new Transformation(new Vector3f(), new Quaternionf().rotateX((float) -Math.PI / 2),
+                    new Vector3f(.32f), new Quaternionf()));
         }
         for (int i = 0; i < 10; i++) {
             var gem = item(new ItemStack(Material.EMERALD), 0, .93, 0, 0, 0);

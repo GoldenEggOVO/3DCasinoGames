@@ -33,10 +33,6 @@ jobs:
         run: mvn -B -ntp package
       - name: Verify assets and packaging
         run: python -m unittest discover -s tools -p "test_*.py"
-      - name: Verify checked-in vanilla geometry
-        run: |
-          python tools/export_vanilla_models.py
-          git diff --exit-code -- src/main/resources/vanilla-models.json
       - name: Package public source
         run: python tools/package-source.py
       - uses: actions/upload-artifact@v4

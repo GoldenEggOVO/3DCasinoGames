@@ -3,7 +3,7 @@ from pathlib import Path
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-DIRECTORIES = ('src', 'resource-pack', 'tools', 'docs', '.github')
+DIRECTORIES = ('src', 'tools', 'docs', '.github')
 TOP_LEVEL = ('pom.xml', 'README.md', 'README.zh-CN.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'LICENSE',
              'THIRD_PARTY.md', '.gitignore', '.gitattributes')
 EXTENSIONS = {'.java', '.xml', '.yml', '.yaml', '.json', '.mcmeta', '.png', '.py', '.md', '.txt'}

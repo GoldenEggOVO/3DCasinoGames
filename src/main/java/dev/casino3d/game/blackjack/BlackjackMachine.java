@@ -75,9 +75,7 @@ public final class BlackjackMachine extends PracticeMachine<BlackjackRound> {
     protected void refresh() {
         hand(round.dealer(), dealerCards, -.32, round.active());
         hand(round.player(), playerCards, .35, false);
-        readout.text(Component.text(vanillaAppearance()
-                ? vanillaReadout(round.player(), round.dealer(), round.active())
-                : readout(round.player(), round.dealer(), round.active())));
+        readout.text(Component.text(vanillaReadout(round.player(), round.dealer(), round.active())));
         if (wasActive && !round.active())
             origin.getWorld()
                     .playSound(

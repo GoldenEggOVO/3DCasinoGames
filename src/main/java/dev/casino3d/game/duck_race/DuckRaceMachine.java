@@ -23,7 +23,7 @@ public final class DuckRaceMachine extends AnimatedMachine<DuckRaceRound> {
     @Override
     protected void buildGame() {
         body("showcase_duck_race");
-        boolean builtin = vanillaAppearance() && definition.equals(MachineDefinition.builtin("duck_race"));
+        boolean builtin = definition.equals(MachineDefinition.builtin("duck_race"));
         for (int i = 0; i < 4; i++) {
             var original = definition.button("select:" + i);
             var pose = original.transform();

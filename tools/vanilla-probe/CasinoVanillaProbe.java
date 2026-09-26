@@ -70,7 +70,8 @@ public final class CasinoVanillaProbe extends JavaPlugin {
         try {
             var casino = (CasinoPlugin) Bukkit.getPluginManager().getPlugin("3dcasino");
             require(casino != null && casino.isEnabled(), "Casino disabled");
-            require(casino.vanillaAppearance(), "Vanilla appearance not enabled");
+            require(VanillaGeometry.name(ModelItems.resolve("3dcasino:card_47")) != null,
+                    "Built-in cards no longer use vanilla geometry");
             require(Files.isRegularFile(casino.getDataFolder().toPath().resolve("languages/en_US.yml"))
                     && Files.isRegularFile(casino.getDataFolder().toPath().resolve("languages/zh_CN.yml")),
                     "Language files were not generated");
@@ -241,7 +242,7 @@ public final class CasinoVanillaProbe extends JavaPlugin {
                     }
                     if (game.equals("blackjack")) {
                         var dealt = blackjackCards(machine);
-                        dealt.get(0).setItemStack(ModelItems.resolve("3dcasino:card_47", true));
+                        dealt.get(0).setItemStack(ModelItems.resolve("3dcasino:card_47"));
                         ((PracticeMachine<?>) machine).tick();
                         writePreview(machine, "blackjack-dealt");
                     }

@@ -18,11 +18,11 @@
 
 需要 **Paper / Purpur 26.2 和 Java 25**。安装一个 JAR 即可，无需 CraftEngine、资源包或客户端模组。
 
-1. 从 [Releases](https://github.com/GoldenEggOVO/3DCasinoGames/releases) 下载 `3dcasino-0.6.0-beta.1.jar`。
+1. 从 [Releases](https://github.com/GoldenEggOVO/3DCasinoGames/releases) 下载 JAR。如需使用 `0.6.0-beta.1` 发布后提交的新改动，在新 Release 发布前请从当前源码构建。
 2. 停服并备份插件数据和世界，将 JAR 放入 `plugins/`，同一插件只保留一个版本。
 3. 启动服务器，使用 `/3dcasino` 打开菜单，或使用 `/3dcasino create blackjack` 创建机器。
 
-默认配置为 `machine-appearance: vanilla`、`menu-enabled: true`、`language: en_US`。可编辑语言文件会生成到 `plugins/3dcasino/languages/`。将 `config.yml` 中的语言改为 `language: zh_CN` 并重启，即可使用中文；详见[语言配置](docs/languages.md)。
+默认配置为 `menu-enabled: true`、`language: en_US`。可编辑语言文件会生成到 `plugins/3dcasino/languages/`。将 `config.yml` 中的语言改为 `language: zh_CN` 并重启，即可使用中文；详见[语言配置](docs/languages.md)。
 
 **不兼容升级：** 0.6 使用新的数据目录和命名空间，不提供旧命令、旧权限、旧 Java 包或自动迁移适配。替换旧版本前，请阅读[安装与升级说明](docs/installation.md)。
 
@@ -36,7 +36,7 @@ Vault 和 AuthMe 为可选集成，不需要 ServerGames、ServerBoards、Server
 - 完整的 52 张扑克牌和牌背，右下角牌面标记旋转 180°。
 - 原生 Dialog 菜单、实体按钮、练习下注和可编辑机器定义。
 - 机器布置永久保存，在重启或区块加载后恢复。每位玩家每种游戏可放置一台；当前对局和动画不跨重启恢复。
-- 可选的原生资源包模式及模型解析接口，供高级自定义外观使用。
+- 内置机器始终使用原版几何；显式配置外部自定义物品时仍可使用模型解析接口。
 
 ## 命令与权限
 

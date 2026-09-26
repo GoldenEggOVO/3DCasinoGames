@@ -24,7 +24,7 @@ public final class DragonTowerMachine extends AnimatedMachine<DragonTowerRound> 
     public DragonTowerMachine(
             MachineManager manager, UUID owner, Location origin, MachineDefinition definition) {
         super(manager, owner, origin, definition, new DragonTowerRound(new SecureRandom()));
-        compact = vanillaAppearance() && definition.equals(MachineDefinition.builtin("dragon_tower"));
+        compact = definition.equals(MachineDefinition.builtin("dragon_tower"));
     }
 
     public static ButtonDefinition vanillaButton(String action) {

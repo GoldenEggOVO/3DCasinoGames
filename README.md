@@ -18,11 +18,11 @@
 
 Requires **Paper / Purpur 26.2 and Java 25**. Install one JAR; no CraftEngine, resource pack or client mod is required.
 
-1. Download `3dcasino-0.6.0-beta.1.jar` from [Releases](https://github.com/GoldenEggOVO/3DCasinoGames/releases).
+1. Download a JAR from [Releases](https://github.com/GoldenEggOVO/3DCasinoGames/releases). To use changes made after `0.6.0-beta.1`, build the current source until a newer release is published.
 2. Stop the server, back up plugin data and worlds, and place the JAR in `plugins/`. Keep only one version installed.
 3. Start the server and use `/3dcasino` or `/3dcasino create blackjack`.
 
-Defaults are `machine-appearance: vanilla`, `menu-enabled: true`, and `language: en_US`. Editable language files are generated under `plugins/3dcasino/languages/`; see [languages](docs/languages.md).
+Defaults are `menu-enabled: true` and `language: en_US`. Editable language files are generated under `plugins/3dcasino/languages/`; see [languages](docs/languages.md).
 
 **Breaking upgrade:** 0.6 uses a new data directory and namespace. Old commands, permissions, Java packages and automatic migration adapters are not provided. Read [installation and upgrade](docs/installation.md) before replacing an earlier version.
 
@@ -36,7 +36,7 @@ All 12 physical machines are free practice: they do not withdraw money or award 
 - All 52 playing cards plus a card back; the lower corner is rotated 180 degrees.
 - Native Dialog menus, physical buttons, practice stakes and editable machine definitions.
 - Permanent machine placements, restored after restarts and chunk loads. One machine of each game per player. Active rounds and animations do not survive a restart.
-- Optional native resource-pack mode and a model resolver API for advanced custom appearances.
+- A model resolver API for explicitly configured external custom items; built-in machines always use vanilla geometry.
 
 ## Commands and permissions
 

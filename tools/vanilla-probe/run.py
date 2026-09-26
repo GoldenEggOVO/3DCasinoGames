@@ -72,8 +72,10 @@ def main():
               'plugins': sorted(path.name for path in plugins.glob('*.jar')), 'phases': []}
     for phase, marker in enumerate(MARKERS, 1):
         if phase == 2:
-            # Missing appearance key exercises upgrades as well as the fresh-install default.
-            (config / 'config.yml').write_text('menu-enabled: false\nlanguage: custom\n', encoding='utf-8')
+            # A stale appearance key must not activate the removed client-pack mode.
+            (config / 'config.yml').write_text(
+                'menu-enabled: false\nlanguage: custom\nmachine-appearance: resource-pack\n',
+                encoding='utf-8')
             (config / 'languages/custom.yml').write_text(
                 '"models.showcase_button_play.0": "CUSTOM PLAY"\n', encoding='utf-8')
         log_path = run / f'phase-{phase}.log'

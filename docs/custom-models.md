@@ -1,8 +1,8 @@
 # 自定义机器外观
 
-模型定义只为现有游戏配置外观和布局，不执行脚本，也不定义新规则。默认使用内置原版 Display 几何；高级自定义物品模型可通过普通 Minecraft 资源包提供。外部命名空间不必为 casino。
+模型定义只为现有游戏配置外观和布局，不执行脚本，也不定义新规则。内置模型始终使用 JAR 内原版 Display 几何；外部命名空间的自定义物品仍可由可选解析服务提供。
 
-默认 `machine-appearance: vanilla` 时，内置模型 ID 解析为原版 Display 几何，其他模型 ID 使用原版材质回退，`material:` 引用仍直接使用指定材料；自定义坐标、按钮及模型定义快照保持生效。此模式用于无资源包游玩，不会保留自定义模型贴图。
+内置模型 ID 解析为原版 Display 几何，`material:` 引用直接使用指定原版材料；其他模型 ID 在没有外部解析服务时使用原版材质回退。自定义坐标、按钮及模型定义快照保持生效。插件本身不提供或要求资源包。
 
 内置默认定义由 `src/main/java/dev/casino3d/model/BuiltinLayouts.java` 和 `MachineDefinition.builtin(game)` 提供。外部定义放在服务器 `plugins/3dcasino/machines/*.yml`，每文件一台皮肤。缺省字段按 `game` 继承内置定义，因此只修改需要覆盖的项目。
 
@@ -28,7 +28,7 @@ parts:
     scale: 0.2
 ```
 
-可直接复制 [emerald-blackjack.yml](emerald-blackjack.yml) 到上述目录。该示例用原版材料验证替换，无需额外贴图。自定义资源可将 `material:EMERALD_BLOCK` 改为 `my_pack:my_blackjack`，并提供相应 `assets/my_pack/items/my_blackjack.json` 及引用模型/贴图。使用这些外部物品模型时，先设置 `machine-appearance: resource-pack` 并让客户端加载资源包。模型配置不负责上传资源。
+可直接复制 [emerald-blackjack.yml](emerald-blackjack.yml) 到上述目录。该示例用原版材料验证替换，无需额外贴图。如把材料改为外部模型 ID（例如 `my_pack:my_blackjack`），需由外部解析服务提供物品；其客户端素材也由该服务的管理员自行管理。模型配置不负责上传资源。
 
 执行 `/3dcasino reload-models`，然后 `/3dcasino create blackjack emerald-blackjack`。加载先校验全部文件再替换注册表；失败保留之前有效定义。已经创建的机器保留原定义快照；删除后重新创建才使用新外观。
 

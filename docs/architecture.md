@@ -14,7 +14,7 @@
 
 ## 模型解析接口
 
-注册 `dev.casino3d.api.MachineModelResolver`，实现 `ItemStack resolve(String namespacedModel)`。返回 `null` 时使用默认解析；返回的物品会复制，插件不修改提供者的缓存实例。此接口用于显式的 `resource-pack` 模式，默认解析使用原版 `item_model`。默认的 `vanilla` 模式直接使用内置 Display 几何，不调用物品解析服务。
+注册 `dev.casino3d.api.MachineModelResolver`，实现 `ItemStack resolve(String namespacedModel)`。仅显式配置的外部命名空间会调用此接口；内置 `3dcasino:` 模型始终使用 JAR 内原版 Display 几何，`material:` 直接使用原版材料。返回 `null` 时使用原版材料回退；返回的物品会复制，插件不修改提供者的缓存实例。
 
 模型定义详见 [custom-models.md](custom-models.md)。注册服务和机器操作应在服务器主线程进行；不要在解析方法里阻塞网络或磁盘。API 目前是 beta，修改公共接口时需说明兼容影响。
 
@@ -22,7 +22,7 @@
 
 测试中的 `Frozen*Round` 是冻结的 0.3.3 行为基线，只用于与新规则逐动作对比，不会进入插件 JAR。修改玩法应同时更新明确的行为测试；不能悄悄修改冻结基线使差分测试通过。
 
-默认美术资源迁移保持原几何与像素。运行资源生成器前阅读 [resources.md](resources.md)，重绘会受字体版本影响。内置按钮位置及尺寸由 `BuiltinLayouts` 和对应控制器的原版布局覆盖共同确定，测试需要覆盖实际定义而非重复写一套期望实现。
+内置几何保存在 `vanilla-models.json`；修改后阅读 [resources.md](resources.md) 并进行客户端外观验收。内置按钮位置及尺寸由 `BuiltinLayouts` 和对应控制器的原版布局覆盖共同确定，测试需要覆盖实际定义而非重复写一套期望实现。
 
 `machine/PlacementStore` 独立保存机器布置和模型快照，使用临时文件同步后原子替换；对局状态不写入布置文件。`MachineManager` 按所有者与游戏类型索引，区分保存记录与已加载实体。区块或世界卸载只卸载实体，显式删除才写入记录变更。
 

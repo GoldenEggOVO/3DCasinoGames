@@ -1,14 +1,17 @@
 """Check visible curve coverage and actual affine faces, not only part counts."""
 import json
+import importlib.util
 import math
 from pathlib import Path
 import unittest
 import numpy as np
-from export_vanilla_models import load
 from vanilla_curves import cuboid, disc, rounded_rectangle, wheel
 
 ROOT = Path(__file__).resolve().parents[1]
-audit = load('curve_surface_audit', ROOT/'tools/vanilla-preview/audit_surfaces.py').audit
+spec = importlib.util.spec_from_file_location('curve_surface_audit', ROOT/'tools/vanilla-preview/audit_surfaces.py')
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+audit = module.audit
 
 
 def flat_material(parts, x, y):

@@ -1,13 +1,10 @@
 # 许可与第三方来源
 
-项目保留原 GPL-3.0 许可文件，不擅自改为宽松许可。
+项目使用 [GPL-3.0](LICENSE)。
 
-- Paper API：`io.papermc.paper:paper-api`，来源为项目 POM 指定的 PaperMC 官方 Maven 仓库。服务器 API 在运行时提供，不随源码包附带服务器 JAR。
-- Gson、JUnit 及 Maven 构建插件：以 POM 坐标为准确版本依据，由公开仓库获取，遵循各自上游许可。
-- Vault、AuthMe：可选服务器集成；本项目不分发其插件 JAR。Vault 的服务由管理员安装的插件提供。
-- Python NumPy：几何审计与测试依赖，遵循 NumPy 的 BSD 许可。Blender 仅用于开发预览，不随插件分发。
-- Python Pillow：可选资源开发/测试依赖，来源 https://python-pillow.org/ ，适用其上游许可证。普通资源打包只使用 Python 标准库。
-- 历史 Arial Bold、Segoe UI Symbol、Microsoft YaHei 字体：来自原开发环境，字体程序不包含在本项目中。原纹理中已有栅格文字保留；不能据此宣称获得字体再分发许可。
-- 默认资源中的图像切片和机器素材：继承原项目的生成图与程序化模型。原始 `artwork/casino-icons-source.png`、`casino-panels-source.png` 仅保留在本地，不包含在公开源码包；原 README 记载界面自制且未采用参考网站标志。现有文件缺少完整生成工具/服务版本与权属记录，因此公开平台发布前仍需由维护者核实来源及可再分发权，不能把技术打包验证视为素材权属确认。
+- Paper API、Gson、JUnit 与 Maven 构建插件：版本以 `pom.xml` 为准；运行时服务器提供 Paper API。
+- Vault、AuthMe：可选集成；本项目不分发其插件 JAR。
+- Python NumPy、Pillow：本地几何测试和预览工具使用，均不随插件 JAR 分发。Blender 只用于开发预览。
+- README 展示图由服务器导出的 Display 几何渲染，并非 Minecraft 截图。预览时使用的本地字体及可选 Minecraft 原版纹理文件不包含在插件或公开源码包中。
 
-本次交付不包含私有 KaMenu JAR、其他第三方插件二进制、字体文件或生产服务器配置。
+交付不包含私有插件、生产服务器配置、第三方插件二进制或客户端资源包。
