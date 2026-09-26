@@ -2,15 +2,21 @@
 
 [![Build](https://github.com/GoldenEggOVO/3DCasinoGames/actions/workflows/ci.yml/badge.svg)](https://github.com/GoldenEggOVO/3DCasinoGames/actions/workflows/ci.yml)
 
-Standalone 3D casino machines for **Paper / Purpur 26.2 and Java 25**. Plugin, commands, permissions and model namespace: **3dcasino**. Current version: **0.6.0-beta.1**.
+[English](README.md) | [简体中文](README.zh-CN.md)
 
-**Install one JAR. No CraftEngine, resource pack or client mod is required.** Physical machines are free practice: they do not withdraw money or award an economy balance.
+## Machine showcase
 
-![Vanilla machine previews](docs/images/vanilla-machines.png)
+![Blackjack, Mines, Crash and Plinko](docs/images/machines-01.png)
 
-*Blender renders of server-exported Display geometry, not Minecraft screenshots. Most materials use representative block colors.*
+![Slots, Duck Race, Wheel of Fortune and Money Wheel](docs/images/machines-02.png)
+
+![Penguin Cross, Keno, Hilo and Dragon Tower](docs/images/machines-03.png)
+
+*Renders of the actual server Display geometry, not in-game screenshots. [Preview details](docs/vanilla-visual-review.md).*
 
 ## Install
+
+Requires **Paper / Purpur 26.2 and Java 25**. Install one JAR; no CraftEngine, resource pack or client mod is required.
 
 1. Download `3dcasino-0.6.0-beta.1.jar` from [Releases](https://github.com/GoldenEggOVO/3DCasinoGames/releases).
 2. Stop the server, back up plugin data and worlds, and place the JAR in `plugins/`. Keep only one version installed.
@@ -22,9 +28,9 @@ Defaults are `machine-appearance: vanilla`, `menu-enabled: true`, and `language:
 
 Vault and AuthMe are optional. ServerGames, ServerBoards, ServerMenu and KaMenu are not required.
 
-## Games
+## Features
 
-Blackjack, Mines, Crash, Plinko, Slots, Duck Race, Wheel of Fortune, Money Wheel, Penguin Cross, Keno, Hilo and Dragon Tower.
+All 12 physical machines are free practice: they do not withdraw money or award an economy balance.
 
 - Vanilla block and text displays, rotated curved edges and consistent buttons.
 - All 52 playing cards plus a card back; the lower corner is rotated 180 degrees.

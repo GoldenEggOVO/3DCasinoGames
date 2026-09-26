@@ -15,7 +15,7 @@ These are Blender renders of actual isolated-server Display snapshots. Most bloc
 
 ![Revealed Dragon Tower](images/dragon-revealed.png)
 
-The delivery ZIP includes full-resolution before/after comparisons. Reviewed the rear support connection, table/button clearance, second-row position and removed panel against those comparisons. Earlier accepted styling—rotated curved segments, solid-color controls, larger card patterns, inverted lower card corner, Mines layout and Hilo pointer animation—is retained.
+The [README showcase](../README.md#machine-showcase) displays all 12 machines. The rear support connection, table/button clearance, second-row position and removed panel were reviewed against locally generated before/after comparisons. Earlier accepted styling—rotated curved segments, solid-color controls, larger card patterns, inverted lower card corner, Mines layout and Hilo pointer animation—is retained.
 
 ## Verification boundary
 
