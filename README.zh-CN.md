@@ -43,6 +43,7 @@ Vault 和 AuthMe 为可选集成，不需要 ServerGames、ServerBoards、Server
 | 命令 | 用途 |
 | --- | --- |
 | `/3dcasino` | 打开原生管理菜单 |
+| `/3dcasino menu` | 明确打开原生管理菜单 |
 | `/3dcasino create <game> [skin-id]` | 创建免费练习机器 |
 | `/3dcasino bet <game> <1-100>` | 修改自己附近空闲机器的练习下注 |
 | `/3dcasino remove [game]` | 删除指定游戏或自己的全部机器 |

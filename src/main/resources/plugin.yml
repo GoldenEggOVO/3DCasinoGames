@@ -6,7 +6,7 @@ softdepend: [Vault, AuthMe]
 commands:
   3dcasino:
     description: Manage free-play 3D casino machines
-    usage: /3dcasino [create <game> [skin-id] | bet <game> <1-100> | remove [game] | reload-models]
+    usage: /3dcasino [menu | create <game> [skin-id] | bet <game> <1-100> | remove [game] | reload-models]
 permissions:
   3dcasino.machine:
     default: op

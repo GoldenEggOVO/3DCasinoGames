@@ -43,6 +43,7 @@ All 12 physical machines are free practice: they do not withdraw money or award 
 | Command | Purpose |
 | --- | --- |
 | `/3dcasino` | Open the native management menu |
+| `/3dcasino menu` | Open the native management menu explicitly |
 | `/3dcasino create <game> [skin-id]` | Create a free practice machine |
 | `/3dcasino bet <game> <1-100>` | Change the stake on your nearby idle machine |
 | `/3dcasino remove [game]` | Remove one game or all your machines |

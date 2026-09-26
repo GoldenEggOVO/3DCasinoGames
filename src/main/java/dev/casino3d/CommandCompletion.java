@@ -8,12 +8,20 @@ import java.util.Locale;
 public final class CommandCompletion {
     private CommandCompletion() {}
 
+    static void hideNamespacedRoot(Collection<String> commands) {
+        commands.remove("3dcasino:3dcasino");
+    }
+
+    static List<String> menu(String[] args) {
+        return args.length == 1 ? matching(List.of("menu"), args[0]) : List.of();
+    }
+
     public static List<String> player(String[] args, Collection<String> games,
             Collection<String> skins, Collection<String> ownedGames) {
         if (args.length == 0) return List.of();
         Collection<String> candidates = List.of();
         String command = args[0].toLowerCase(Locale.ROOT);
-        if (args.length == 1) candidates = List.of("create", "bet", "remove", "reload-models");
+        if (args.length == 1) candidates = List.of("menu", "create", "bet", "remove", "reload-models");
         else if (args.length == 2) candidates = switch (command) {
             case "create" -> games;
             case "bet", "remove" -> ownedGames;

@@ -1,21 +1,36 @@
 package dev.casino3d;
 
 import static org.junit.jupiter.api.Assertions.*;
+import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class CommandCompletionTest {
+    @Test void hidesOnlyCasinosDuplicateRootSuggestion() {
+        var commands = new ArrayList<>(List.of(
+                "3dcasino", "3dcasino:3dcasino", "minecraft:help", "other:3dcasino"));
+        CommandCompletion.hideNamespacedRoot(commands);
+        assertEquals(List.of("3dcasino", "minecraft:help", "other:3dcasino"), commands);
+    }
+
     private List<String> player(String... args) {
         return CommandCompletion.player(args, List.of("mines", "blackjack", "hilo"),
                 List.of("mines", "blue_mines"), List.of("hilo", "mines"));
     }
 
     @Test void filtersCaseInsensitiveAndNeverOffersPlayerNames() {
+        assertEquals(List.of("menu"), player("ME"));
         assertEquals(List.of("create"), player("CR"));
         assertEquals(List.of("blackjack"), player("create", "B"));
         assertEquals(List.of(), player("unknown", ""));
         assertEquals(List.of(), player("reload-models", ""));
         assertEquals(List.of(), player("create", "mines", "mines", ""));
+    }
+
+    @Test void playersWithoutMachinePermissionCanStillCompleteMenu() {
+        assertEquals(List.of("menu"), CommandCompletion.menu(new String[]{"me"}));
+        assertEquals(List.of(), CommandCompletion.menu(new String[]{"create"}));
+        assertEquals(List.of(), CommandCompletion.menu(new String[]{"menu", ""}));
     }
 
     @Test void completionUsesOnlySuppliedSkinsAndOwnedGames() {
