@@ -23,7 +23,7 @@ Game IDs: `blackjack`, `mines`, `crash`, `plinko`, `slots`, `duck_race`, `wheel_
 
 ## Breaking change from 0.5.x
 
-The runtime identity is now `3dcasino`. The old `ServerCasino` data folder is neither imported nor overwritten. Old `/casino`, `/casino-demo`, permissions and Java package names are removed. Existing API consumers must recompile against `dev.threedcasino`.
+The runtime identity is now `3dcasino`. The old `ServerCasino` data folder is neither imported nor overwritten. Old `/casino`, `/casino-demo`, permissions and Java package names are removed. Existing API consumers must recompile against `dev.casino3d`.
 
 For a fresh installation, remove the old JAR while stopped and keep its data backup. Create new machines in the new namespace. There is no migration command or compatibility adapter.
 

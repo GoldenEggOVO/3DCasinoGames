@@ -4,7 +4,7 @@
 
 默认 `machine-appearance: vanilla` 时，内置模型 ID 解析为原版 Display 几何，其他模型 ID 使用原版材质回退，`material:` 引用仍直接使用指定材料；自定义坐标、按钮及模型定义快照保持生效。此模式用于无资源包游玩，不会保留自定义模型贴图。
 
-内置默认定义由 `src/main/java/dev/threedcasino/model/BuiltinLayouts.java` 和 `MachineDefinition.builtin(game)` 提供。外部定义放在服务器 `plugins/3dcasino/machines/*.yml`，每文件一台皮肤。缺省字段按 `game` 继承内置定义，因此只修改需要覆盖的项目。
+内置默认定义由 `src/main/java/dev/casino3d/model/BuiltinLayouts.java` 和 `MachineDefinition.builtin(game)` 提供。外部定义放在服务器 `plugins/3dcasino/machines/*.yml`，每文件一台皮肤。缺省字段按 `game` 继承内置定义，因此只修改需要覆盖的项目。
 
 ```yaml
 schema-version: 1

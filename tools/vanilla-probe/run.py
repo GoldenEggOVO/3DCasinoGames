@@ -35,7 +35,7 @@ def main():
         check.bind(('127.0.0.1', args.port))
     version = ET.parse(CASINO / 'pom.xml').findtext('{http://maven.apache.org/POM/4.0.0}version')
     plugin = CASINO / f'target/3dcasino-{version}.jar'
-    classes = CASINO / 'target/3dcasino-probe-classes'
+    classes = CASINO / 'target/casino3d-probe-classes'
     classes.mkdir(parents=True, exist_ok=True)
     jars = [plugin, base / 'versions/26.2/purpur-26.2.jar',
             *sorted((base / 'libraries').rglob('*.jar'))]
@@ -45,7 +45,7 @@ def main():
     probe = CASINO / 'target/CasinoVanillaProbe.jar'
     with zipfile.ZipFile(probe, 'w', zipfile.ZIP_DEFLATED) as archive:
         archive.writestr('plugin.yml', 'name: CasinoVanillaProbe\nversion: 1\n'
-                         "api-version: '26.2'\nmain: dev.threedcasino.probe.CasinoVanillaProbe\n"
+                         "api-version: '26.2'\nmain: dev.casino3d.probe.CasinoVanillaProbe\n"
                          'depend: [3dcasino]\n')
         for file in sorted(classes.rglob('*.class')):
             archive.write(file, file.relative_to(classes).as_posix())

@@ -14,7 +14,7 @@
 | Namespace and Tab | Only new command, permission-filtered suggestions; invalid console UUID gives usage |
 | Language | English default, generated files, edited machine label applied after restart, English fallback |
 
-Release JAR SHA-256: `6248ab0d6e6b45d419af8f725510e5e7adf97dfae1bd7e43d3055aff3213d09d`.
+Release JAR SHA-256: `6f869119e091e117ea7f5b5c2cd3eaf4d44d8388cde091655ac28b5e2d1f1899`.
 
 The isolated server contains only the plugin and disposable test probe. CraftEngine, Vault, AuthMe, ServerGames, ServerBoards, ServerMenu and KaMenu are absent. It binds only to loopback and uses a copied test template, not a production server.
 

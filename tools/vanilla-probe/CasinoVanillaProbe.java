@@ -1,14 +1,14 @@
-package dev.threedcasino.probe;
+package dev.casino3d.probe;
 
 import com.google.gson.GsonBuilder;
-import dev.threedcasino.CasinoPlugin;
-import dev.threedcasino.MachineGeometry;
-import dev.threedcasino.game.PracticeRound;
-import dev.threedcasino.machine.MachineManager;
-import dev.threedcasino.machine.PracticeMachine;
-import dev.threedcasino.model.VanillaGeometry;
-import dev.threedcasino.model.ModelItems;
-import dev.threedcasino.model.MachineDefinition;
+import dev.casino3d.CasinoPlugin;
+import dev.casino3d.MachineGeometry;
+import dev.casino3d.game.PracticeRound;
+import dev.casino3d.machine.MachineManager;
+import dev.casino3d.machine.PracticeMachine;
+import dev.casino3d.model.VanillaGeometry;
+import dev.casino3d.model.ModelItems;
+import dev.casino3d.model.MachineDefinition;
 import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
 import java.nio.file.Files;
@@ -389,9 +389,9 @@ public final class CasinoVanillaProbe extends JavaPlugin {
         double scale = game.equals("plinko") ? .75 : MachineGeometry.machineScale(game);
         for (var entry : buttons.entrySet()) {
             var expected = (game.equals("mines")
-                    ? dev.threedcasino.game.mines.MinesMachine.vanillaButton((String) entry.getValue())
+                    ? dev.casino3d.game.mines.MinesMachine.vanillaButton((String) entry.getValue())
                     : game.equals("dragon_tower")
-                    ? dev.threedcasino.game.dragon_tower.DragonTowerMachine.vanillaButton((String) entry.getValue())
+                    ? dev.casino3d.game.dragon_tower.DragonTowerMachine.vanillaButton((String) entry.getValue())
                     : MachineDefinition.builtin(game).button((String) entry.getValue())).transform();
             double expectedX = expected.x(), expectedY = expected.y(), expectedZ = expected.z();
             if (game.equals("penguin_cross")) expectedZ += .20;

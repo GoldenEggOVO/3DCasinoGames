@@ -2,7 +2,7 @@
 
 ## 0.6.0-beta.1
 
-- Breaking rename: plugin/data folder, command, permissions and models use `3dcasino`; Java API uses `dev.threedcasino`. Old aliases and automatic compatibility adapters are removed.
+- Breaking rename: plugin/data folder, command, permissions and models use `3dcasino`; Java API uses `dev.casino3d`. Old aliases and automatic compatibility adapters are removed.
 - Add permission-aware command completion, game-specific skin suggestions and owned-machine suggestions.
 - Add editable `languages/en_US.yml` and `languages/zh_CN.yml`, selected through `config.yml`; English is the default for Dialog, machine labels and feedback.
 - Dragon Tower tiles now use one gray terracotta block when hidden, emerald blocks when safe, and TNT when trapped. Idle tiles use 1056 fewer BlockDisplays.
