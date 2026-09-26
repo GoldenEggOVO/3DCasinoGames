@@ -1,6 +1,6 @@
 # Verification — 0.6.0-beta.1
 
-## Results
+## Published beta results
 
 | Check | Result |
 | --- | --- |
@@ -23,6 +23,18 @@ The isolated server contains only the plugin and disposable test probe. CraftEng
 3. Restart again; deleted machines remain absent.
 
 Java regressions retain the frozen game-rule comparisons and economy/persistence tests. New checks cover language fallback, malformed YAML, placeholders, key coverage, validation messages, translation-independent outcomes, command suggestions and metadata. Visual changes also have geometry regressions.
+
+## Display update fixes after the beta release
+
+The source build now passes 140 Java tests (zero failures, errors or skips). The clean Purpur probe also checks:
+
+- Every vanilla carrier is hidden at spawn; every composite block/text part already has its pose and starts with zero transform interpolation.
+- Blackjack keeps dealer and player card entities separate. A deterministic dealer draw reveals the hole card without restarting its deal animation or moving the player's cards.
+- Dragon Tower and Keno material changes preserve geometry; Keno result gems appear at their target tile without interpolating from a hidden position.
+- Zero-scale model hiding produces finite transformations and restores correctly.
+- All 12 machines run through 80 update ticks, followed by geometry checks, removal, and the existing restart checks.
+
+The controller audit covered Blackjack, Mines, Crash, Plinko, Slots, Duck Race, Wheel of Fortune, Money Wheel, Penguin Cross, Keno, Hilo and Dragon Tower. Deliberate dealing, spinning, falling and racing animations remain enabled. These checks validate server entities and their initialization; client animation appearance still requires Minecraft acceptance. The published beta asset is separate from this newer source build.
 
 ## Display counts
 

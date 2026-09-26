@@ -47,9 +47,22 @@ public final class CasinoVanillaProbe extends JavaPlugin {
     private boolean sneaking;
     private int shownDialogs;
     private boolean permissions = true;
+    private final Map<UUID, Transformation> spawnPoses = new LinkedHashMap<>();
+    private final Map<UUID, Integer> spawnDurations = new LinkedHashMap<>();
+    private final Map<UUID, Boolean> spawnVisibility = new LinkedHashMap<>();
 
     @Override
     public void onEnable() {
+        Bukkit.getPluginManager().registerEvents(new org.bukkit.event.Listener() {
+            @org.bukkit.event.EventHandler
+            public void onSpawn(org.bukkit.event.entity.EntitySpawnEvent event) {
+                if (event.getEntity() instanceof Display display) {
+                    spawnPoses.put(display.getUniqueId(), display.getTransformation());
+                    spawnDurations.put(display.getUniqueId(), display.getInterpolationDuration());
+                    spawnVisibility.put(display.getUniqueId(), display.isVisibleByDefault());
+                }
+            }
+        }, this);
         Bukkit.getScheduler().runTaskLater(this, this::check, 100);
     }
 
@@ -176,8 +189,27 @@ public final class CasinoVanillaProbe extends JavaPlugin {
                     }
                     if (game.equals("blackjack")) {
                         checkVanillaCards(machine);
+                        // Force a dealer draw as well as a hole-card reveal, independent of shuffle.
+                        var blackjack = (dev.casino3d.game.blackjack.BlackjackRound) round;
+                        for (int attempt = 0; !round.active() && attempt < 100; attempt++)
+                            blackjack.start(System.currentTimeMillis());
+                        require(round.active(), "Could not start Blackjack probe hand");
+                        var dealerHand = (List<Integer>) field(round, "dealer");
+                        dealerHand.clear(); dealerHand.addAll(List.of(1, 2));
+                        var playerHand = (List<Integer>) field(round, "player");
+                        playerHand.clear(); playerHand.addAll(List.of(9, 6));
+                        var deck = (List<Integer>) field(round, "deck");
+                        int next = (int) field(round, "next");
+                        deck.set(next, 7); deck.set(next + 1, 6);
+                        var refresh = machine.getClass().getDeclaredMethod("refresh");
+                        refresh.setAccessible(true); refresh.invoke(machine);
+                        for (int frame = 0; frame < 10; frame++) ((PracticeMachine<?>) machine).tick();
                         if (round.active()) {
-                            var cards = (List<?>) field(machine, "cards");
+                            var cards = blackjackCards(machine);
+                            var hole = (ItemDisplay) cards.get(1);
+                            var playerCards = List.copyOf(cards.subList(2, cards.size()));
+                            var playerPositions = playerCards.stream().map(ItemDisplay.class::cast)
+                                    .map(Entity::getLocation).toList();
                             require(VanillaGeometry.name(((ItemDisplay) cards.get(1)).getItemStack()).equals("card_52"),
                                     "Dealer hole card is not hidden");
                             Thread.sleep(170);
@@ -185,23 +217,41 @@ public final class CasinoVanillaProbe extends JavaPlugin {
                                     .filter(entry -> entry.getValue().equals("stand"))
                                     .findFirst().orElseThrow();
                             click(manager, player, (ItemDisplay) stand.getKey(), game);
+                            cards = blackjackCards(machine);
                             require(!VanillaGeometry.name(((ItemDisplay) cards.get(1)).getItemStack()).equals("card_52"),
                                     "Dealer hole card did not turn face up");
+                            var slides = (Map<?, ?>) field(machine, "slides");
+                            require(!slides.containsKey(hole), "Hole-card reveal restarted the dealing animation");
+                            require(cards.subList(blackjack.dealer().size(), cards.size()).equals(playerCards),
+                                    "Dealer draw reused player card entities");
+                            for (int frame = 0; frame < 10; frame++) {
+                                ((PracticeMachine<?>) machine).tick();
+                                for (int i = 0; i < playerCards.size(); i++)
+                                    require(((ItemDisplay) playerCards.get(i)).getLocation().distanceSquared(playerPositions.get(i)) < 1e-12,
+                                            "Dealer reveal moved a player card");
+                            }
                             getLogger().info("CASINO_VANILLA_CARD_PASS dealt=" + cards.size()
                                     + " hole_hidden_then_revealed=true");
                         }
                     }
-                    for (int frame = 1; frame <= (game.equals("hilo") ? 80 : 10); frame++) {
+                    for (int frame = 1; frame <= 80; frame++) {
                         ((PracticeMachine<?>) machine).tick();
                         if (game.equals("hilo") && List.of(1,10,14,20,28,40,42,50,56,62,70,80).contains(frame))
                             writePreview(machine, "hilo-motion/" + String.format("%02d",frame));
                     }
                     if (game.equals("blackjack")) {
-                        var dealt = (List<ItemDisplay>) field(machine, "cards");
+                        var dealt = blackjackCards(machine);
                         dealt.get(0).setItemStack(ModelItems.resolve("3dcasino:card_47", true));
                         ((PracticeMachine<?>) machine).tick();
                         writePreview(machine, "blackjack-dealt");
                     }
+                    checkVisuals(machine, game);
+                    if (game.equals("keno")) {
+                        for (var gem : (List<ItemDisplay>) field(machine, "gems"))
+                            require(gem.getTeleportDuration() == 0 && gem.getInterpolationDuration() == 0,
+                                    "Keno result gem can fly from its previous hidden position");
+                    }
+                    if (game.equals("penguin_cross")) checkZeroScale(machine);
                     checkSettings(casino, machine, player);
                     var previousParts = new ArrayList<>((List<Entity>) field(machine, "parts"));
                     manager.command(player, new String[] {"remove", game});
@@ -422,9 +472,16 @@ public final class CasinoVanillaProbe extends JavaPlugin {
         }
         for (Object group : (List<?>) field(machine, "vanillaDisplays")) {
             var carrier = (ItemDisplay) field(group, "carrier");
+            require(Boolean.FALSE.equals(spawnVisibility.get(carrier.getUniqueId())),
+                    "Vanilla placeholder was visible at spawn: " + game);
             var parent = VanillaGeometry.matrix(carrier.getTransformation());
             for (Object child : (List<?>) field(group, "children")) {
                 var display = (Display) field(child, "display");
+                var initial = spawnPoses.get(display.getUniqueId());
+                require(initial != null && !initial.getScale().equals(new org.joml.Vector3f(1)),
+                        "Vanilla child spawned at default pose: " + game);
+                require(spawnDurations.get(display.getUniqueId()) == 0,
+                        "Vanilla child interpolates from default pose: " + game);
                 var expected = new org.joml.Matrix4f(parent).mul((org.joml.Matrix4f) field(child, "local"));
                 var pose = display.getTransformation();
                 var actual = new org.joml.Matrix4f().translation(pose.getTranslation())
@@ -441,7 +498,7 @@ public final class CasinoVanillaProbe extends JavaPlugin {
     }
 
     private void checkVanillaCards(Object machine) throws Exception {
-        var cards = (List<?>) field(machine, "cards");
+        var cards = blackjackCards(machine);
         require(cards.size() >= 4, "Blackjack did not deal vanilla cards");
         var parts = (List<?>) field(machine, "parts");
         require(cards.stream().map(ItemDisplay.class::cast)
@@ -451,6 +508,35 @@ public final class CasinoVanillaProbe extends JavaPlugin {
                 .map(BlockDisplay.class::cast)
                 .filter(display -> display.getBlock().getMaterial() == Material.WHITE_CONCRETE)
                 .count() >= 4, "Blackjack card bases missing");
+    }
+
+    private List<ItemDisplay> blackjackCards(Object machine) throws Exception {
+        var cards = new ArrayList<ItemDisplay>((List<ItemDisplay>) field(machine, "dealerCards"));
+        cards.addAll((List<ItemDisplay>) field(machine, "playerCards"));
+        return cards;
+    }
+
+    private void checkZeroScale(Object machine) throws Exception {
+        var carrier = (ItemDisplay) ((List<?>) field(machine, "figures")).getFirst();
+        var group = ((List<?>) field(machine, "vanillaDisplays")).stream().filter(value -> {
+            try { return field(value, "carrier") == carrier; }
+            catch (Exception e) { throw new RuntimeException(e); }
+        }).findFirst().orElseThrow();
+        var saved = carrier.getTransformation();
+        var hidden = carrier.getTransformation();
+        hidden.getScale().zero();
+        carrier.setTransformation(hidden);
+        var sync = group.getClass().getDeclaredMethod("sync");
+        sync.setAccessible(true); sync.invoke(group);
+        for (var child : (List<?>) field(group, "children")) {
+            var pose = ((Display) field(child, "display")).getTransformation();
+            require(pose.getScale().isFinite() && pose.getTranslation().isFinite()
+                    && pose.getLeftRotation().isFinite() && pose.getRightRotation().isFinite(),
+                    "Hiding a model produced non-finite geometry");
+        }
+        carrier.setTransformation(saved);
+        sync.invoke(group);
+        checkVisuals(machine, "penguin_cross");
     }
 
     private void writePreview(Object machine, String game) throws Exception {

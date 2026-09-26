@@ -43,8 +43,13 @@ public final class KenoMachine extends AnimatedMachine<KenoRound> {
                         new Vector3f(.32f), new Quaternionf()));
             }
         }
-        for (int i = 0; i < 10; i++)
-            gems.add(item(new ItemStack(Material.EMERALD), 0, .93, 0, 0, 0));
+        for (int i = 0; i < 10; i++) {
+            var gem = item(new ItemStack(Material.EMERALD), 0, .93, 0, 0, 0);
+            // Reveal at the drawn tile, without traveling from the previous hidden position.
+            gem.setTeleportDuration(0);
+            gem.setInterpolationDuration(0);
+            gems.add(gem);
+        }
     }
 
     @Override

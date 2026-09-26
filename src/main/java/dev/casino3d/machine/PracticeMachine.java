@@ -79,16 +79,16 @@ public abstract class PracticeMachine<R extends PracticeRound> {
                             .spawn(
                                     worldAt(transform.x(), transform.y(), transform.z()),
                                     ItemDisplay.class,
-                                    this::common);
-            display.setItemStack(ModelItems.resolve(part.model(), vanillaAppearance()));
-            display.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
-            display.setTransformation(
-                    new Transformation(
-                            new Vector3f(),
-                            transform.rotation(),
-                            new Vector3f(
-                                    (float) (4 * transform.scale() * scale())),
-                            new Quaternionf().rotateY((float) Math.PI)));
+                                    entity -> {
+                                        common(entity);
+                                        initializeItem(entity, ModelItems.resolve(part.model(), vanillaAppearance()));
+                                        entity.setTransformation(
+                                                new Transformation(
+                                                        new Vector3f(),
+                                                        transform.rotation(),
+                                                        new Vector3f((float) (4 * transform.scale() * scale())),
+                                                        new Quaternionf().rotateY((float) Math.PI)));
+                                    });
             attachVanilla(display);
         }
         var b = settingsBounds();
@@ -216,6 +216,12 @@ public abstract class PracticeMachine<R extends PracticeRound> {
         return plugin.vanillaAppearance();
     }
 
+    private void initializeItem(ItemDisplay display, ItemStack stack) {
+        display.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
+        display.setItemStack(stack);
+        display.setVisibleByDefault(!vanillaAppearance() || VanillaGeometry.name(stack) == null);
+    }
+
     protected final ItemDisplay item(
             ItemStack stack, double x, double y, double z, double size, double pitch) {
         var result = origin.getWorld()
@@ -224,8 +230,7 @@ public abstract class PracticeMachine<R extends PracticeRound> {
                         ItemDisplay.class,
                         display -> {
                             common(display);
-                            display.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
-                            display.setItemStack(stack);
+                            initializeItem(display, stack);
                             pose(display, MachineGeometry.itemPose(size, pitch, 0));
                             display.setInterpolationDuration(1);
                         });
@@ -246,8 +251,7 @@ public abstract class PracticeMachine<R extends PracticeRound> {
                         ItemDisplay.class,
                         entity -> {
                             common(entity);
-                            entity.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
-                            entity.setItemStack(model(name));
+                            initializeItem(entity, model(name));
                             entity.setTransformation(
                                     new Transformation(
                                             new Vector3f(),
@@ -347,9 +351,7 @@ public abstract class PracticeMachine<R extends PracticeRound> {
                                 ItemDisplay.class,
                                 display -> {
                                     common(display);
-                                    display.setItemDisplayTransform(
-                                            ItemDisplay.ItemDisplayTransform.NONE);
-                                    display.setItemStack(model(modelName));
+                                    initializeItem(display, model(modelName));
                                     display.setTransformation(buttonPose(button, 0));
                                     display.setInterpolationDuration(1);
                                 });

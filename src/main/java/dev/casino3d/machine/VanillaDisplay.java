@@ -45,6 +45,8 @@ final class VanillaDisplay {
             remove();
             return false;
         }
+        var matrix = VanillaGeometry.matrix(carrier.getTransformation());
+        var nextLocation = carrier.getLocation();
         String nextName = VanillaGeometry.name(carrier.getItemStack());
         if (!Objects.equals(name, nextName)) {
             var model = VanillaGeometry.get(nextName);
@@ -59,12 +61,13 @@ final class VanillaDisplay {
                 remove();
                 name = nextName;
                 carrier.setVisibleByDefault(model == null);
-                if (model != null) build(model);
-                previous = null;
+                if (model != null) build(model, matrix);
+                previous = matrix;
+                location = nextLocation;
+                glowing = carrier.isGlowing();
+                glowColor = carrier.getGlowColorOverride();
             }
         }
-        var matrix = VanillaGeometry.matrix(carrier.getTransformation());
-        var nextLocation = carrier.getLocation();
         boolean moved = !nextLocation.equals(location);
         boolean transformed = !matrix.equals(previous);
         boolean glowChanged = previous == null || glowing != carrier.isGlowing()
@@ -72,6 +75,7 @@ final class VanillaDisplay {
         for (var part : children) {
             if (moved) part.display.teleport(nextLocation);
             if (transformed) {
+                part.display.setInterpolationDuration(1);
                 applyPose(part.display, new Matrix4f(matrix).mul(part.local));
                 part.display.setInterpolationDelay(0);
             }
@@ -103,38 +107,47 @@ final class VanillaDisplay {
     private static void applyPose(Display display, Matrix4f matrix) {
         // The server's SVD has an absolute epsilon: tiny stretched facets lose
         // shear. Decompose at a larger scale, then send the corrected components.
-        float factor = 64f / matrix.getScale(new Vector3f()).length();
+        float length = matrix.getScale(new Vector3f()).length();
+        float factor = length == 0 ? 1 : 64f / length;
         display.setTransformationMatrix(new Matrix4f(matrix).scale(factor));
         var pose = display.getTransformation();
         pose.getScale().div(factor);
         display.setTransformation(pose);
     }
 
-    private void build(VanillaGeometry model) {
+    private void initialize(Display display, Matrix4f pose) {
+        register.accept(display);
+        // Set the complete pose before the spawn packet; a new part has no prior pose to animate.
+        applyPose(display, pose);
+        display.setInterpolationDuration(0);
+        display.setGlowing(carrier.isGlowing());
+        display.setGlowColorOverride(carrier.getGlowColorOverride());
+    }
+
+    private void build(VanillaGeometry model, Matrix4f parent) {
         for (var box : model.boxes()) {
+            var local = VanillaGeometry.boxMatrix(box);
             var display = carrier.getWorld().spawn(carrier.getLocation(), BlockDisplay.class, d -> {
-                register.accept(d);
+                initialize(d, new Matrix4f(parent).mul(local));
                 d.setBlock(Material.valueOf(box.material()).createBlockData());
-                d.setInterpolationDuration(1);
             });
-            children.add(new Part(display, VanillaGeometry.boxMatrix(box)));
+            children.add(new Part(display, local));
         }
         for (int index = 0; index < model.labels().size(); index++) {
             var label = model.labels().get(index);
             String translated = dev.casino3d.Language.modelLabel(name, index, label.text());
+            float size = Math.min(label.height() / .2f, label.width() / (Math.max(1, translated.length()) * .15f));
+            float[] p = label.position();
+            var local = new Matrix4f().translation(p[0], p[1] - .125f*size, p[2]).scale(size);
             var display = carrier.getWorld().spawn(carrier.getLocation(), TextDisplay.class, d -> {
-                register.accept(d);
+                initialize(d, new Matrix4f(parent).mul(local));
                 d.setBillboard(Display.Billboard.FIXED);
                 d.setDefaultBackground(false);
                 d.setBackgroundColor(Color.fromARGB(0));
                 d.setLineWidth(1000);
                 d.text(Component.text(translated, TextColor.color(label.color() == null ? 0xf6edcf : label.color())));
-                d.setInterpolationDuration(1);
             });
-            float size = Math.min(label.height() / .2f, label.width() / (Math.max(1, translated.length()) * .15f));
-            float[] p = label.position();
-            children.add(new Part(display, new Matrix4f().translation(p[0], p[1] - .125f*size, p[2])
-                    .scale(size)));
+            children.add(new Part(display, local));
         }
     }
 
