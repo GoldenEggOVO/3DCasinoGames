@@ -1,6 +1,13 @@
-# Verification — 0.6.0-beta.1
+# Verification — 0.6.0-beta.2
 
-## Published beta results
+## Beta.2 release validation
+
+- Fresh release build: 159 Java tests and 20 Python tests passed, with no skipped Java tests.
+- The exact `3dcasino-0.6.0-beta.2.jar` passed all three clean Purpur phases: all 12 machines, feedback, menu toggles, targeting, saved-machine restoration and deletion across restarts.
+- Local evidence: `reports/vanilla-runtime/run-20260927T091003258657Z/result.json`, including the tested artifact digest.
+- Client visuals, sound mixing and high-density multiplayer performance remain separate in-game acceptance checks.
+
+## Historical beta.1 results
 
 | Check | Result |
 | --- | --- |
@@ -16,7 +23,7 @@
 
 Release JAR SHA-256: `6f869119e091e117ea7f5b5c2cd3eaf4d44d8388cde091655ac28b5e2d1f1899`.
 
-The published beta asset predates the current source cleanup. Its resource-pack checks below are historical release evidence, not current installation requirements.
+The beta.1 asset predates the current source cleanup. Its resource-pack checks below are historical release evidence, not current installation requirements.
 
 The isolated server contains only the plugin and disposable test probe. CraftEngine, Vault, AuthMe, ServerGames, ServerBoards, ServerMenu and KaMenu are absent. It binds only to loopback and uses a copied test template, not a production server.
 
@@ -59,7 +66,7 @@ These are Blender renders of actual server Display snapshots. The default label,
 
 Final runtime evidence: `reports/vanilla-runtime/run-20260927T000743723959Z/result.json`; tested JAR hash matches the local delivery. All 1,857 targeting samples passed. Preview images use the preceding successful run with identical runtime code.
 
-Local detailed evidence is retained under `reports/foundation/` and `reports/vanilla-runtime/` (ignored by Git). The newer source/local JAR is not a new published Release. See [alignment contracts](tabletop-alignment.md).
+Local detailed evidence is retained under `reports/foundation/` and `reports/vanilla-runtime/` (ignored by Git). These foundation changes are included in beta.2. See [alignment contracts](tabletop-alignment.md).
 
 ## Current source: machine feedback and wheel refinement
 
@@ -73,7 +80,7 @@ Local detailed evidence is retained under `reports/foundation/` and `reports/van
 
 The exact tested JAR is recorded by SHA-256 in local `reports/vanilla-runtime/run-20260927T020642026495Z/result.json`. The probe uses only Casino and its disposable test plugin. Runtime logs, surface audits and individual renders remain under ignored local `reports/feedback/` and `reports/vanilla-runtime/`.
 
-All-machine renders were inspected for screen/control occlusion. Blackjack uses its rear readout; Mines, Penguin Cross and Keno have supported table readouts; Plinko's readout is beside PLAY. See [feedback semantics and wheel previews](machine-feedback.md). Screens add five to seven display entities per machine. This source build is newer than the published beta Release.
+All-machine renders were inspected for screen/control occlusion. Blackjack uses its rear readout; Mines, Penguin Cross and Keno have supported table readouts; Plinko's readout is beside PLAY. See [feedback semantics and wheel previews](machine-feedback.md). Screens add five to seven display entities per machine. These feedback changes are included in beta.2.
 
 ## Current source: Blackjack and Duck Race layout correction
 

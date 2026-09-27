@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.6.0-beta.2
 
 - Raise Blackjack's profit readout above its original score display. Shorten Duck Race by two blocks and mount its centered readout above the middle finish houses; preserve controls, race duration and rules.
 - Add physical bet/return/net readouts and per-machine session totals to all 12 practice machines. Delay results until their visible reveal; retain doubled Blackjack stakes, early Crash cashouts and independent Plinko settlements.

@@ -18,7 +18,7 @@
 
 Requires **Paper / Purpur 26.2 and Java 25**. Install one JAR; no CraftEngine, resource pack or client mod is required.
 
-1. Download a JAR from [Releases](https://github.com/GoldenEggOVO/3DCasinoGames/releases). To use changes made after `0.6.0-beta.1`, build the current source until a newer release is published.
+1. Download `3dcasino-0.6.0-beta.2.jar` from [the Beta release](https://github.com/GoldenEggOVO/3DCasinoGames/releases/tag/v0.6.0-beta.2).
 2. Stop the server, back up plugin data and worlds, and place the JAR in `plugins/`. Keep only one version installed.
 3. Start the server and use `/3dcasino` or `/3dcasino create blackjack`.
 
