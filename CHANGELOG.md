@@ -1,5 +1,10 @@
 # Changelog
 
+## Compatibility verification — 2026-09-27
+
+- Verify the existing beta.2 JAR on Paper 26.3 build 42 and Purpur 26.3 build 2642, with a fresh Purpur 26.2 regression run. No plugin binary change is required; retain the 26.2 compile/API floor so one JAR supports both versions.
+- Extend the runtime probe with explicit server version/JAR selection, runtime-version assertions and server artifact digests. Document the experimental status of the tested 26.3 server builds.
+
 ## 0.6.0-beta.2
 
 - Raise Blackjack's profit readout above its original score display. Shorten Duck Race by two blocks and mount its centered readout above the middle finish houses; preserve controls, race duration and rules.

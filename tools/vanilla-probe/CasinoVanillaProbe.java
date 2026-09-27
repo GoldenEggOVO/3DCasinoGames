@@ -68,6 +68,11 @@ public final class CasinoVanillaProbe extends JavaPlugin {
 
     private void check() {
         try {
+            String expectedVersion = System.getProperty("casino.probe.expected-version", "26.2");
+            require(Bukkit.getMinecraftVersion().equals(expectedVersion),
+                    "Wrong server version: " + Bukkit.getMinecraftVersion());
+            getLogger().info("CASINO_VANILLA_VERSION_PASS minecraft=" + Bukkit.getMinecraftVersion()
+                    + " server=" + Bukkit.getVersion());
             var casino = (CasinoPlugin) Bukkit.getPluginManager().getPlugin("3dcasino");
             require(casino != null && casino.isEnabled(), "Casino disabled");
             require(VanillaGeometry.name(ModelItems.resolve("3dcasino:card_47")) != null,

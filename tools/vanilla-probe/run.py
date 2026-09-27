@@ -1,4 +1,4 @@
-"""Run three clean Purpur phases with only Casino and a vanilla-display probe."""
+"""Run three clean Paper/Purpur phases with only Casino and a vanilla-display probe."""
 import argparse
 from datetime import datetime, timezone
 import hashlib
@@ -21,7 +21,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--port', type=int, default=25597)
     parser.add_argument('--server-template', type=Path, required=True,
-                        help='Prepared Purpur 26.2 folder with accepted EULA, libraries, cache and versions')
+                        help='Prepared server folder with accepted EULA, libraries, cache and versions')
+    parser.add_argument('--server-version', choices=('26.2', '26.3'), default='26.2')
+    parser.add_argument('--server-jar', default='purpur-2622.jar',
+                        help='Bootstrap JAR filename in the template folder')
     parser.add_argument('--java-home', type=Path, default=os.environ.get('JAVA_HOME'))
     args = parser.parse_args()
     if not args.java_home:
@@ -37,7 +40,10 @@ def main():
     plugin = CASINO / f'target/3dcasino-{version}.jar'
     classes = CASINO / 'target/casino3d-probe-classes'
     classes.mkdir(parents=True, exist_ok=True)
-    jars = [plugin, base / 'versions/26.2/purpur-26.2.jar',
+    server_jars = sorted((base / 'versions' / args.server_version).glob('*.jar'))
+    if len(server_jars) != 1:
+        parser.error(f'Expected one patched server JAR for {args.server_version}, found {server_jars}')
+    jars = [plugin, *server_jars,
             *sorted((base / 'libraries').rglob('*.jar'))]
     subprocess.run([str(jdk / ('javac' + suffix)), '-encoding', 'UTF-8', '-cp',
                     os.pathsep.join(map(str, jars)), '-d', str(classes),
@@ -52,7 +58,7 @@ def main():
     run = CASINO / 'reports/vanilla-runtime' / ('run-' + datetime.now(timezone.utc)
                                                 .strftime('%Y%m%dT%H%M%S%fZ'))
     run.mkdir(parents=True)
-    for name in ('purpur-2622.jar', 'eula.txt'):
+    for name in (args.server_jar, 'eula.txt'):
         shutil.copy2(base / name, run / name)
     for name in ('libraries', 'cache', 'versions'):
         shutil.copytree(base / name, run / name)
@@ -69,6 +75,8 @@ def main():
         'view-distance=2\nsimulation-distance=2\nenable-rcon=false\n'
         'enable-query=false\nmax-players=1\n', encoding='utf-8')
     result = {'runtime': str(run), 'tested_jar_sha256': hashlib.sha256(plugin.read_bytes()).hexdigest(),
+              'server_version': args.server_version, 'server_jar': args.server_jar,
+              'server_jar_sha256': hashlib.sha256((base / args.server_jar).read_bytes()).hexdigest(),
               'plugins': sorted(path.name for path in plugins.glob('*.jar')), 'phases': []}
     for phase, marker in enumerate(MARKERS, 1):
         if phase == 2:
@@ -83,7 +91,8 @@ def main():
             process = subprocess.run([str(jdk / ('java' + suffix)), '-Xms512M', '-Xmx2G',
                                       '-Dstdout.encoding=UTF-8', '-Dstderr.encoding=UTF-8',
                                       '-Dterminal.jline=false', '-Dterminal.ansi=false',
-                                      '-jar', 'purpur-2622.jar', 'nogui'], cwd=run,
+                                      f'-Dcasino.probe.expected-version={args.server_version}',
+                                      '-jar', args.server_jar, 'nogui'], cwd=run,
                                      stdin=subprocess.DEVNULL, stdout=output,
                                      stderr=subprocess.STDOUT, timeout=180, check=False)
         log = log_path.read_text(encoding='utf-8', errors='replace')

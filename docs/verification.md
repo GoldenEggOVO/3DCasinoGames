@@ -1,5 +1,19 @@
 # Verification — 0.6.0-beta.2
 
+## Cross-version compatibility
+
+The unchanged published beta.2 JAR was tested on all three servers below on 2026-09-27, using Java 25. Every run used plugin digest `5bcbfc4e68c5d2ca98687e20b106406be03cccd5e89aea0ef4f3a2c54b60a77a`.
+
+| Server | Build | Three phases | Local evidence directory under `reports/vanilla-runtime/` |
+| --- | --- | --- | --- |
+| Purpur 26.2 | 2622 | Passed | `run-20260927T092857122591Z` |
+| Purpur 26.3 | 2642 (experimental) | Passed | `run-20260927T092700249294Z` |
+| Paper 26.3 | 42 (alpha) | Passed | `run-20260927T092832854840Z` |
+
+Each run checks the actual Minecraft version, all 12 machines, 1,857 targeting samples in its first phase, feedback, Dialog construction/calls, command completion, language overrides, menus on/off, persistence and deletion across restarts. Each runtime contains only Casino and the disposable probe. The Python suite also passed all 20 tests after the runner changes.
+
+The plugin keeps its Paper 26.2 compilation dependency and `api-version: '26.2'` minimum. There is no separate 26.3 artifact or version-specific gameplay branch. See [probe commands](../tools/vanilla-probe/README.md) to reproduce the checks. 26.3 upstream builds are still experimental; real-client rendering, sound and interaction acceptance remain separate from these server-side checks.
+
 ## Beta.2 release validation
 
 - Fresh release build: 159 Java tests and 20 Python tests passed, with no skipped Java tests.
