@@ -74,9 +74,7 @@ The current source build passes 140 Java tests and 18 Python tests. The source a
 - Restore scan sample (30 scans after 10 warmups): 10 / 100 / 1,000 / 10,000 records took about 0.012 / 0.022 / 0.100 / 0.191 ms per scan. Records referenced a missing world. This measures skip/lookup overhead only, not loaded-world entity creation or chunk-load latency. No extra restore index was introduced on this limited evidence.
 - Saved model validation now also covers the JSON restoration path; invalid references, inverted bounds and excessive rotation fail without rewriting the source file. Payment behavior and placement schema remain unchanged.
 
-![Runtime label previews](images/foundation-labels.png)
-
-These are Blender renders of actual server Display snapshots. The default label, oversized English/Chinese labels and Blackjack were visually inspected. Long labels show ellipses inside the existing button; geometry and button positions are unchanged. Representative materials and a substitute font are used, so this does not validate Minecraft font rasterization, bold rendering or final client interaction.
+Local Blender renders of actual server Display snapshots were inspected for the default label, oversized English/Chinese labels and Blackjack. Those historical previews are no longer included in the repository. Long labels showed ellipses inside the existing button; geometry and button positions were unchanged. Representative materials and a substitute font were used, so this did not validate Minecraft font rasterization, bold rendering or final client interaction.
 
 Final runtime evidence: `reports/vanilla-runtime/run-20260927T000743723959Z/result.json`; tested JAR hash matches the local delivery. All 1,857 targeting samples passed. Preview images use the preceding successful run with identical runtime code.
 
@@ -110,8 +108,6 @@ All 30 runtime snapshots passed the coplanar surface audit. The tested JAR hash
 is recorded in `reports/vanilla-runtime/run-20260927T041836894521Z/result.json`.
 The changed machines were re-rendered and checked for screen occlusion and
 support intersections; Minecraft client acceptance remains pending.
-
-![Updated screen placement](images/layout-clearance.png)
 
 ## Display counts
 

@@ -79,9 +79,7 @@ pointer and four matching choice buttons. Both retain their original 20-sector
 order and probabilities, and include rear supports, axle and vent details.
 `python tools/refine_wheels.py` regenerates only the wheel-specific geometry.
 
-![Wheel front and rear views](images/feedback-wheels.png)
-
-These previews render actual Display snapshots exported from the local Purpur
+The [README showcase](../README.md#machine-showcase) renders actual Display snapshots exported from the local Purpur
 probe. Blocks use representative colors and text uses a substitute font; item
 sprites are approximate. They are not Minecraft screenshots. Client rendering,
 sound mixing and interaction feel still require in-game acceptance.
