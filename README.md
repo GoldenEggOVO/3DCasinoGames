@@ -16,7 +16,7 @@
 
 ## Install
 
-Requires **Paper / Purpur 26.2 or 26.3 and Java 25**. The same JAR supports both Minecraft versions; no CraftEngine, resource pack or client mod is required. The tested 26.3 server builds are experimental; see [compatibility verification](docs/verification.md#cross-version-compatibility).
+Requires **Paper / Purpur 26.2 or 26.3 and Java 25**. The same JAR supports both Minecraft versions; no resource pack or client mod is required. The tested 26.3 server builds are experimental; see [compatibility verification](docs/verification.md#cross-version-compatibility).
 
 1. Download `3dcasino-0.6.0-beta.2.jar` from [the Beta release](https://github.com/GoldenEggOVO/3DCasinoGames/releases/tag/v0.6.0-beta.2).
 2. Stop the server, back up plugin data and worlds, and place the JAR in `plugins/`. Keep only one version installed.
@@ -26,7 +26,7 @@ Defaults are `menu-enabled: true` and `language: en_US`. Editable language files
 
 **Breaking upgrade:** 0.6 uses a new data directory and namespace. Old commands, permissions, Java packages and automatic migration adapters are not provided. Read [installation and upgrade](docs/installation.md) before replacing an earlier version.
 
-Vault and AuthMe are optional. ServerGames, ServerBoards, ServerMenu and KaMenu are not required.
+Vault and AuthMe are optional integrations.
 
 ## Features
 
@@ -51,7 +51,7 @@ All 12 physical machines are free practice: they do not withdraw money or award 
 | `/3dcasino reload-language` | Validate and apply language changes without restarting |
 | `/3dcasino reload-models` | Validate and reload machine definitions for new placements |
 
-Tab completion filters games, matching skins and your own machines. `3dcasino.use` defaults to everyone; `3dcasino.machine` defaults to operators. `3dcasino.admin` defaults to operators and permits language reload. Shift + right-click opens machine settings. This plugin does not bind Shift + F.
+Tab completion filters games, matching skins and your own machines. `3dcasino.use` defaults to everyone; `3dcasino.machine` defaults to operators. `3dcasino.admin` defaults to operators and permits language reload. Shift + right-click opens machine settings.
 
 Set `menu-enabled: false` and restart to disable Dialog. Commands, physical buttons, persistence and settlement services continue working.
 

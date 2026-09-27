@@ -16,7 +16,7 @@
 
 ## 安装
 
-需要 **Paper / Purpur 26.2 或 26.3 和 Java 25**。同一个 JAR 支持这两个 Minecraft 版本，无需 CraftEngine、资源包或客户端模组。已测试的 26.3 服务端构建仍为实验版，详见[兼容性验证](docs/verification.md#cross-version-compatibility)。
+需要 **Paper / Purpur 26.2 或 26.3 和 Java 25**。同一个 JAR 支持这两个 Minecraft 版本，无需资源包或客户端模组。已测试的 26.3 服务端构建仍为实验版，详见[兼容性验证](docs/verification.md#cross-version-compatibility)。
 
 1. 从 [Beta 发布页](https://github.com/GoldenEggOVO/3DCasinoGames/releases/tag/v0.6.0-beta.2) 下载 `3dcasino-0.6.0-beta.2.jar`。
 2. 停服并备份插件数据和世界，将 JAR 放入 `plugins/`，同一插件只保留一个版本。
@@ -26,7 +26,7 @@
 
 **不兼容升级：** 0.6 使用新的数据目录和命名空间，不提供旧命令、旧权限、旧 Java 包或自动迁移适配。替换旧版本前，请阅读[安装与升级说明](docs/installation.md)。
 
-Vault 和 AuthMe 为可选集成，不需要 ServerGames、ServerBoards、ServerMenu 或 KaMenu。
+Vault 和 AuthMe 为可选集成。
 
 ## 功能
 
@@ -51,7 +51,7 @@ Vault 和 AuthMe 为可选集成，不需要 ServerGames、ServerBoards、Server
 | `/3dcasino reload-language` | 校验并应用语言修改，无需重启 |
 | `/3dcasino reload-models` | 校验并重载机器定义，新创建的机器使用新定义 |
 
-Tab 补全会筛选游戏、对应皮肤和自己的机器。`3dcasino.use` 默认允许所有玩家，`3dcasino.machine` 默认仅允许 OP。`3dcasino.admin` 默认仅允许 OP，用于语言重载。Shift＋右键机器可打开设置。本插件不绑定 Shift＋F。
+Tab 补全会筛选游戏、对应皮肤和自己的机器。`3dcasino.use` 默认允许所有玩家，`3dcasino.machine` 默认仅允许 OP。`3dcasino.admin` 默认仅允许 OP，用于语言重载。Shift＋右键机器可打开设置。
 
 设置 `menu-enabled: false` 并重启可关闭 Dialog，命令、实体按钮、保存恢复和结算服务继续运行。
 
