@@ -1,10 +1,16 @@
 # Vanilla machine previews
 
+## Current source: feedback and wheels
+
+The README gallery now shows all 12 machines with physical feedback screens. The new wheel housings, pointers, rear vents and screen supports are shown in [front/rear previews](machine-feedback.md#wheel-models-and-previews). These current-source images use representative colors for blocks and simplified item sprites. Client textures, fonts and audio need in-game acceptance.
+
+## Published beta preview
+
 ![0.6.0-beta.1 changes](images/vanilla-machines.png)
 
-These are Blender renders of actual isolated-server Display snapshots. Most blocks use representative colors; Dragon Tower tile blocks use local Minecraft 26.2 textures. This is not a Minecraft screenshot. The final JAR has the same model geometry as the preview capture.
+These are Blender renders of actual isolated-server Display snapshots. Most blocks use representative colors; Dragon Tower tile blocks use local Minecraft 26.2 textures. This is not a Minecraft screenshot. These older captures document the published beta geometry; the source gallery above includes later changes.
 
-## This release
+### Published beta changes
 
 - Dragon Tower: hidden tiles are single gray terracotta blocks; revealed tiles are emerald/TNT blocks. The red upright body and buttons remain. Gray terracotta naturally has a warm brown-gray appearance in Minecraft.
 - Hilo: two rear posts and a crossbar connect the panel to the table. The preview shows the rear so the support is visible.

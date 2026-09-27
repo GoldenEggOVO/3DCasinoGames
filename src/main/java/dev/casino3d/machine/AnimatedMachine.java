@@ -72,19 +72,15 @@ public abstract class AnimatedMachine<R extends PracticeRound> extends PracticeM
             animationEnd = 0;
             refresh();
             animationFinished();
-            origin.getWorld()
-                    .playSound(
-                            origin,
-                            round.payout() > 0
-                                    ? Sound.BLOCK_AMETHYST_BLOCK_CHIME
-                                    : Sound.BLOCK_NOTE_BLOCK_BASS,
-                            .35f,
-                            round.payout() > 0 ? 1.35f : .8f);
+            sound(Sound.BLOCK_WOODEN_BUTTON_CLICK_ON, .18f, .7f);
+            if (round.active()) sound(Sound.BLOCK_NOTE_BLOCK_PLING, .22f, 1.2f);
             return;
         }
         double progress = (age - animationStart) / (double) (animationEnd - animationStart);
         animateFrame(progress, 1 - Math.pow(1 - progress, 3));
-        if (age % 12 == 0)
-            origin.getWorld().playSound(origin, Sound.BLOCK_NOTE_BLOCK_HAT, .15f, 1.5f);
+        movementSound(progress);
     }
+
+    /** Each game supplies a cue tied to its visible movement. */
+    protected void movementSound(double progress) {}
 }

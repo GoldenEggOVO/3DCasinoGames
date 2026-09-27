@@ -251,3 +251,16 @@
 "command.language-reloaded": "<green>Language reloaded. Reopen menus to see the new text."
 "command.language-failed": "<red>Language reload failed. Previous text remains active; check the console."
 "command.language-usage": "Usage: /3dcasino reload-language"
+
+# Physical practice feedback; amounts do not use an economy balance.
+"feedback.bet": "<gray>BET <white>{amount}"
+"feedback.return": "<gray>BET <white>{bet}  <gray>RETURN <white>{amount}"
+"feedback.ready": "<white>READY"
+"feedback.running": "<yellow>PLAYING…"
+"feedback.cashout": "<aqua>CASH OUT {amount}"
+"feedback.loss": "<red>{amount}"
+"feedback.even": "<gray>{amount}"
+"feedback.win": "<green>{amount}"
+"feedback.big_win": "<gold>{amount}"
+"feedback.session": "<gray>SESSION {amount}"
+"feedback.pending": "<gray>BALLS IN PLAY {count}"

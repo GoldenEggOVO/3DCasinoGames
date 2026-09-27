@@ -4,8 +4,6 @@ import dev.casino3d.MachineGeometry;
 import dev.casino3d.machine.*;
 import dev.casino3d.model.MachineDefinition;
 
-import net.kyori.adventure.text.Component;
-
 import org.bukkit.*;
 import org.bukkit.entity.*;
 import org.bukkit.inventory.ItemStack;
@@ -23,8 +21,7 @@ public final class SlotsMachine extends AnimatedMachine<SlotsRound> {
         Material.NETHER_STAR
     };
     final List<ItemDisplay> figures = new ArrayList<>();
-    TextDisplay slotPopup;
-    int popupUntil;
+    private int stoppedReels;
 
     public SlotsMachine(
             MachineManager manager, UUID owner, Location origin, MachineDefinition definition) {
@@ -44,7 +41,6 @@ public final class SlotsMachine extends AnimatedMachine<SlotsRound> {
                             .46,
                             .32,
                             0));
-        slotPopup = text(0, 1.82, .9, .75);
     }
 
     @Override
@@ -72,6 +68,10 @@ public final class SlotsMachine extends AnimatedMachine<SlotsRound> {
 
     @Override
     protected void animateFrame(double progress, double ease) {
+        int stopped = progress > .85 ? 3 : progress > .70 ? 2 : progress > .55 ? 1 : 0;
+        if (stopped > stoppedReels) sound(Sound.BLOCK_PISTON_CONTRACT, .2f, .9f + stopped * .15f);
+        stoppedReels = stopped;
+        if (stopped < 3 && age % 4 == 0) sound(Sound.BLOCK_NOTE_BLOCK_HAT, .10f, 1.5f);
         for (int i = 0; i < 9; i++) {
             boolean settled = progress > (.55 + (i % 3) * .15);
             if (age % 3 == 0 || settled)
@@ -87,32 +87,6 @@ public final class SlotsMachine extends AnimatedMachine<SlotsRound> {
 
     @Override
     protected void beforeAction(String action) {
-        if (action.equals("play")) {
-            slotPopup.text(Component.empty());
-            popupUntil = 0;
-        }
-    }
-
-    @Override
-    protected void idleTick() {
-        if (popupUntil > 0 && age >= popupUntil) {
-            slotPopup.text(Component.empty());
-            popupUntil = 0;
-        }
-    }
-
-    @Override
-    protected void animationFinished() {
-        slotPopup.text(
-                Component.text(
-                        "X"
-                                + java.math.BigDecimal.valueOf(round.payout())
-                                        .divide(
-                                                java.math.BigDecimal.valueOf(round.stake()),
-                                                3,
-                                                java.math.RoundingMode.HALF_UP)
-                                        .stripTrailingZeros()
-                                        .toPlainString()));
-        popupUntil = age + 35;
+        if (action.equals("play")) stoppedReels = 0;
     }
 }

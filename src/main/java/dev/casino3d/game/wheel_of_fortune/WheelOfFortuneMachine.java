@@ -30,10 +30,10 @@ public final class WheelOfFortuneMachine extends AnimatedMachine<WheelOfFortuneR
         body("showcase_wheel_of_fortune");
         button("play", "showcase_button_round_spin");
         disc = model("showcase_wheel_fortune", 0, 2, .25, 4);
-        model("showcase_pointer", 0, 2.93, .36, 4);
+        model("showcase_pointer_fortune", 0, 2.93, .36, 4);
         for (double value :
                 dev.casino3d.game.wheel_of_fortune.WheelOfFortuneRound.multipliers()) {
-            var label = text(0, 2, .30, .32);
+            var label = text(0, 2, .321, .25);
             translatedLabel(label, () -> value < 0 ? Language.component("fortune.again-label")
                     : Component.text(String.format(Locale.ROOT, "%sX", java.math.BigDecimal.valueOf(value)
                             .stripTrailingZeros().toPlainString())));
@@ -61,7 +61,10 @@ public final class WheelOfFortuneMachine extends AnimatedMachine<WheelOfFortuneR
 
     @Override
     protected void animateFrame(double progress, double ease) {
-        rotateDisc(spinFrom + (spinTo - spinFrom) * ease);
+        double angle = spinFrom + (spinTo - spinFrom) * ease;
+        if ((int) Math.floor(discAngle * 20 / (2 * Math.PI)) != (int) Math.floor(angle * 20 / (2 * Math.PI)))
+            sound(Sound.BLOCK_WOODEN_BUTTON_CLICK_ON, .25f, .95f + (float) (1 - progress) * .3f);
+        rotateDisc(angle);
     }
 
     void rotateDisc(double angle) {
@@ -76,7 +79,10 @@ public final class WheelOfFortuneMachine extends AnimatedMachine<WheelOfFortuneR
             double theta = 2 * Math.PI * (i + .5) / wheelLabels.size() - angle;
             wheelLabels
                     .get(i)
-                    .teleport(at(Math.sin(theta) * .70, 2 + Math.cos(theta) * .70 - .03, .30));
+                    .teleport(at(Math.sin(theta) * .64, 2 + Math.cos(theta) * .64 - .02, .321));
+            pose(wheelLabels.get(i), new org.bukkit.util.Transformation(new org.joml.Vector3f(),
+                    new org.joml.Quaternionf().rotateZ((float) -theta),
+                    new org.joml.Vector3f(.25f), new org.joml.Quaternionf()));
         }
     }
 
@@ -98,6 +104,7 @@ public final class WheelOfFortuneMachine extends AnimatedMachine<WheelOfFortuneR
     protected boolean repeatAnimation() {
         if (round.active()) {
             rotateDisc(spinTo);
+            sound(Sound.BLOCK_NOTE_BLOCK_BIT, .3f, 1.7f);
             round.replayFortune();
             return true;
         }

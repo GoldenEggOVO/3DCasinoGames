@@ -21,7 +21,6 @@ public final class MinesMachine extends PracticeMachine<MinesDemoRound> {
     private final Map<ItemDisplay, String> faces = new HashMap<>();
     private final Map<ItemDisplay, Flip> flips = new HashMap<>();
     private TextDisplay setting;
-    private boolean wasActive;
     private final boolean refined;
     private static final ModelTransform CONSOLE = new ModelTransform(0, .67, 1.96, -35, 0, 0, 1);
 
@@ -69,6 +68,9 @@ public final class MinesMachine extends PracticeMachine<MinesDemoRound> {
     }
 
     @Override
+    protected Long cashoutAmount() { return round.active() ? (round.mines() != null && round.mines().safeCount() > 0 ? round.mines().payout() : null) : null; }
+
+    @Override
     protected boolean available(String action) {
         return switch (action) {
             case "minus" -> !round.active() && round.mineCount() > 1;
@@ -110,17 +112,13 @@ public final class MinesMachine extends PracticeMachine<MinesDemoRound> {
             if (!face.equals(faces.put(cell, face))) flips.put(cell, new Flip(face, age));
         }
         setting.text(Language.component("mines.count", "count", round.mineCount()));
-        if (wasActive && !round.active())
-            origin.getWorld()
-                    .playSound(
-                            origin,
-                            round.payout() > 0
-                                    ? Sound.BLOCK_AMETHYST_BLOCK_CHIME
-                                    : Sound.BLOCK_NOTE_BLOCK_BASS,
-                            .45f,
-                            round.payout() > 0 ? 1.4f : .65f);
-        wasActive = round.active();
     }
+
+    @Override
+    protected boolean busy() { return round.finished() && !flips.isEmpty(); }
+
+    @Override
+    protected boolean revealing() { return !flips.isEmpty(); }
 
     @Override
     protected void animate() {
@@ -128,6 +126,8 @@ public final class MinesMachine extends PracticeMachine<MinesDemoRound> {
             var entry = iterator.next();
             var flip = entry.getValue();
             double t = Math.min(1, (age - flip.start) / 8.0);
+            if (age - flip.start == 4 && flip.model.equals("mine_gem") && round.active())
+                sound(Sound.BLOCK_NOTE_BLOCK_PLING, .2f, 1.15f);
             if (t >= .5) entry.getKey().setItemStack(model(flip.model));
             pose(entry.getKey(), cellPose(Math.sin(t * Math.PI) * 1.3));
             if (t >= 1) iterator.remove();

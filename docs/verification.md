@@ -61,24 +61,38 @@ Final runtime evidence: `reports/vanilla-runtime/run-20260927T000743723959Z/resu
 
 Local detailed evidence is retained under `reports/foundation/` and `reports/vanilla-runtime/` (ignored by Git). The newer source/local JAR is not a new published Release. See [alignment contracts](tabletop-alignment.md).
 
+## Current source: machine feedback and wheel refinement
+
+- JDK 25 / Maven package: **159 tests passed**, zero failures, errors or skipped tests.
+- Python geometry and packaging checks: **20 passed**.
+- Clean Purpur 26.2: all three phases passed, **12 feedback lifecycles** and **1,857 targeting samples** passed. Menu-off play, six restored machines and delete/restart checks passed.
+- Runtime combination checks cover Blackjack doubled stakes and delayed final-card feedback, Crash cashout before the crash without double counting, and three concurrent Plinko balls.
+- Surface audit: **30 actual runtime snapshots**, zero same-facing coplanar overlaps, including both spinning wheels at their settled angles.
+- Feedback unit tests cover reveal gating, repeat suppression, partial returns, doubled stakes and out-of-order ball settlements. Frozen game-rule and economy tests remain green.
+- Independent source review found no blocking issue. No additional random draws, economy calls or persistence changes were introduced by presentation feedback.
+
+The exact tested JAR is recorded by SHA-256 in local `reports/vanilla-runtime/run-20260927T020642026495Z/result.json`. The probe uses only Casino and its disposable test plugin. Runtime logs, surface audits and individual renders remain under ignored local `reports/feedback/` and `reports/vanilla-runtime/`.
+
+All-machine renders were inspected for screen/control occlusion. Blackjack uses its rear readout; Mines, Penguin Cross and Keno have supported table readouts; Plinko's readout is beside PLAY. See [feedback semantics and wheel previews](machine-feedback.md). Screens add five to seven display entities per machine. This source build is newer than the published beta Release.
+
 ## Display counts
 
 Idle/default snapshots; totals include hidden item carriers and text displays, exclude Interaction entities. A Blackjack hand adds card entities while playing.
 
 | Machine | Unique model IDs | BlockDisplays | All Displays |
 | --- | ---: | ---: | ---: |
-| Blackjack | 6 | 328 | 340 |
-| Mines | 5 | 232 | 267 |
-| Crash | 4 | 154 | 162 |
-| Plinko | 2 | 277 | 294 |
-| Slots | 2 | 70 | 84 |
-| Duck Race | 10 | 323 | 338 |
-| Wheel of Fortune | 4 | 744 | 770 |
-| Money Wheel | 8 | 932 | 966 |
-| Penguin Cross | 5 | 171 | 187 |
-| Keno | 3 | 660 | 754 |
-| Hilo | 6 | 257 | 281 |
-| Dragon Tower | 4 | 274 | 304 |
+| Blackjack | 6 | 330 | 345 |
+| Mines | 5 | 236 | 274 |
+| Crash | 4 | 156 | 167 |
+| Plinko | 2 | 279 | 299 |
+| Slots | 2 | 72 | 88 |
+| Duck Race | 10 | 327 | 345 |
+| Wheel of Fortune | 4 | 893 | 921 |
+| Money Wheel | 8 | 1033 | 1069 |
+| Penguin Cross | 5 | 175 | 194 |
+| Keno | 3 | 664 | 761 |
+| Hilo | 6 | 259 | 286 |
+| Dragon Tower | 4 | 276 | 309 |
 
 Dragon Tower now uses 1056 fewer BlockDisplays than the earlier rounded hidden tiles. This count is not a measured client FPS improvement.
 

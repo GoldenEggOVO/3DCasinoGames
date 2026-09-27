@@ -41,6 +41,11 @@ public abstract class PracticeMachine<R extends PracticeRound> {
     private ItemDisplay highlighted;
     protected int age;
     private long lastClick;
+    protected final FeedbackState feedback = new FeedbackState();
+    private final MachineSounds sounds;
+    private MachineScreen screen;
+    private long observedRound;
+
 
     protected PracticeMachine(
             MachineManager manager,
@@ -54,6 +59,7 @@ public abstract class PracticeMachine<R extends PracticeRound> {
         this.origin = origin.clone();
         this.definition = definition;
         this.round = round;
+        sounds = new MachineSounds(this.origin);
     }
 
     public final UUID owner() {
@@ -74,6 +80,7 @@ public abstract class PracticeMachine<R extends PracticeRound> {
 
     public final void build() {
         buildGame();
+        screen = new MachineScreen(this);
         for (var part : definition.parts()) {
             var transform = part.transform();
             var display =
@@ -109,6 +116,7 @@ public abstract class PracticeMachine<R extends PracticeRound> {
                                 b.get(5) * s),
                         this::settings);
         refresh();
+        updateFeedback();
         syncVanillaDisplays();
     }
 
@@ -169,9 +177,39 @@ public abstract class PracticeMachine<R extends PracticeRound> {
             refresh();
             languageRevision = dev.casino3d.Language.revision();
         }
+        updateFeedback();
+        sounds.tick(age);
         if (age % 4 == 0) hover();
         syncVanillaDisplays();
     }
+
+    /** Subclasses with cards or flips may reveal later than the rule settles. */
+    protected boolean revealing() { return busy(); }
+    protected boolean feedbackFinished() { return round.finished(); }
+    protected Long cashoutAmount() { return null; }
+
+    private void updateFeedback() {
+        long sequence = round.sequence();
+        if (sequence != observedRound) {
+            observedRound = sequence;
+            feedback.launch(sequence, round.stake());
+            sounds.start();
+        }
+        feedback.reviseStake(sequence, round.stake());
+        if (feedbackFinished() && !revealing()) settleFeedback(sequence, round.payout());
+        long stake = round instanceof DemoRound demo && sequence == 0 ? demo.configuredStake() : round.stake();
+        if (screen != null) screen.update(feedback, stake, revealing() ? null : cashoutAmount());
+    }
+
+    protected final void launchFeedback(Object id, long stake) {
+        feedback.launch(id, stake);
+        sounds.start();
+    }
+    protected final void settleFeedback(Object id, long returned) {
+        var result = feedback.reveal(id, returned);
+        if (result != null) sounds.result(result, age);
+    }
+    protected final void sound(Sound sound, float volume, float pitch) { sounds.play(sound, volume, pitch); }
 
     private void syncVanillaDisplays() {
         vanillaDisplays.removeIf(display -> !display.sync());
@@ -478,9 +516,10 @@ public abstract class PracticeMachine<R extends PracticeRound> {
             hit.target.visual.setTransformation(buttonPose(button, button.press()));
             pressed.put(hit.target.visual, age + 4);
         }
+        sound(Sound.BLOCK_STONE_BUTTON_CLICK_ON, .25f, 1.1f);
         action(hit.target.action);
+        updateFeedback();
         syncVanillaDisplays();
-        origin.getWorld().playSound(origin, Sound.BLOCK_STONE_BUTTON_CLICK_ON, .35f, 1.1f);
     }
 
     private void hover() {
@@ -551,6 +590,7 @@ public abstract class PracticeMachine<R extends PracticeRound> {
     }
 
     public final void clear() {
+        sounds.clear();
         plugin.machineSettings().unregister(this);
         for (Entity entity : parts) entity.remove();
         parts.clear();

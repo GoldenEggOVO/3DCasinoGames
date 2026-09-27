@@ -53,17 +53,17 @@ public final class CrashMachine extends PracticeMachine<CrashRound> {
         rocket.setGlowing(round.active());
         if (wasActive && !round.active()) {
             origin.getWorld()
-                    .playSound(
-                            origin,
-                            round.payout() > 0
-                                    ? Sound.BLOCK_AMETHYST_BLOCK_CHIME
-                                    : Sound.BLOCK_NOTE_BLOCK_BASS,
-                            .45f,
-                            round.payout() > 0 ? 1.4f : .65f);
-            origin.getWorld()
                     .spawnParticle(Particle.SMOKE, rocket.getLocation(), 8, .12, .12, .08, .015);
         }
         wasActive = round.active();
+    }
+
+    @Override
+    protected boolean feedbackFinished() { return round.finished() || round.cashed(); }
+
+    @Override
+    protected Long cashoutAmount() {
+        return round.active() && !round.cashed() ? round.stake() * round.multiplier() / 100 : null;
     }
 
     private double rocketX() {
@@ -78,6 +78,8 @@ public final class CrashMachine extends PracticeMachine<CrashRound> {
     protected void animate() {
         if (round.active()) {
             round.tick(System.currentTimeMillis());
+            if (age % 10 == 0) sound(Sound.BLOCK_NOTE_BLOCK_BASS, .13f,
+                    Math.min(1.8f, .7f + round.multiplier() / 500f));
             if (age % 2 == 0 || !round.active()) refresh();
         }
     }

@@ -67,13 +67,19 @@ public final class DragonTowerMachine extends AnimatedMachine<DragonTowerRound> 
     }
 
     @Override
+    protected Long cashoutAmount() { return round.active() ? (round.floors() > 0 ? round.payout() : null) : null; }
+
+    @Override
     protected boolean available(String action) {
         return round.available(action);
     }
 
     @Override
     protected void perform(String action) {
+        int previous = round.floors();
         round.action(action);
+        if (round.floors() > previous && round.active())
+            sound(Sound.BLOCK_NOTE_BLOCK_PLING, .23f, 1f + round.floors() * .08f);
     }
 
     @Override

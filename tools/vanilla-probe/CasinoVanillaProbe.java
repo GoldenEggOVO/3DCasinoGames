@@ -169,6 +169,11 @@ public final class CasinoVanillaProbe extends JavaPlugin {
                             || game.equals("plinko") && !((Map<?, ?>) field(machine, "balls")).isEmpty(),
                             "PLAY did not advance game: " + game);
                     checkVisuals(machine, game);
+                    var earlyFeedback = (dev.casino3d.machine.FeedbackState) field(machine, "feedback");
+                    require(field(machine, "screen") != null, "Feedback screen missing: " + game);
+                    if (machine instanceof dev.casino3d.machine.AnimatedMachine<?> && !game.equals("dragon_tower")
+                            && !game.equals("penguin_cross"))
+                        require(earlyFeedback.last() == null, "Result leaked before animation: " + game);
                     if (game.equals("slots")) checkLanguageReload(casino, player, console, (PracticeMachine<?>) machine);
                     if (game.equals("dragon_tower")) {
                         Thread.sleep(170);
@@ -257,6 +262,8 @@ public final class CasinoVanillaProbe extends JavaPlugin {
                                     "Keno result gem can fly from its previous hidden position");
                     }
                     if (game.equals("penguin_cross")) checkZeroScale(machine);
+                    checkFeedback((PracticeMachine<?>) machine, round, game);
+                    checkFeedbackCombinations((PracticeMachine<?>) machine, round, game);
                     checkSettings(casino, machine, player);
                     var previousParts = new ArrayList<>((List<Entity>) field(machine, "parts"));
                     manager.command(player, new String[] {"remove", game});
@@ -317,6 +324,107 @@ public final class CasinoVanillaProbe extends JavaPlugin {
         } finally {
             Bukkit.shutdown();
         }
+    }
+
+    private void machineAction(PracticeMachine<?> machine, String action) throws Exception {
+        for (Class<?> type = machine.getClass(); type != null; type = type.getSuperclass()) {
+            try {
+                var method = type.getDeclaredMethod("action", String.class);
+                method.setAccessible(true); method.invoke(machine, action); return;
+            } catch (NoSuchMethodException ignored) {}
+        }
+        throw new NoSuchMethodException("action");
+    }
+
+    private void checkFeedback(PracticeMachine<?> machine, PracticeRound round, String game) throws Exception {
+        if (game.equals("mines") && round.active()) {
+            var mines = (dev.casino3d.game.mines.MinesDemoRound) round;
+            int safe = 0;
+            while ((mines.mines().mask() & (1 << safe)) != 0) safe++;
+            machineAction(machine, "cell:" + safe);
+            for (int i = 0; i < 10; i++) machine.tick();
+            machineAction(machine, "cash");
+        }
+        if (game.equals("penguin_cross") && round.active()) {
+            machineAction(machine, "step");
+            for (int i = 0; i < 31; i++) machine.tick();
+            if (round.active()) machineAction(machine, "cash");
+        }
+        if (game.equals("dragon_tower") && round.active()) machineAction(machine, "cash");
+        if (game.equals("crash")) {
+            var crash = (dev.casino3d.game.crash.CrashRound) round;
+            crash.tick(crash.started() + 3_600_000);
+        }
+        for (int i = 0; i < 1600; i++) {
+            machine.tick();
+            var state = (dev.casino3d.machine.FeedbackState) field(machine, "feedback");
+            if (state.last() != null && state.pending() == 0) break;
+        }
+        var state = (dev.casino3d.machine.FeedbackState) field(machine, "feedback");
+        require(state.pending() == 0 && state.last() != null, "Missing final feedback: " + game);
+        require(state.last().returned() == round.payout(), "Incorrect returned amount: " + game);
+        require(state.last().net() == round.payout() - state.last().stake(), "Incorrect net: " + game);
+        long total = state.totalNet();
+        for (int i = 0; i < 20; i++) machine.tick();
+        require(state.totalNet() == total, "Repeated settlement: " + game);
+        writePreview(machine, game + "-result");
+        getLogger().info("CASINO_FEEDBACK_PASS game=" + game + " net=" + state.last().net()
+                + " outcome=" + state.last().outcome() + " once=true");
+    }
+
+    private void checkFeedbackCombinations(PracticeMachine<?> machine, PracticeRound round, String game) throws Exception {
+        var state = (dev.casino3d.machine.FeedbackState) field(machine, "feedback");
+        if (game.equals("blackjack")) {
+            // Complete natural hands normally, then force a non-natural double-down fixture.
+            for (int attempt = 0; attempt < 100; attempt++) {
+                machineAction(machine, "start");
+                for (int i = 0; i < 10; i++) machine.tick();
+                if (round.active()) break;
+            }
+            require(round.active(), "Could not prepare double-down fixture");
+            var player = (List<Integer>) field(round, "player");
+            player.clear(); player.addAll(List.of(3, 4));
+            var dealer = (List<Integer>) field(round, "dealer");
+            dealer.clear(); dealer.addAll(List.of(9, 6));
+            ((List<Integer>) field(round, "deck")).set((int) field(round, "next"), 9);
+            long stake = round.stake(), before = state.totalNet();
+            machineAction(machine, "double");
+            machine.tick();
+            require(state.last() == null, "Double-down revealed before the final card arrived");
+            for (int i = 0; i < 10; i++) machine.tick();
+            require(state.last().stake() == stake * 2, "Double-down feedback used the initial stake");
+            require(state.totalNet() == before + round.payout() - stake * 2, "Double-down net incorrect");
+        } else if (game.equals("crash")) {
+            machineAction(machine, "start");
+            var crash = (dev.casino3d.game.crash.CrashRound) round;
+            var point = crash.getClass().getDeclaredField("crashPoint");
+            point.setAccessible(true); point.setInt(crash, 1000);
+            machine.tick();
+            long before = state.totalNet();
+            machineAction(machine, "cash");
+            machine.tick();
+            require(crash.active() && crash.cashed() && state.last() != null, "Cashout feedback delayed until crash");
+            long expected = before + crash.payout() - crash.stake();
+            require(state.totalNet() == expected, "Early cashout net incorrect");
+            crash.tick(crash.started() + 3_600_000);
+            for (int i = 0; i < 20; i++) machine.tick();
+            require(state.totalNet() == expected, "Crash counted an early cashout twice");
+        } else if (game.equals("plinko")) {
+            long before = state.totalNet();
+            for (int ball = 0; ball < 3; ball++) {
+                machineAction(machine, "play");
+                for (int i = 0; i < 4; i++) machine.tick();
+            }
+            require(state.pending() == 3 && state.last() == null, "Concurrent balls were not tracked separately");
+            var stakes = (Map<dev.casino3d.PlinkoFlights.Flight, Long>) field(machine, "stakes");
+            long expected = before;
+            for (var entry : stakes.entrySet())
+                expected += dev.casino3d.CasinoRules.plinkoPayout(entry.getValue(),
+                        dev.casino3d.PlinkoPath.slot(entry.getKey().path())) - entry.getValue();
+            for (int i = 0; i < 120; i++) machine.tick();
+            require(state.pending() == 0 && state.totalNet() == expected, "Concurrent ball net incorrect");
+        } else return;
+        getLogger().info("CASINO_FEEDBACK_PASS game=" + game + " combinations=true");
     }
 
     private void checkLanguageReload(CasinoPlugin casino, Player player,

@@ -53,6 +53,9 @@ public final class PenguinCrossMachine extends AnimatedMachine<PenguinCrossRound
     }
 
     @Override
+    protected Long cashoutAmount() { return round.active() ? (round.steps() > 0 ? round.payout() : null) : null; }
+
+    @Override
     protected boolean available(String action) {
         return round.available(action);
     }
@@ -81,6 +84,13 @@ public final class PenguinCrossMachine extends AnimatedMachine<PenguinCrossRound
                                     -1.1 + (i + 1) * 2.2 / 8,
                                     fallen && i == round.steps() ? .45 : 1,
                                     0));
+    }
+
+    @Override
+    protected void movementSound(double progress) {
+        if (age - animationStart == 18) sound(Sound.BLOCK_SNOW_STEP, .22f, 1.1f);
+        if (age - animationStart == 24 && round.finished() && round.payout() == 0)
+            sound(Sound.ENTITY_GENERIC_SPLASH, .22f, 1.2f);
     }
 
     @Override

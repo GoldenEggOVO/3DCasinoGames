@@ -19,7 +19,6 @@ public final class BlackjackMachine extends PracticeMachine<BlackjackRound> {
     private final Map<ItemDisplay, Slide> slides = new HashMap<>();
     private final Map<ItemDisplay, String> faces = new HashMap<>();
     private TextDisplay readout;
-    private boolean wasActive;
 
     public BlackjackMachine(
             MachineManager manager, UUID owner, Location origin, MachineDefinition definition) {
@@ -81,16 +80,6 @@ public final class BlackjackMachine extends PracticeMachine<BlackjackRound> {
                 .append(Component.text("\n" + CasinoRules.cards(round.player()) + "\n"
                         + CasinoRules.cards(round.active() ? round.dealer().subList(0, Math.min(1, round.dealer().size())) : round.dealer())
                         + (round.active() && round.dealer().size() > 1 ? "  ?" : ""))));
-        if (wasActive && !round.active())
-            origin.getWorld()
-                    .playSound(
-                            origin,
-                            round.payout() > 0
-                                    ? Sound.BLOCK_AMETHYST_BLOCK_CHIME
-                                    : Sound.BLOCK_NOTE_BLOCK_BASS,
-                            .45f,
-                            round.payout() > 0 ? 1.4f : .65f);
-        wasActive = round.active();
     }
 
     private void trim(List<ItemDisplay> cards, int count) {
@@ -104,6 +93,7 @@ public final class BlackjackMachine extends PracticeMachine<BlackjackRound> {
     }
 
     private void hand(List<Integer> hand, List<ItemDisplay> cards, double z, boolean hidden) {
+        if (cards.size() < hand.size()) sound(Sound.ITEM_BOOK_PAGE_TURN, .2f, 1.2f);
         trim(cards, hand.size());
         for (int i = 0; i < hand.size(); i++) {
             String face = "card_" + (hidden && i > 0 ? 52 : hand.get(i));
@@ -126,6 +116,12 @@ public final class BlackjackMachine extends PracticeMachine<BlackjackRound> {
             } else card.teleport(target);
         }
     }
+
+    @Override
+    protected boolean busy() { return round.finished() && !slides.isEmpty(); }
+
+    @Override
+    protected boolean revealing() { return !slides.isEmpty(); }
 
     @Override
     protected void animate() {

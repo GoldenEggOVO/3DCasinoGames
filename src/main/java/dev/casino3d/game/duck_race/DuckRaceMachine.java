@@ -64,6 +64,11 @@ public final class DuckRaceMachine extends AnimatedMachine<DuckRaceRound> {
     }
 
     @Override
+    protected void movementSound(double progress) {
+        if (age % 8 == 0) sound(Sound.BLOCK_WOOD_STEP, .12f, 1.1f + (float) progress * .4f);
+    }
+
+    @Override
     protected void animateFrame(double progress, double ease) {
         for (int i = 0; i < 4; i++) {
             double finish = i == round.winner() ? -4.3 : -3.5 + i * .18;

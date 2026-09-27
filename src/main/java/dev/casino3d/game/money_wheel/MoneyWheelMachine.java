@@ -28,10 +28,10 @@ public final class MoneyWheelMachine extends AnimatedMachine<MoneyWheelRound> {
         button("play", "showcase_button_round_spin");
         for (int i = 0; i < 4; i++) button("select:" + i, "showcase_button_money_" + i);
         disc = model("showcase_wheel_money", 0, 2, .25, 4);
-        model("showcase_pointer", 0, 2.93, .36, 4);
+        model("showcase_pointer_money", 0, 2.93, .36, 4);
         int[] segments = MoneyWheelRound.segments(), multipliers = MoneyWheelRound.multipliers();
         for (int segment : segments) {
-            var label = text(0, 2, .30, .30);
+            var label = text(0, 2, .321, .16);
             label.text(net.kyori.adventure.text.Component.text(multipliers[segment] + "X"));
             wheelLabels.add(label);
         }
@@ -57,7 +57,10 @@ public final class MoneyWheelMachine extends AnimatedMachine<MoneyWheelRound> {
 
     @Override
     protected void animateFrame(double progress, double ease) {
-        rotateDisc(spinFrom + (spinTo - spinFrom) * ease);
+        double angle = spinFrom + (spinTo - spinFrom) * ease;
+        if ((int) Math.floor(discAngle * 20 / (2 * Math.PI)) != (int) Math.floor(angle * 20 / (2 * Math.PI)))
+            sound(Sound.BLOCK_WOODEN_BUTTON_CLICK_ON, .25f, .95f + (float) (1 - progress) * .3f);
+        rotateDisc(angle);
     }
 
     void rotateDisc(double angle) {
@@ -71,7 +74,10 @@ public final class MoneyWheelMachine extends AnimatedMachine<MoneyWheelRound> {
             double theta = 2 * Math.PI * (i + .5) / wheelLabels.size() - angle;
             wheelLabels
                     .get(i)
-                    .teleport(at(Math.sin(theta) * .70, 2 + Math.cos(theta) * .70 - .03, .30));
+                    .teleport(at(Math.sin(theta) * .78, 2 + Math.cos(theta) * .78 - .02, .321));
+            pose(wheelLabels.get(i), new org.bukkit.util.Transformation(new org.joml.Vector3f(),
+                    new org.joml.Quaternionf().rotateZ((float) -theta),
+                    new org.joml.Vector3f(.16f), new org.joml.Quaternionf()));
         }
     }
 

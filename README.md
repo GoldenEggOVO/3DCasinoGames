@@ -33,6 +33,7 @@ Vault and AuthMe are optional. ServerGames, ServerBoards, ServerMenu and KaMenu 
 All 12 physical machines are free practice: they do not withdraw money or award an economy balance.
 
 - Vanilla block and text displays, rotated curved edges and consistent buttons.
+- Physical bet/return/net readouts on all 12 machines, with per-game vanilla sound cues. [Feedback details](docs/machine-feedback.md).
 - All 52 playing cards plus a card back; the lower corner is rotated 180 degrees.
 - Native Dialog menus, physical buttons, practice stakes and editable machine definitions.
 - Permanent machine placements, restored after restarts and chunk loads. One machine of each game per player. Active rounds and animations do not survive a restart.

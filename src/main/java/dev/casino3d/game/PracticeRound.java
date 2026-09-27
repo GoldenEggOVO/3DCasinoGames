@@ -10,6 +10,7 @@ public abstract class PracticeRound {
     public static final long MIN_STAKE = 100;
     public static final long MAX_STAKE = 10000;
     protected final Random random;
+    private long sequence;
     protected boolean active;
     protected boolean finished;
     protected long stake = STAKE;
@@ -19,6 +20,9 @@ public abstract class PracticeRound {
     protected PracticeRound(Random random) {
         this.random = Objects.requireNonNull(random);
     }
+
+    /** Identity for presentation events, without affecting random draws or settlement. */
+    public final long sequence() { return sequence; }
 
     public final boolean active() {
         return active;
@@ -51,6 +55,7 @@ public abstract class PracticeRound {
     }
 
     protected final void begin() {
+        sequence++;
         active = true;
         finished = false;
         payout = 0;

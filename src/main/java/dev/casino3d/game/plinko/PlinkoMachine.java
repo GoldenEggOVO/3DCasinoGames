@@ -107,6 +107,7 @@ public final class PlinkoMachine extends PracticeMachine<PlinkoMachine.Round> {
         ball.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.FIXED);
         balls.put(flight, ball);
         stakes.put(flight, round.stake());
+        launchFeedback(flight, round.stake());
     }
 
     @Override
@@ -119,15 +120,17 @@ public final class PlinkoMachine extends PracticeMachine<PlinkoMachine.Round> {
             balls.get(flight).teleport(at(point.x(), point.y(), .43));
         }
         if (!balls.isEmpty() && age % 8 == 0)
-            origin.getWorld().playSound(at(0, 3, .43), Sound.BLOCK_NOTE_BLOCK_HAT, .2f, 1.5f);
+            sound(Sound.BLOCK_NOTE_BLOCK_HAT, .16f, 1.5f);
         for (var flight : flights.advance()) {
             int slot = PlinkoPath.slot(flight.path());
             light.teleport(at((slot - 6) * .36, 1.04, .43));
             var ball = balls.remove(flight);
             ball.remove();
             parts.remove(ball);
-            round.settle(CasinoRules.plinkoPayout(stakes.remove(flight), slot));
-            origin.getWorld().playSound(at(0, 1, .43), Sound.BLOCK_AMETHYST_BLOCK_CHIME, .3f, 1.2f);
+            long returned = CasinoRules.plinkoPayout(stakes.remove(flight), slot);
+            round.settle(returned);
+            sound(Sound.BLOCK_WOODEN_BUTTON_CLICK_ON, .2f, .8f);
+            settleFeedback(flight, returned);
         }
     }
 

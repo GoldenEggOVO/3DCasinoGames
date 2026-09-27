@@ -73,6 +73,7 @@ public final class KenoMachine extends AnimatedMachine<KenoRound> {
 
     void revealKeno(int count) {
         if (kenoRevealed == count) return;
+        if (count > kenoRevealed && busy()) sound(Sound.BLOCK_NOTE_BLOCK_PLING, .16f, 1f + count * .06f);
         kenoRevealed = count;
         for (int i = 0; i < tiles.size(); i++) {
             boolean picked = round.selected().contains(i + 1),

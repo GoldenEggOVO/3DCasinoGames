@@ -251,3 +251,16 @@
 "command.language-reloaded": "<green>语言已重载，重新打开菜单即可查看新文字。"
 "command.language-failed": "<red>语言重载失败，继续使用之前的文字，请检查控制台。"
 "command.language-usage": "用法：/3dcasino reload-language"
+
+# Physical practice feedback; amounts do not use an economy balance.
+"feedback.bet": "<gray>下注 <white>{amount}"
+"feedback.return": "<gray>下注 <white>{bet}  <gray>返还 <white>{amount}"
+"feedback.ready": "<white>准备就绪"
+"feedback.running": "<yellow>进行中…"
+"feedback.cashout": "<aqua>可收取 {amount}"
+"feedback.loss": "<red>{amount}"
+"feedback.even": "<gray>{amount}"
+"feedback.win": "<green>{amount}"
+"feedback.big_win": "<gold>{amount}"
+"feedback.session": "<gray>本机累计 {amount}"
+"feedback.pending": "<gray>在场弹珠 {count}"

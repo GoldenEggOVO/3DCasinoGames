@@ -75,6 +75,11 @@ public final class HiloMachine extends AnimatedMachine<HiloRound> {
     }
 
     @Override
+    protected void movementSound(double progress) {
+        if (age % 5 == 0) sound(Sound.BLOCK_NOTE_BLOCK_HAT, .12f, .9f + (float) progress * .5f);
+    }
+
+    @Override
     protected void animateFrame(double progress, double ease) {
         showHiloResult(revealValue(progress, round.rolls().getFirst()));
     }

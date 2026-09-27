@@ -90,7 +90,8 @@ def main():
         phase_result = {'phase': phase, 'exit_code': process.returncode,
                         'pass': process.returncode == 0 and marker in log
                         and 'CASINO_VANILLA_FAIL' not in log,
-                        'evidence': [line for line in log.splitlines() if 'CASINO_VANILLA_' in line or 'CASINO_AIM_PASS' in line or 'CASINO_NAMESPACE_TAB_PASS' in line]}
+                        'evidence': [line for line in log.splitlines() if any(marker in line for marker in
+                                     ('CASINO_VANILLA_', 'CASINO_AIM_PASS', 'CASINO_NAMESPACE_TAB_PASS', 'CASINO_FEEDBACK_PASS'))]}
         result['phases'].append(phase_result)
         (run / 'result.json').write_text(json.dumps(result, ensure_ascii=False, indent=2),
                                          encoding='utf-8')
