@@ -10,6 +10,7 @@ public record ButtonDefinition(
         double size,
         double press) {
     public ButtonDefinition {
+        java.util.Objects.requireNonNull(transform);
         for (double value : new double[] {width, height, depth, size, press}) {
             if (!Double.isFinite(value))
                 throw new Language.Failure("error.button-finite");

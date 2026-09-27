@@ -18,9 +18,25 @@ public record MachineDefinition(
         buttons = Map.copyOf(buttons);
         parts = List.copyOf(parts);
         settingsBounds = List.copyOf(settingsBounds);
+        if (id == null || !id.matches("[a-z0-9_-]+")) throw new Language.Failure("error.model-id");
+        if (game == null || !games().contains(game)) throw new Language.Failure("error.unknown-game", "game", game);
+        models.forEach((key, value) -> {
+            if (!key.matches("[a-z0-9_./-]+")) throw new Language.Failure("error.logical-model", "model", key);
+            validateModel(value);
+        });
+        for (String anchor : anchors.keySet())
+            if (!Set.of("body", "playfield").contains(anchor)) throw new Language.Failure("error.anchor", "anchor", anchor);
+        if (!buttons.keySet().equals(BuiltinLayouts.buttons(game).keySet()))
+            throw new Language.Failure("error.unknown-button", "action", buttons.keySet());
+        if (parts.size() > 64) throw new Language.Failure("error.parts-limit");
+        vector(settingsBounds, 6, "settings-bounds");
+        for (int i = 0; i < 3; i++)
+            if (settingsBounds.get(i) >= settingsBounds.get(i + 3)) throw new Language.Failure("error.settings-bounds");
     }
 
-    public record Part(String model, ModelTransform transform) {}
+    public record Part(String model, ModelTransform transform) {
+        public Part { validateModel(Objects.requireNonNull(model)); Objects.requireNonNull(transform); }
+    }
 
     public static Set<String> games() {
         return BuiltinLayouts.GAMES;

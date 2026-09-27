@@ -16,6 +16,10 @@ public final class CommandCompletion {
         return args.length == 1 ? matching(List.of("menu"), args[0]) : List.of();
     }
 
+    static List<String> admin(String[] args) {
+        return args.length == 1 ? matching(List.of("reload-language"), args[0]) : List.of();
+    }
+
     public static List<String> player(String[] args, Collection<String> games,
             Collection<String> skins, Collection<String> ownedGames) {
         if (args.length == 0) return List.of();
@@ -40,7 +44,7 @@ public final class CommandCompletion {
         if (args.length == 0) return List.of();
         Collection<String> candidates = List.of();
         boolean mines = args[0].equalsIgnoreCase("mines");
-        if (args.length == 1) candidates = List.of("mines", "resolve");
+        if (args.length == 1) candidates = List.of("mines", "reload-language", "resolve");
         else if (mines && args.length == 2) candidates = List.of("resolve");
         else if ((!mines && args.length == 4 && args[0].equalsIgnoreCase("resolve"))
                 || (mines && args.length == 5 && args[1].equalsIgnoreCase("resolve")))

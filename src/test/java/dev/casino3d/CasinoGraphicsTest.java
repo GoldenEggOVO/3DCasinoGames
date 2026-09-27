@@ -15,12 +15,12 @@ class CasinoGraphicsTest {
         r.hand = List.of(1, 2);
         r.dealer = List.of(3, 4);
         String board = String.join("", CasinoGraphics.board(r, 0));
-        assertTrue(board.contains(String.valueOf((char) (0xE400 + 52 * 4))));
-        assertFalse(board.contains(String.valueOf((char) (0xE400 + 4 * 4))));
+        assertTrue(board.contains("[?]"));
+        assertFalse(board.contains(CasinoRules.cards(List.of(4))));
         r.phase = CasinoRound.Phase.PAID;
         assertTrue(
                 String.join("", CasinoGraphics.board(r, 0))
-                        .contains(String.valueOf((char) (0xE400 + 4 * 4))));
+                        .contains(CasinoRules.cards(List.of(4))));
     }
 
     @Test
@@ -35,7 +35,8 @@ class CasinoGraphicsTest {
             r.point = 250;
             for (String line : CasinoGraphics.board(r, 0)) {
                 String plain = line.replaceAll("<[^>]*>", "");
-                assertFalse(plain.endsWith("\uEFFF"));
+                assertFalse(plain.codePoints().anyMatch(c -> Character.getType(c) == Character.PRIVATE_USE));
+                assertFalse(line.contains("<font:"));
             }
         }
     }
@@ -47,6 +48,6 @@ class CasinoGraphicsTest {
         r.path = 0b101010101010;
         var rows = CasinoGraphics.board(r, 0);
         assertEquals(13, rows.size());
-        for (String row : rows) assertEquals(1, row.chars().filter(c -> c == 0xE702).count());
+        for (String row : rows) assertEquals(1, row.chars().filter(c -> c == 'o').count());
     }
 }

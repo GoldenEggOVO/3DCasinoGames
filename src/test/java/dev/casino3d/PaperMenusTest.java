@@ -29,7 +29,7 @@ class PaperMenusTest {
                     }
                     throw new AssertionError(method.getName());
                 });
-        PaperMenus.open(plugin, player, new YamlConfiguration(), (action, values) -> fail());
+        PaperMenus.open(plugin, player, null, (action, values) -> fail());
         assertEquals(1, messages.get());
     }
 }

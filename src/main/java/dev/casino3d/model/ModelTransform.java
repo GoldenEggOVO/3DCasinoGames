@@ -16,6 +16,8 @@ public record ModelTransform(
         }
         if (scale < .001 || scale > 32)
             throw new Language.Failure("error.transform-scale");
+        if (Math.max(Math.max(Math.abs(pitch), Math.abs(yaw)), Math.abs(roll)) > 360)
+            throw new Language.Failure("error.vector-number", "field", "rotation");
         if (Math.max(Math.max(Math.abs(x), Math.abs(y)), Math.abs(z)) > 64)
             throw new Language.Failure("error.transform-position");
     }

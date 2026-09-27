@@ -99,6 +99,8 @@ public final class CasinoVanillaProbe extends JavaPlugin {
                         if (method.getName().equals("sendMessage")) {
                             for (Object argument : arguments) if (argument instanceof String value)
                                 consoleMessages.add(value);
+                            else if (argument instanceof net.kyori.adventure.text.Component value)
+                                consoleMessages.add(PlainTextComponentSerializer.plainText().serialize(value));
                         }
                         return null;
                     });
@@ -112,6 +114,7 @@ public final class CasinoVanillaProbe extends JavaPlugin {
             var marker = casino.getDataFolder().toPath().resolve("vanilla-probe-phase.txt");
             if (!Files.exists(marker)) {
                 checkMenus(casino, player, true);
+                benchmarkRestore(manager);
                 for (String game : GAMES) {
                     manager.command(player, new String[] {"create", game});
                     var machines = (Map<?, ?>) field(manager, "machines");
@@ -166,6 +169,7 @@ public final class CasinoVanillaProbe extends JavaPlugin {
                             || game.equals("plinko") && !((Map<?, ?>) field(machine, "balls")).isEmpty(),
                             "PLAY did not advance game: " + game);
                     checkVisuals(machine, game);
+                    if (game.equals("slots")) checkLanguageReload(casino, player, console, (PracticeMachine<?>) machine);
                     if (game.equals("dragon_tower")) {
                         Thread.sleep(170);
                         click(manager, player, (ItemDisplay) ((List<?>) field(machine,"tiles")).getFirst(), game);
@@ -286,7 +290,7 @@ public final class CasinoVanillaProbe extends JavaPlugin {
                         var parts = (List<Entity>) field(machine, "parts");
                         require(parts.stream().filter(TextDisplay.class::isInstance).map(TextDisplay.class::cast)
                                 .anyMatch(display -> PlainTextComponentSerializer.plainText()
-                                        .serialize(display.text()).equals("CUSTOM PLAY")),
+                                        .serialize(display.text()).equals("GO")),
                                 "Edited language was not applied to restored button");
                         getLogger().info("CASINO_VANILLA_LANGUAGE_PASS custom_button=true fallback=true");
                     }
@@ -313,6 +317,96 @@ public final class CasinoVanillaProbe extends JavaPlugin {
         } finally {
             Bukkit.shutdown();
         }
+    }
+
+    private void checkLanguageReload(CasinoPlugin casino, Player player,
+            org.bukkit.command.ConsoleCommandSender console, PracticeMachine<?> machine) throws Exception {
+        var data = casino.getDataFolder().toPath();
+        var configPath = data.resolve("config.yml");
+        String configBefore = Files.readString(configPath);
+        var custom = data.resolve("languages/probe_reload.yml");
+        var parts = (List<Entity>) field(machine, "parts");
+        var ids = parts.stream().map(Entity::getUniqueId).collect(java.util.stream.Collectors.toSet());
+        var round = (PracticeRound) field(machine, "round");
+        long payout = round.payout();
+        boolean active = round.active();
+        try {
+            Files.writeString(custom, "models.showcase_button_spin.0: '<green>RELOADED'\n");
+            Files.writeString(configPath, "menu-enabled: true\nlanguage: probe_reload\n");
+            var command = casino.getCommand("3dcasino");
+            long revision = dev.casino3d.Language.revision();
+            permissions = false;
+            casino.onCommand(player, command, "3dcasino", new String[]{"reload-language"});
+            require(dev.casino3d.Language.revision() == revision, "Unprivileged language reload succeeded");
+            permissions = true;
+            casino.onCommand(console, command, "3dcasino", new String[]{"reload-language"});
+            require(dev.casino3d.Language.revision() > revision, "Language reload failed");
+            machine.tick();
+            require(parts.stream().filter(TextDisplay.class::isInstance).map(TextDisplay.class::cast)
+                    .anyMatch(d -> PlainTextComponentSerializer.plainText().serialize(d.text()).equals("RELOADED")),
+                    "Live model labels were not refreshed");
+            require(ids.equals(parts.stream().map(Entity::getUniqueId).collect(java.util.stream.Collectors.toSet())),
+                    "Language reload replaced machine entities");
+            require(round.active() == active && round.payout() == payout, "Reload changed the round");
+            var menus = field(casino, "menus");
+            var sessions = (dev.casino3d.ui.MenuSessions<?>) field(menus, "sessions");
+            require(sessions.players().isEmpty(), "Reload retained stale menu sessions");
+            revision = dev.casino3d.Language.revision();
+            Files.writeString(custom, "models.showcase_button_spin.0: BAD\nround.result: '{ammount}'\n");
+            casino.onCommand(console, command, "3dcasino", new String[]{"reload-language"});
+            require(dev.casino3d.Language.revision() == revision, "Invalid reload replaced the language");
+            writePreview(machine, "slots-reloaded");
+            for (String locale : List.of("en", "zh")) {
+                String label = locale.equals("en") ? "<bold>Spin the reels for another practice round"
+                        : "<bold>再次转动滚轮开始新的练习回合";
+                Files.writeString(custom, "models.showcase_button_spin.0: '" + label + "'\n");
+                casino.onCommand(console, command, "3dcasino", new String[]{"reload-language"});
+                machine.tick();
+                writePreview(machine, "slots-long-" + locale);
+            }
+            getLogger().info("CASINO_VANILLA_RELOAD_PASS permission=true transactional=true entities_preserved=true round_preserved=true");
+        } finally {
+            permissions = true;
+            Files.writeString(configPath, configBefore);
+            casino.onCommand(console, casino.getCommand("3dcasino"), "3dcasino", new String[]{"reload-language"});
+            machine.tick();
+        }
+    }
+
+    private void benchmarkRestore(MachineManager manager) throws Exception {
+        var placements = (Map<Object, Object>) field(manager, "placements");
+        var original = new LinkedHashMap<>(placements);
+        var keyType = Class.forName("dev.casino3d.machine.MachineManager$Key");
+        var keyConstructor = keyType.getDeclaredConstructors()[0];
+        keyConstructor.setAccessible(true);
+        var placementType = Class.forName("dev.casino3d.machine.PlacementStore$Placement");
+        var placementConstructor = placementType.getDeclaredConstructors()[0];
+        placementConstructor.setAccessible(true);
+        var restore = MachineManager.class.getDeclaredMethod("restoreLoaded");
+        restore.setAccessible(true);
+        UUID absentWorld = UUID.randomUUID();
+        var definition = MachineDefinition.builtin("slots");
+        var results = new LinkedHashMap<Integer, Double>();
+        try {
+            for (int count : new int[]{10, 100, 1000, 10000}) {
+                placements.clear();
+                for (int i = 0; i < count; i++) {
+                    UUID owner = new UUID(0, i);
+                    placements.put(keyConstructor.newInstance(owner, "slots"),
+                            placementConstructor.newInstance(owner, absentWorld, 0d, 90d, 0d, 0f, definition, 1000L));
+                }
+                for (int i = 0; i < 10; i++) restore.invoke(manager);
+                long start = System.nanoTime();
+                for (int i = 0; i < 30; i++) restore.invoke(manager);
+                results.put(count, (System.nanoTime() - start) / 30e6);
+            }
+        } finally {
+            placements.clear();
+            placements.putAll(original);
+        }
+        Files.createDirectories(getDataFolder().toPath());
+        Files.writeString(getDataFolder().toPath().resolve("restore-scan-ms.json"), new GsonBuilder().setPrettyPrinting().create().toJson(results));
+        getLogger().info("CASINO_VANILLA_RESTORE_SCAN " + results);
     }
 
     private void checkMenus(CasinoPlugin casino, Player player, boolean enabled) throws Exception {
@@ -443,7 +537,7 @@ public final class CasinoVanillaProbe extends JavaPlugin {
         require(texts.stream().noneMatch(value -> value.codePoints().anyMatch(code ->
                 Character.UnicodeScript.of(code) == Character.UnicodeScript.HAN)),
                 "Default machine text is not English: " + game);
-        require(texts.stream().anyMatch(s -> s.equals("PLAY") || s.equals("SPIN") || s.equals("CUSTOM PLAY")), "PLAY/SPIN label missing: " + game);
+        require(texts.stream().anyMatch(s -> s.equals("PLAY") || s.equals("SPIN") || s.equals("GO")), "PLAY/SPIN label missing: " + game);
         require(texts.stream().noneMatch(s -> s.startsWith("FREE PLAY")), "Floating status label remains: " + game);
         var buttons = (Map<?, ?>) field(machine, "buttonActions");
         var origin = (Location) field(machine, "origin");
@@ -599,10 +693,13 @@ public final class CasinoVanillaProbe extends JavaPlugin {
                     case "isSneaking" -> sneaking;
                     case "showDialog" -> { shownDialogs++; yield null; }
                     case "sendMessage" -> {
-                        for (Object value : args) if (value instanceof String message)
-                            require(message.codePoints().noneMatch(code ->
-                                    Character.UnicodeScript.of(code) == Character.UnicodeScript.HAN),
+                        for (Object value : args) {
+                            String message = value instanceof net.kyori.adventure.text.Component c
+                                    ? PlainTextComponentSerializer.plainText().serialize(c)
+                                    : value instanceof String str ? str : "";
+                            require(message.codePoints().noneMatch(code -> Character.UnicodeScript.of(code) == Character.UnicodeScript.HAN),
                                     "Default command message is not English: " + message);
+                        }
                         yield null;
                     }
                     case "getWorld" -> Bukkit.getWorlds().getFirst();

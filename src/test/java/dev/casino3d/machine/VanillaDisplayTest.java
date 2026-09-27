@@ -6,6 +6,40 @@ import dev.casino3d.model.VanillaGeometry;
 import org.junit.jupiter.api.Test;
 
 class VanillaDisplayTest {
+    @Test void unchangedCarrierDoesNotEvenTraverseChildEntities() throws Exception {
+        var pose = new org.bukkit.util.Transformation(new org.joml.Vector3f(), new org.joml.Quaternionf(),
+                new org.joml.Vector3f(1), new org.joml.Quaternionf());
+        var stack = new org.bukkit.inventory.ItemStack() {
+            @Override public boolean hasItemMeta() { return false; }
+        };
+        var carrier = (org.bukkit.entity.ItemDisplay) java.lang.reflect.Proxy.newProxyInstance(
+                getClass().getClassLoader(), new Class<?>[]{org.bukkit.entity.ItemDisplay.class},
+                (proxy, method, args) -> switch (method.getName()) {
+                    case "isValid" -> true;
+                    case "getTransformation" -> pose;
+                    case "getLocation" -> new org.bukkit.Location(null, 0, 0, 0);
+                    case "getItemStack" -> stack;
+                    case "isGlowing" -> false;
+                    case "getGlowColorOverride", "setVisibleByDefault" -> null;
+                    default -> throw new AssertionError(method.getName());
+                });
+        var display = new VanillaDisplay(carrier, entity -> {}, new java.util.ArrayList<>());
+        var visits = new java.util.concurrent.atomic.AtomicInteger();
+        var children = new java.util.ArrayList<>() {
+            @Override public java.util.Iterator<Object> iterator() {
+                visits.incrementAndGet();
+                return super.iterator();
+            }
+        };
+        var field = VanillaDisplay.class.getDeclaredField("children");
+        field.setAccessible(true);
+        field.set(display, children);
+        for (int i = 0; i < 200; i++) assertTrue(display.sync());
+        assertEquals(0, visits.get());
+        pose.getTranslation().x = 1;
+        display.sync();
+        assertEquals(1, visits.get());
+    }
     @Test
     void dragonRevealsCanChangeMaterialWithoutReplacingDisplayEntities() {
         var hidden = VanillaGeometry.get("dragon_tile_hidden");

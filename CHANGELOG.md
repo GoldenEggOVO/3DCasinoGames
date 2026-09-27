@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Unify player-facing text with Adventure Components and style-only MiniMessage; insert ordinary parameters literally and retain legacy color/reset semantics.
+- Validate language keys, placeholders and styles; add transactional `/3dcasino reload-language` with the operator-default `3dcasino.admin` permission. Refresh live labels and invalidate old menus without restarting rounds.
+- Replace internal menu YAML round-trips with immutable typed Dialog descriptions; bound inputs and use monotonic, owner-bound, single-use sessions with expiry cleanup.
+- Replace leftover resource-font recovery graphics with vanilla card/path/multiplier text.
+- Fit machine labels using visible glyph advances and bold styles; clip oversized translations within existing label bounds.
+- Skip unchanged composite-display traversal and repeated button-press pose writes. Validate saved model references, bounds and rotations before restoration.
+- Document text/menu contracts for independent Tabletop alignment; retain rules, free practice, placement format and uncertain-transfer handling.
+
 - Remove the bundled client resource pack and its appearance switch. Built-in machines always use the JAR's vanilla Display geometry; old `machine-appearance` config entries are ignored.
 - Keep optional model resolution only for explicitly configured external custom item references. Remove pack-only generators, baselines and packaging checks.
 

@@ -42,6 +42,25 @@ The controller audit covered Blackjack, Mines, Crash, Plinko, Slots, Duck Race, 
 
 The current source build passes 140 Java tests and 18 Python tests. The source archive contains `vanilla-models.json` and no client resource-pack files. A clean local Purpur 26.2 probe passed all three phases: all 12 machines created and interacted with, six saved machines restored and played with Dialog disabled, then deleted machines stayed absent after another restart. Phase two deliberately included the obsolete `machine-appearance: resource-pack` config key; the built-in machines still used vanilla geometry. No other custom plugin or client pack was installed. Local phase evidence is in `reports/vanilla-runtime/run-20260926T225410846298Z/result.json` (ignored by Git).
 
+## Current source: text, menus and runtime foundation
+
+- Java: 155 tests passed, zero failures/errors/skips. Python: 18 passed.
+- Clean loopback Purpur 26.2: all three phases passed, all 12 machines operated, six restored/operated with Dialog disabled, removal survived another restart. Only Casino and the disposable probe were installed.
+- Reload checks: denied player cannot reload; valid reload preserves entity UUIDs and round state, invalid placeholders retain the previous language, old menu sessions are cleared. Long English/Chinese labels are exported from the running server.
+- Surface audit: 18 runtime snapshots, zero same-facing coplanar overlaps. Existing geometry and ray-targeting regressions remain enabled.
+- Independent review found bold-width and closing-style validation gaps; both were fixed with regression tests and re-reviewed. Menu descriptions also test duplicate/oversized input rejection and immutable lists.
+- No-change synchronization: 200 calls formerly traversed children 200 times; now zero traversals, with traversal retained on a transformation change. This is an operation-count result, not an FPS claim.
+- Restore scan sample (30 scans after 10 warmups): 10 / 100 / 1,000 / 10,000 records took about 0.012 / 0.022 / 0.100 / 0.191 ms per scan. Records referenced a missing world. This measures skip/lookup overhead only, not loaded-world entity creation or chunk-load latency. No extra restore index was introduced on this limited evidence.
+- Saved model validation now also covers the JSON restoration path; invalid references, inverted bounds and excessive rotation fail without rewriting the source file. Payment behavior and placement schema remain unchanged.
+
+![Runtime label previews](images/foundation-labels.png)
+
+These are Blender renders of actual server Display snapshots. The default label, oversized English/Chinese labels and Blackjack were visually inspected. Long labels show ellipses inside the existing button; geometry and button positions are unchanged. Representative materials and a substitute font are used, so this does not validate Minecraft font rasterization, bold rendering or final client interaction.
+
+Final runtime evidence: `reports/vanilla-runtime/run-20260927T000743723959Z/result.json`; tested JAR hash matches the local delivery. All 1,857 targeting samples passed. Preview images use the preceding successful run with identical runtime code.
+
+Local detailed evidence is retained under `reports/foundation/` and `reports/vanilla-runtime/` (ignored by Git). The newer source/local JAR is not a new published Release. See [alignment contracts](tabletop-alignment.md).
+
 ## Display counts
 
 Idle/default snapshots; totals include hidden item carriers and text displays, exclude Interaction entities. A Blackjack hand adds card entities while playing.

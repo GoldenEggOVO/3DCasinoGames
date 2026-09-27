@@ -25,6 +25,26 @@ class LanguageTest {
 
     @AfterEach void restoreEnglish() { Language.reset(); }
 
+    @Test void reloadKeepsLastGoodLanguageWhenAnyEntryIsInvalid() throws Exception {
+        Language.use(Language.load(folder, "en_US", message -> fail(message)));
+        Files.writeString(folder.resolve("custom.yml"), "menu.close: 'GOOD'\n");
+        assertTrue(Language.reload(folder, "custom", message -> fail(message)));
+        Files.writeString(folder.resolve("custom.yml"), "menu.close: 'BAD'\nround.result: '{ammount}'\n");
+        var warnings = new ArrayList<String>();
+        assertFalse(Language.reload(folder, "custom", warnings::add));
+        assertEquals("GOOD", Language.text("menu.close"));
+        assertTrue(warnings.stream().anyMatch(s -> s.contains("custom.yml") && s.contains("round.result")));
+    }
+
+    @Test void unwritableLanguageDirectoryFallsBackToBundledEnglish() throws Exception {
+        Path file = folder.resolve("not-a-directory");
+        Files.writeString(file, "keep");
+        var warnings = new ArrayList<String>();
+        assertEquals("FREE PLAY", Language.load(file, "en_US", warnings::add).message("round.playing"));
+        assertFalse(warnings.isEmpty());
+        assertEquals("keep", Files.readString(file));
+    }
+
     @Test void freshInstallCopiesBothLanguagesAndUsesEnglish() throws Exception {
         var language = Language.load(folder, "en_US", message -> fail(message));
         assertTrue(Files.exists(folder.resolve("en_US.yml")));
@@ -38,7 +58,10 @@ class LanguageTest {
         Files.writeString(folder.resolve("en_US.yml"), "menu.close: 'CUSTOM CLOSE'\n");
         Files.writeString(folder.resolve("zh_CN.yml"), "models.cabinet_button_play.0: '自定义开始'\nmenu.close: 42\n");
         String before = Files.readString(folder.resolve("zh_CN.yml"));
-        var language = Language.load(folder, "zh_CN", message -> fail(message));
+        var warnings = new ArrayList<String>();
+        var language = Language.load(folder, "zh_CN", warnings::add);
+        assertEquals(1, warnings.size());
+        assertTrue(warnings.getFirst().contains("menu.close"));
         assertEquals("自定义开始", language.message("models.cabinet_button_play.0"));
         assertEquals("CUSTOM CLOSE", language.message("menu.close"));
         assertEquals("FREE PLAY", language.message("round.playing"));
@@ -139,7 +162,7 @@ class LanguageTest {
     @Test void everyLiteralMessageKeyInSourceExistsInBothLanguages() throws Exception {
         var english = bundled("en_US");
         var chinese = bundled("zh_CN");
-        var keys = Pattern.compile("(?:\\btext\\(\\s*\"|\"(?=error\\.))([a-z][a-z0-9_.-]+)\"");
+        var keys = Pattern.compile("(?:\\b(?:text|component)\\(\\s*\"|\"(?=error\\.))([a-z][a-z0-9_.-]+)\"");
         try (var source = Files.walk(Path.of("src/main/java"))) {
             for (Path file : source.filter(path -> path.toString().endsWith(".java")).toList()) {
                 var matches = keys.matcher(Files.readString(file));

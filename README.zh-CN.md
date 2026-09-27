@@ -22,7 +22,7 @@
 2. 停服并备份插件数据和世界，将 JAR 放入 `plugins/`，同一插件只保留一个版本。
 3. 启动服务器，使用 `/3dcasino` 打开菜单，或使用 `/3dcasino create blackjack` 创建机器。
 
-默认配置为 `menu-enabled: true`、`language: en_US`。可编辑语言文件会生成到 `plugins/3dcasino/languages/`。将 `config.yml` 中的语言改为 `language: zh_CN` 并重启，即可使用中文；详见[语言配置](docs/languages.md)。
+默认配置为 `menu-enabled: true`、`language: en_US`。可编辑语言文件会生成到 `plugins/3dcasino/languages/`。将 `config.yml` 中的语言改为 `language: zh_CN` 并执行 `/3dcasino reload-language`，即可使用中文；详见[语言配置](docs/languages.md)。
 
 **不兼容升级：** 0.6 使用新的数据目录和命名空间，不提供旧命令、旧权限、旧 Java 包或自动迁移适配。替换旧版本前，请阅读[安装与升级说明](docs/installation.md)。
 
@@ -47,9 +47,10 @@ Vault 和 AuthMe 为可选集成，不需要 ServerGames、ServerBoards、Server
 | `/3dcasino create <game> [skin-id]` | 创建免费练习机器 |
 | `/3dcasino bet <game> <1-100>` | 修改自己附近空闲机器的练习下注 |
 | `/3dcasino remove [game]` | 删除指定游戏或自己的全部机器 |
+| `/3dcasino reload-language` | 校验并应用语言修改，无需重启 |
 | `/3dcasino reload-models` | 校验并重载机器定义，新创建的机器使用新定义 |
 
-Tab 补全会筛选游戏、对应皮肤和自己的机器。`3dcasino.use` 默认允许所有玩家，`3dcasino.machine` 默认仅允许 OP。Shift＋右键机器可打开设置。本插件不绑定 Shift＋F。
+Tab 补全会筛选游戏、对应皮肤和自己的机器。`3dcasino.use` 默认允许所有玩家，`3dcasino.machine` 默认仅允许 OP。`3dcasino.admin` 默认仅允许 OP，用于语言重载。Shift＋右键机器可打开设置。本插件不绑定 Shift＋F。
 
 设置 `menu-enabled: false` 并重启可关闭 Dialog，命令、实体按钮、保存恢复和结算服务继续运行。
 
@@ -70,6 +71,7 @@ python -m unittest discover -s tools -p "test_*.py"
 使用 JDK 25 和 Maven 3.9+。首次构建会下载公开依赖。安装 `target/3dcasino-*.jar`，不要安装 `original-*.jar`。构建插件不需要 Blender、模型生成或本地字体。
 
 - [安装说明](docs/installation.md) · [语言配置](docs/languages.md) · [验证记录](docs/verification.md)
+- [Tabletop 对齐说明](docs/tabletop-alignment.md)
 - [自定义模型](docs/custom-models.md) · [扩展接口](docs/architecture.md) · [外观预览](docs/vanilla-visual-review.md)
 - [资源工具](docs/resources.md) · [更新记录](CHANGELOG.md) · [参与开发](CONTRIBUTING.md)
 

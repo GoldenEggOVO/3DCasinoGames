@@ -3,7 +3,6 @@ package dev.casino3d;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.scheduler.BukkitTask;
 import org.junit.jupiter.api.Test;
 
 import java.io.InputStreamReader;
@@ -34,7 +33,7 @@ class ArchitectureTest {
             assertEquals("3dcasino", metadata.getName());
             assertEquals(Set.of("3dcasino"), metadata.getCommands().keySet());
             assertNull(metadata.getCommands().get("3dcasino").get("aliases"));
-            assertEquals(Set.of("3dcasino.use", "3dcasino.machine"),
+            assertEquals(Set.of("3dcasino.use", "3dcasino.machine", "3dcasino.admin"),
                     metadata.getPermissions().stream().map(org.bukkit.permissions.Permission::getName)
                             .collect(java.util.stream.Collectors.toSet()));
         }
@@ -61,10 +60,11 @@ class ArchitectureTest {
     }
 
     @Test
-    void optionalMenusDoNotOwnSettlementServicesOrJobs() throws Exception {
+    void optionalMenusDoNotOwnSettlementServices() throws Exception {
         for (var field : Class.forName("dev.casino3d.CasinoMenus").getDeclaredFields()) {
             assertNotEquals(CasinoService.class, field.getType());
-            assertFalse(BukkitTask.class.isAssignableFrom(field.getType()));
+            assertNotEquals(CasinoRuntime.class, field.getType());
+            assertNotEquals(MinesService.class, field.getType());
         }
     }
 }

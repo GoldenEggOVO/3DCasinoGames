@@ -34,16 +34,9 @@ public final class WheelOfFortuneMachine extends AnimatedMachine<WheelOfFortuneR
         for (double value :
                 dev.casino3d.game.wheel_of_fortune.WheelOfFortuneRound.multipliers()) {
             var label = text(0, 2, .30, .32);
-            label.text(
-                    Component.text(
-                            value < 0
-                                    ? Language.text("fortune.again-label")
-                                    : String.format(
-                                            Locale.ROOT,
-                                            "%sX",
-                                            java.math.BigDecimal.valueOf(value)
-                                                    .stripTrailingZeros()
-                                                    .toPlainString())));
+            translatedLabel(label, () -> value < 0 ? Language.component("fortune.again-label")
+                    : Component.text(String.format(Locale.ROOT, "%sX", java.math.BigDecimal.valueOf(value)
+                            .stripTrailingZeros().toPlainString())));
             wheelLabels.add(label);
         }
     }

@@ -69,13 +69,13 @@ public final class MachineManager implements Listener {
 
     public void command(Player player, String[] args) {
         if (!plugin.machineAllowed(player)) {
-            player.sendMessage(text("machine.denied"));
+            player.sendMessage(dev.casino3d.Language.component("machine.denied"));
             return;
         }
         try {
             if (args.length == 1 && args[0].equalsIgnoreCase("reload-models")) {
                 registry.reload(plugin.getDataFolder().toPath().resolve("machines"));
-                player.sendMessage(text("machine.models-reloaded"));
+                player.sendMessage(dev.casino3d.Language.component("machine.models-reloaded"));
                 return;
             }
             if (args.length >= 1 && args[0].equalsIgnoreCase("bet")) {
@@ -91,7 +91,7 @@ public final class MachineManager implements Listener {
                     throw new IllegalArgumentException("error.machine-distance");
                 }
                 machine.setStake(Long.parseLong(args[2]) * 100);
-                player.sendMessage(text("machine.stake-saved", "amount", args[2]));
+                player.sendMessage(dev.casino3d.Language.component("machine.stake-saved", "amount", args[2]));
                 return;
             }
             if (args.length >= 1 && args[0].equalsIgnoreCase("remove")) {
@@ -109,19 +109,18 @@ public final class MachineManager implements Listener {
                     if (!placements.containsKey(new Key(machine.owner(), machine.game())))
                         detach(machine);
                 }
-                player.sendMessage(text("machine.removed"));
+                player.sendMessage(dev.casino3d.Language.component("machine.removed"));
                 return;
             }
             if (args.length < 2 || args.length > 3 || !args[0].equalsIgnoreCase("create")) {
-                player.sendMessage(
-                        text("machine.usage"));
+                player.sendMessage(dev.casino3d.Language.component("machine.usage"));
                 return;
             }
             String game = args[1].toLowerCase(Locale.ROOT);
             var definition = registry.get(game, args.length == 3 ? args[2] : game);
             var key = new Key(player.getUniqueId(), game);
             if (placements.containsKey(key)) {
-                player.sendMessage(text("machine.exists"));
+                player.sendMessage(dev.casino3d.Language.component("machine.exists"));
                 return;
             }
             var origin = player.getLocation();
@@ -134,7 +133,7 @@ public final class MachineManager implements Listener {
             origin.setZ(Math.floor(origin.getZ()) + .5);
             origin.setYaw(yaw + 180);
             if (origin.getY() + 6 >= origin.getWorld().getMaxHeight()) {
-                player.sendMessage(text("machine.height"));
+                player.sendMessage(dev.casino3d.Language.component("machine.height"));
                 return;
             }
             var machine = create(game, player.getUniqueId(), origin, definition);
@@ -159,9 +158,9 @@ public final class MachineManager implements Listener {
                 machine.clear();
                 throw ex;
             }
-            player.sendMessage(text("machine.created"));
+            player.sendMessage(dev.casino3d.Language.component("machine.created"));
         } catch (IOException | IllegalArgumentException ex) {
-            player.sendMessage(text("machine.failed", "error", dev.casino3d.Language.error(ex)));
+            player.sendMessage(dev.casino3d.Language.component("machine.failed", "error", dev.casino3d.Language.error(ex)));
             if (ex.getMessage() == null || !ex.getMessage().startsWith("error."))
                 plugin.getLogger().log(java.util.logging.Level.WARNING, "Machine command failed", ex);
         }

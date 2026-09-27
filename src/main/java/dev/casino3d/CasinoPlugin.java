@@ -117,28 +117,53 @@ public final class CasinoPlugin extends JavaPlugin implements Listener {
     }
 
     private void menuHelp(Player player) {
-        player.sendMessage(
-                text("menu.disabled"));
+        player.sendMessage(dev.casino3d.Language.component("menu.disabled"));
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (args.length > 0 && args[0].equalsIgnoreCase("reload-language")) {
+            if (!(sender instanceof ConsoleCommandSender)
+                    && (!(sender instanceof Player p) || !allowed(p) || !CasinoPermissions.allowed(p, "admin"))) {
+                sender.sendMessage(Language.component("command.denied"));
+                return true;
+            }
+            if (args.length != 1) {
+                sender.sendMessage(Language.component("command.language-usage"));
+                return true;
+            }
+            boolean loaded = false;
+            try {
+                var config = new org.bukkit.configuration.file.YamlConfiguration();
+                config.load(new java.io.File(getDataFolder(), "config.yml"));
+                String locale = config.getString("language", "en_US");
+                loaded = Language.reload(getDataFolder().toPath().resolve("languages"), locale, getLogger()::warning);
+                if (loaded) {
+                    getConfig().set("language", locale);
+                    if (menus != null) menus.invalidate();
+                }
+            } catch (java.io.IOException | org.bukkit.configuration.InvalidConfigurationException ex) {
+                getLogger().log(Level.WARNING, "Cannot reload language configuration", ex);
+            }
+            sender.sendMessage(Language.component(loaded ? "command.language-reloaded" : "command.language-failed"));
+            return true;
+        }
         if (args.length > 0
                         && Set.of("create", "remove", "bet", "reload-models")
                                 .contains(args[0].toLowerCase(java.util.Locale.ROOT))) {
             if (sender instanceof Player player) machineCommand(player, args);
-            else sender.sendMessage(text("command.player-only"));
+            else sender.sendMessage(dev.casino3d.Language.component("command.player-only"));
             return true;
         }
         boolean mines = args.length > 0 && args[0].equalsIgnoreCase("mines");
         if (mines) args = java.util.Arrays.copyOfRange(args, 1, args.length);
         if (args.length > 0 && args[0].equalsIgnoreCase("resolve")) {
             if (!(sender instanceof ConsoleCommandSender)) {
-                sender.sendMessage(text("command.console-only"));
+                sender.sendMessage(dev.casino3d.Language.component("command.console-only"));
                 return true;
             }
             if (args.length != 4 || !Set.of("applied", "not-applied").contains(args[3])) {
-                sender.sendMessage(text("command.resolve-usage", "command", mines ? "3dcasino mines" : "3dcasino"));
+                sender.sendMessage(dev.casino3d.Language.component("command.resolve-usage", "command", mines ? "3dcasino mines" : "3dcasino"));
                 return true;
             }
             UUID playerId;
@@ -147,7 +172,7 @@ public final class CasinoPlugin extends JavaPlugin implements Listener {
                 playerId = UUID.fromString(args[1]);
                 roundId = UUID.fromString(args[2]);
             } catch (IllegalArgumentException invalidId) {
-                sender.sendMessage(text("command.resolve-usage", "command", mines ? "3dcasino mines" : "3dcasino"));
+                sender.sendMessage(dev.casino3d.Language.component("command.resolve-usage", "command", mines ? "3dcasino mines" : "3dcasino"));
                 return true;
             }
             try {
@@ -158,9 +183,9 @@ public final class CasinoPlugin extends JavaPlugin implements Listener {
                         args[3].equals("applied"));
                 getLogger()
                         .warning(text("command.resolve-audit", "command", command.getName(), "arguments", String.join(" ", args)));
-                sender.sendMessage(text("command.resolved"));
+                sender.sendMessage(dev.casino3d.Language.component("command.resolved"));
             } catch (Exception ex) {
-                sender.sendMessage(text("command.resolve-failed", "error", Language.error(ex)));
+                sender.sendMessage(dev.casino3d.Language.component("command.resolve-failed", "error", Language.error(ex)));
                 if (ex.getMessage() == null || !ex.getMessage().startsWith("error."))
                     getLogger().log(Level.WARNING, "Settlement reconciliation failed", ex);
             }
@@ -168,15 +193,15 @@ public final class CasinoPlugin extends JavaPlugin implements Listener {
         }
         if (sender instanceof Player player) {
             if (!allowed(player)) {
-                player.sendMessage(text("command.denied"));
+                player.sendMessage(dev.casino3d.Language.component("command.denied"));
             } else if (mines) {
-                player.sendMessage(text("command.mines"));
+                player.sendMessage(dev.casino3d.Language.component("command.mines"));
             } else {
                 if (menus != null && menusEnabled()) menus.open(player);
                 else menuHelp(player);
             }
         } else {
-            sender.sendMessage(text("command.console-help"));
+            sender.sendMessage(dev.casino3d.Language.component("command.console-help"));
         }
         return true;
     }
@@ -186,7 +211,10 @@ public final class CasinoPlugin extends JavaPlugin implements Listener {
             CommandSender sender, Command command, String alias, String[] args) {
         if (sender instanceof Player player) {
             if (!allowed(player)) return java.util.List.of();
-            return machineAllowed(player) ? machines.complete(player, args) : CommandCompletion.menu(args);
+            var choices = new java.util.ArrayList<>(machineAllowed(player)
+                    ? machines.complete(player, args) : CommandCompletion.menu(args));
+            if (CasinoPermissions.allowed(player, "admin")) choices.addAll(CommandCompletion.admin(args));
+            return choices.stream().distinct().sorted().toList();
         }
         return sender instanceof ConsoleCommandSender
                 ? CommandCompletion.console(args) : java.util.List.of();

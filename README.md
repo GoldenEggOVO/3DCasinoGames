@@ -47,9 +47,10 @@ All 12 physical machines are free practice: they do not withdraw money or award 
 | `/3dcasino create <game> [skin-id]` | Create a free practice machine |
 | `/3dcasino bet <game> <1-100>` | Change the stake on your nearby idle machine |
 | `/3dcasino remove [game]` | Remove one game or all your machines |
+| `/3dcasino reload-language` | Validate and apply language changes without restarting |
 | `/3dcasino reload-models` | Validate and reload machine definitions for new placements |
 
-Tab completion filters games, matching skins and your own machines. `3dcasino.use` defaults to everyone; `3dcasino.machine` defaults to operators. Shift + right-click opens machine settings. This plugin does not bind Shift + F.
+Tab completion filters games, matching skins and your own machines. `3dcasino.use` defaults to everyone; `3dcasino.machine` defaults to operators. `3dcasino.admin` defaults to operators and permits language reload. Shift + right-click opens machine settings. This plugin does not bind Shift + F.
 
 Set `menu-enabled: false` and restart to disable Dialog. Commands, physical buttons, persistence and settlement services continue working.
 
@@ -70,6 +71,7 @@ python -m unittest discover -s tools -p "test_*.py"
 Use JDK 25 and Maven 3.9+. The first build downloads public dependencies. Install `target/3dcasino-*.jar`, never `original-*.jar`. Building the plugin does not require Blender, model generation or local fonts.
 
 - [Installation](docs/installation.md) · [Languages](docs/languages.md) · [Verification](docs/verification.md)
+- [Tabletop alignment](docs/tabletop-alignment.md)
 - [Custom models](docs/custom-models.md) · [API](docs/architecture.md) · [Visual review](docs/vanilla-visual-review.md)
 - [Resource tools](docs/resources.md) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md)
 

@@ -11,6 +11,27 @@ import org.junit.jupiter.api.io.TempDir;
 class PlacementStoreTest {
     @TempDir Path directory;
 
+    @Test void restoredDefinitionsReceiveTheSameValidationAsEditableSkins() throws Exception {
+        Path file = directory.resolve("placements.json");
+        var store = new PlacementStore(file);
+        store.save(List.of(new PlacementStore.Placement(UUID.randomUUID(), UUID.randomUUID(),
+                0, 64, 0, 0, MachineDefinition.builtin("blackjack"), 1000)));
+        String original = Files.readString(file);
+        for (String corruption : List.of("model", "bounds", "rotation")) {
+            var json = com.google.gson.JsonParser.parseString(original).getAsJsonObject();
+            var definition = json.getAsJsonArray("machines").get(0).getAsJsonObject().getAsJsonObject("definition");
+            switch (corruption) {
+                case "model" -> definition.getAsJsonObject("models").addProperty("cabinet_blackjack", "INVALID");
+                case "bounds" -> definition.getAsJsonArray("settingsBounds").set(0, new com.google.gson.JsonPrimitive(999));
+                case "rotation" -> definition.getAsJsonObject("anchors").getAsJsonObject("body").addProperty("pitch", 999);
+            }
+            String invalid = json.toString();
+            Files.writeString(file, invalid);
+            assertThrows(java.io.IOException.class, store::load, corruption);
+            assertEquals(invalid, Files.readString(file));
+        }
+    }
+
     @Test
     void allGameTypesAndSettingsSurviveRestartAndDeletion() throws Exception {
         var store = new PlacementStore(directory.resolve("placements.json"));

@@ -42,7 +42,7 @@ class CommandCompletionTest {
     }
 
     @Test void consoleOnlyCompletesSettlementCommandsAndOutcomePosition() {
-        assertEquals(List.of("mines", "resolve"), CommandCompletion.console(new String[]{""}));
+        assertEquals(List.of("mines", "reload-language", "resolve"), CommandCompletion.console(new String[]{""}));
         assertEquals(List.of("resolve"), CommandCompletion.console(new String[]{"mines", "r"}));
         assertEquals(List.of(), CommandCompletion.console(new String[]{"resolve", ""}));
         assertEquals(List.of("not-applied"), CommandCompletion.console(new String[]{"resolve", "uuid", "round", "n"}));

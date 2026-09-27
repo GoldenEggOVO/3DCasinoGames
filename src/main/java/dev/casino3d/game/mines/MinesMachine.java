@@ -109,7 +109,7 @@ public final class MinesMachine extends PracticeMachine<MinesDemoRound> {
             var cell = cells.get(i);
             if (!face.equals(faces.put(cell, face))) flips.put(cell, new Flip(face, age));
         }
-        setting.text(Component.text(Language.text("mines.count", "count", round.mineCount())));
+        setting.text(Language.component("mines.count", "count", round.mineCount()));
         if (wasActive && !round.active())
             origin.getWorld()
                     .playSound(

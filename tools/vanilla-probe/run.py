@@ -77,7 +77,7 @@ def main():
                 'menu-enabled: false\nlanguage: custom\nmachine-appearance: resource-pack\n',
                 encoding='utf-8')
             (config / 'languages/custom.yml').write_text(
-                '"models.showcase_button_play.0": "CUSTOM PLAY"\n', encoding='utf-8')
+                '"models.showcase_button_play.0": "GO"\n', encoding='utf-8')
         log_path = run / f'phase-{phase}.log'
         with log_path.open('w', encoding='utf-8') as output:
             process = subprocess.run([str(jdk / ('java' + suffix)), '-Xms512M', '-Xmx2G',

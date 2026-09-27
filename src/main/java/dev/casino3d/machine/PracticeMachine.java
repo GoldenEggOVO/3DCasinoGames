@@ -36,6 +36,8 @@ public abstract class PracticeMachine<R extends PracticeRound> {
     private final Map<ItemDisplay, String> buttonActions = new LinkedHashMap<>();
     private final Map<ItemDisplay, Integer> pressed = new HashMap<>();
     private final List<VanillaDisplay> vanillaDisplays = new ArrayList<>();
+    private final List<Runnable> translatedLabels = new ArrayList<>();
+    private long languageRevision = dev.casino3d.Language.revision();
     private ItemDisplay highlighted;
     protected int age;
     private long lastClick;
@@ -156,14 +158,17 @@ public abstract class PracticeMachine<R extends PracticeRound> {
         for (var iterator = pressed.entrySet().iterator(); iterator.hasNext(); ) {
             var entry = iterator.next();
             boolean done = age >= entry.getValue();
-            entry.getKey()
-                    .setTransformation(
-                            buttonPose(
-                                    buttons.get(entry.getKey()),
-                                    done ? 0 : buttons.get(entry.getKey()).press()));
-            if (done) iterator.remove();
+            if (done) {
+                entry.getKey().setTransformation(buttonPose(buttons.get(entry.getKey()), 0));
+                iterator.remove();
+            }
         }
         animate();
+        if (languageRevision != dev.casino3d.Language.revision() && !busy()) {
+            translatedLabels.forEach(Runnable::run);
+            refresh();
+            languageRevision = dev.casino3d.Language.revision();
+        }
         if (age % 4 == 0) hover();
         syncVanillaDisplays();
     }
@@ -260,6 +265,12 @@ public abstract class PracticeMachine<R extends PracticeRound> {
 
     protected final TextDisplay vanillaLabel(double x, double y, double z, String label, float size) {
         return vanillaText(at(x, y, z), label, size);
+    }
+
+    protected final void translatedLabel(TextDisplay display, java.util.function.Supplier<Component> text) {
+        Runnable update = () -> display.text(text.get());
+        translatedLabels.add(update);
+        update.run();
     }
 
     private TextDisplay vanillaText(Location location, String label, float size) {
@@ -462,7 +473,11 @@ public abstract class PracticeMachine<R extends PracticeRound> {
                 || !rowAvailable(hit.target.row)
                 || !available(hit.target.action)) return;
         lastClick = now;
-        if (buttons.containsKey(hit.target.visual)) pressed.put(hit.target.visual, age + 4);
+        if (buttons.containsKey(hit.target.visual)) {
+            var button = buttons.get(hit.target.visual);
+            hit.target.visual.setTransformation(buttonPose(button, button.press()));
+            pressed.put(hit.target.visual, age + 4);
+        }
         action(hit.target.action);
         syncVanillaDisplays();
         origin.getWorld().playSound(origin, Sound.BLOCK_STONE_BUTTON_CLICK_ON, .35f, 1.1f);
@@ -540,6 +555,7 @@ public abstract class PracticeMachine<R extends PracticeRound> {
         for (Entity entity : parts) entity.remove();
         parts.clear();
         vanillaDisplays.clear();
+        translatedLabels.clear();
         targets.clear();
         buttons.clear();
         pressed.clear();

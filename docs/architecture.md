@@ -27,3 +27,11 @@
 `machine/PlacementStore` 独立保存机器布置和模型快照，使用临时文件同步后原子替换；对局状态不写入布置文件。`MachineManager` 按所有者与游戏类型索引，区分保存记录与已加载实体。区块或世界卸载只卸载实体，显式删除才写入记录变更。
 
 语言由 `Language` 加载，默认内置英文。启动只生成缺少的语言文件；菜单和实体文本使用命名键及占位符。服务使用稳定错误键，边界统一翻译；翻译内容不参与动作、概率或资金判断。见 [languages.md](languages.md)。
+
+## 文本与菜单基础
+
+`ui.MessageText` 只解析模板中的显示样式，普通参数使用 `Tag.inserting(Component.text(...))`。`Language.component` 是显示边界，`Language.text` 是日志与规则纯文本边界。禁止把替换后的字符串重新当模板解析。
+
+`ui.MenuView` 是不可变的标题、正文、输入框、按钮和关闭按钮描述。`PaperMenus` 只负责转换到 Paper Dialog，内部不再生成临时 YAML。`MenuSessions` 使用单调时钟、玩家 UUID、令牌和单次消费；回调再检查插件启用、菜单开关、主线程、权限及具体机器状态。五分钟过期，退出、重载和停止时清理。
+
+`VanillaDisplay.sync` 在确认模型、语言、位置、变换和发光均未变化后快速返回。文字重载只更新现有 TextDisplay；机器控制器在安全刷新点更新动态读数。保存的模型定义也经过记录构造校验，不能通过 JSON 恢复绕过 YAML 校验。详见 [Tabletop 对齐说明](tabletop-alignment.md)。

@@ -1,12 +1,13 @@
 package dev.casino3d.machine;
 
 import dev.casino3d.model.VanillaGeometry;
+import dev.casino3d.Language;
+import dev.casino3d.ui.LabelLayout;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
-import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Color;
 import org.bukkit.Location;
@@ -22,10 +23,13 @@ import org.joml.Vector3f;
 /** A hidden item retains the existing animation/input API; its vanilla parts follow its pose. */
 final class VanillaDisplay {
     private record Part(Display display, Matrix4f local) {}
+    private record LabelPart(TextDisplay display, Matrix4f local, VanillaGeometry.Label label, int index) {}
     private final ItemDisplay carrier;
     private final Consumer<Entity> register;
     private final List<Entity> ownerParts;
     private final List<Part> children = new ArrayList<>();
+    private final List<LabelPart> labels = new ArrayList<>();
+    private long languageRevision = Language.revision();
     private String name;
     private Matrix4f previous;
     private Location location;
@@ -72,6 +76,14 @@ final class VanillaDisplay {
         boolean transformed = !matrix.equals(previous);
         boolean glowChanged = previous == null || glowing != carrier.isGlowing()
                 || !Objects.equals(glowColor, carrier.getGlowColorOverride());
+        if (languageRevision != Language.revision()) {
+            for (var label : labels) {
+                updateLabel(label);
+                applyPose(label.display, new Matrix4f(matrix).mul(label.local));
+            }
+            languageRevision = Language.revision();
+        }
+        if (!moved && !transformed && !glowChanged) return true;
         for (var part : children) {
             if (moved) part.display.teleport(nextLocation);
             if (transformed) {
@@ -135,20 +147,28 @@ final class VanillaDisplay {
         }
         for (int index = 0; index < model.labels().size(); index++) {
             var label = model.labels().get(index);
-            String translated = dev.casino3d.Language.modelLabel(name, index, label.text());
-            float size = Math.min(label.height() / .2f, label.width() / (Math.max(1, translated.length()) * .15f));
-            float[] p = label.position();
-            var local = new Matrix4f().translation(p[0], p[1] - .125f*size, p[2]).scale(size);
+            var local = new Matrix4f();
+            int labelIndex = index;
             var display = carrier.getWorld().spawn(carrier.getLocation(), TextDisplay.class, d -> {
+                updateLabel(new LabelPart(d, local, label, labelIndex));
                 initialize(d, new Matrix4f(parent).mul(local));
                 d.setBillboard(Display.Billboard.FIXED);
                 d.setDefaultBackground(false);
                 d.setBackgroundColor(Color.fromARGB(0));
                 d.setLineWidth(1000);
-                d.text(Component.text(translated, TextColor.color(label.color() == null ? 0xf6edcf : label.color())));
             });
             children.add(new Part(display, local));
+            labels.add(new LabelPart(display, local, label, index));
         }
+        languageRevision = Language.revision();
+    }
+
+    private void updateLabel(LabelPart part) {
+        var label = part.label;
+        var fit = LabelLayout.fit(Language.modelComponent(name, part.index, label.text()), label.width(), label.height());
+        float[] p = label.position();
+        part.local.translation(p[0], p[1] - .125f * fit.scale(), p[2]).scale(fit.scale());
+        part.display.text(fit.text().colorIfAbsent(TextColor.color(label.color() == null ? 0xf6edcf : label.color())));
     }
 
     private void remove() {
@@ -157,5 +177,6 @@ final class VanillaDisplay {
             part.display.remove();
         }
         children.clear();
+        labels.clear();
     }
 }
