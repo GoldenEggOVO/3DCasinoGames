@@ -12,6 +12,8 @@ import java.util.*;
 
 /** Physical display and animation for duck_race; the round owns all game rules. */
 public final class DuckRaceMachine extends AnimatedMachine<DuckRaceRound> {
+    private static final double START_Z = .7;
+    private static final double FINISH_Z = -2.3;
 
     final List<ItemDisplay> figures = new ArrayList<>();
 
@@ -36,7 +38,20 @@ public final class DuckRaceMachine extends AnimatedMachine<DuckRaceRound> {
                 ? ButtonDefinition.at(0, .31, 1.73, .65, -35, 1.2)
                 : definition.button("play"));
         for (int i = 0; i < 4; i++)
-            figures.add(model("showcase_duck_" + (i + 1), -.9 + i * .6, 1.08, .7, 4));
+            figures.add(model("showcase_duck_" + (i + 1), -.9 + i * .6, 1.08, START_Z, 4));
+    }
+
+    @Override
+    protected List<Double> settingsBounds() {
+        // Keep existing saved/default skin definitions compatible with the controls.
+        if (!definition.equals(MachineDefinition.builtin("duck_race"))) return super.settingsBounds();
+        var bounds = new ArrayList<>(super.settingsBounds());
+        bounds.set(2, -2.85);
+        return bounds;
+    }
+
+    private double finishZ(int lane) {
+        return lane == round.winner() ? FINISH_Z : FINISH_Z + .8 + lane * .18;
     }
 
     @Override
@@ -59,8 +74,8 @@ public final class DuckRaceMachine extends AnimatedMachine<DuckRaceRound> {
                                     -.9 + i * .6,
                                     1.08,
                                     round.finished()
-                                            ? (i == round.winner() ? -4.3 : -3.5 + i * .18)
-                                            : .7));
+                                            ? finishZ(i)
+                                            : START_Z));
     }
 
     @Override
@@ -71,10 +86,10 @@ public final class DuckRaceMachine extends AnimatedMachine<DuckRaceRound> {
     @Override
     protected void animateFrame(double progress, double ease) {
         for (int i = 0; i < 4; i++) {
-            double finish = i == round.winner() ? -4.3 : -3.5 + i * .18;
+            double finish = finishZ(i);
             double z =
-                    .7
-                            + (finish - .7) * progress
+                    START_Z
+                            + (finish - START_Z) * progress
                             + Math.sin(progress * Math.PI) * Math.sin(age * .18 + i) * .08;
             figures.get(i)
                     .teleport(at(-.9 + i * .6, 1.08 + Math.abs(Math.sin(age * .35 + i)) * .035, z));

@@ -75,13 +75,30 @@ The exact tested JAR is recorded by SHA-256 in local `reports/vanilla-runtime/ru
 
 All-machine renders were inspected for screen/control occlusion. Blackjack uses its rear readout; Mines, Penguin Cross and Keno have supported table readouts; Plinko's readout is beside PLAY. See [feedback semantics and wheel previews](machine-feedback.md). Screens add five to seven display entities per machine. This source build is newer than the published beta Release.
 
+## Current source: Blackjack and Duck Race layout correction
+
+Blackjack's profit readout now sits above the original score display. Duck Race's
+track is exactly two blocks shorter (5 to 3 blocks), with the houses and rear
+legs translated together. The profit readout is centered over the two middle
+houses. Animated and settled duck positions use the same new finish line;
+controls, race duration and rules are preserved.
+
+The final JAR passed 159 Java tests, 20 Python tests and all three clean Purpur
+probe phases, including 1,857 targeting samples and restart/removal checks.
+All 30 runtime snapshots passed the coplanar surface audit. The tested JAR hash
+is recorded in `reports/vanilla-runtime/run-20260927T041836894521Z/result.json`.
+The changed machines were re-rendered and checked for screen occlusion and
+support intersections; Minecraft client acceptance remains pending.
+
+![Updated screen placement](images/layout-clearance.png)
+
 ## Display counts
 
 Idle/default snapshots; totals include hidden item carriers and text displays, exclude Interaction entities. A Blackjack hand adds card entities while playing.
 
 | Machine | Unique model IDs | BlockDisplays | All Displays |
 | --- | ---: | ---: | ---: |
-| Blackjack | 6 | 330 | 345 |
+| Blackjack | 6 | 332 | 347 |
 | Mines | 5 | 236 | 274 |
 | Crash | 4 | 156 | 167 |
 | Plinko | 2 | 279 | 299 |

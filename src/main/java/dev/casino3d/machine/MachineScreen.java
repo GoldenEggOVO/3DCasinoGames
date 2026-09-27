@@ -25,12 +25,12 @@ final class MachineScreen {
     MachineScreen(PracticeMachine<?> machine) {
         this.machine = machine;
         layout = switch (machine.game()) {
-            case "blackjack" -> new Layout(0, 1.47, -.748, 1.17f, .25f);
+            case "blackjack" -> new Layout(0, 1.87, -.81, 1.17f, .25f);
             case "mines" -> new Layout(0, 1.45, -1.15, 1.25f, .32f);
             case "crash" -> new Layout(0, .55, .65, 1.50f, .34f);
             case "plinko" -> new Layout(-1.30, .42, .48, 1.24f, .30f);
             case "slots" -> new Layout(0, .40, .565, 1.60f, .32f);
-            case "duck_race" -> new Layout(1.10, .38, 1.73, 1.08f, .30f);
+            case "duck_race" -> new Layout(0, 1.86, -2.53, 1.08f, .30f);
             case "wheel_of_fortune" -> new Layout(0, .63, .63, 1.10f, .36f);
             case "money_wheel" -> new Layout(0, 1.05, .64, 1.35f, .23f);
             case "penguin_cross" -> new Layout(0, 1.32, -.76, 1.25f, .32f);
@@ -42,6 +42,7 @@ final class MachineScreen {
         slab(layout.width + .055f, layout.height + .055f, .055f, 0, Material.GRAY_CONCRETE);
         slab(layout.width, layout.height, .015f, .037f, Material.BLACK_CONCRETE);
         switch (machine.game()) {
+            case "blackjack" -> stand(1.63);
             case "mines" -> stand(1.07);
             case "penguin_cross" -> stand(.94);
             case "keno" -> stand(.72);
@@ -49,10 +50,7 @@ final class MachineScreen {
                 for (int sign : new int[] {-1, 1})
                     block(sign * .22, layout.y, .43, .08f, .065f, .40f, Material.GRAY_CONCRETE);
             }
-            case "duck_race" -> {
-                block(layout.x, .62, 1.63, .075f, .44f, .10f, Material.GRAY_CONCRETE);
-                block(layout.x, .80, 1.21, .065f, .07f, .85f, Material.GRAY_CONCRETE);
-            }
+            case "duck_race" -> stand(1.59);
             default -> { }
         }
         header = machine.text(layout.x, layout.y + layout.height * .29, layout.z + .056, .1);

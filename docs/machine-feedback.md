@@ -65,6 +65,12 @@ Readout positions are built-in per game and follow the `playfield` transform.
 They add no clickable region. Custom cabinet geometry may need a corresponding
 code-level readout layout adjustment. Existing button locations remain intact.
 
+Blackjack's profit readout is mounted above the original score display, with a
+visible gap. Duck Race uses a three-block racing distance (two blocks shorter
+than before), with the readout centered above the two middle finish houses.
+The houses, rear legs, finish line and duck animation endpoints move together;
+the race duration and game rules remain unchanged.
+
 ## Wheel models and previews
 
 Fortune now has a purple housing, pink rim lamps and a dark diamond pointer.
