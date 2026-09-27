@@ -12,7 +12,7 @@
 
 ![Penguin Cross, Keno, Hilo and Dragon Tower](docs/images/machines-03.png)
 
-*Renders of the actual server Display geometry, not in-game screenshots. [Preview details](docs/vanilla-visual-review.md).*
+*Renders of the actual server Display geometry, not in-game screenshots.*
 
 ## Install
 
@@ -72,8 +72,7 @@ python -m unittest discover -s tools -p "test_*.py"
 Use JDK 25 and Maven 3.9+. The first build downloads public dependencies. Install `target/3dcasino-*.jar`, never `original-*.jar`. Building the plugin does not require Blender, model generation or local fonts.
 
 - [Installation](docs/installation.md) · [Languages](docs/languages.md) · [Verification](docs/verification.md)
-- [Tabletop alignment](docs/tabletop-alignment.md)
-- [Custom models](docs/custom-models.md) · [API](docs/architecture.md) · [Visual review](docs/vanilla-visual-review.md)
-- [Resource tools](docs/resources.md) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md)
+- [Custom models](docs/custom-models.md) · [API](docs/architecture.md) · [Machine feedback](docs/machine-feedback.md)
+- [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md)
 
 Licensed under [GPL-3.0](LICENSE). See [third-party materials](THIRD_PARTY.md). Production settings, private fonts and third-party server/plugin binaries are excluded.

@@ -12,7 +12,7 @@
 
 ![Penguin Cross（企鹅过街）、Keno、Hilo、Dragon Tower（龙塔）](docs/images/machines-03.png)
 
-*图片根据服务端实际 Display 实体几何渲染，并非游戏内截图。详见[预览说明](docs/vanilla-visual-review.md)。*
+*图片根据服务端实际 Display 实体几何渲染，并非游戏内截图。*
 
 ## 安装
 
@@ -72,8 +72,7 @@ python -m unittest discover -s tools -p "test_*.py"
 使用 JDK 25 和 Maven 3.9+。首次构建会下载公开依赖。安装 `target/3dcasino-*.jar`，不要安装 `original-*.jar`。构建插件不需要 Blender、模型生成或本地字体。
 
 - [安装说明](docs/installation.md) · [语言配置](docs/languages.md) · [验证记录](docs/verification.md)
-- [Tabletop 对齐说明](docs/tabletop-alignment.md)
-- [自定义模型](docs/custom-models.md) · [扩展接口](docs/architecture.md) · [外观预览](docs/vanilla-visual-review.md)
-- [资源工具](docs/resources.md) · [更新记录](CHANGELOG.md) · [参与开发](CONTRIBUTING.md)
+- [自定义模型](docs/custom-models.md) · [扩展接口](docs/architecture.md) · [机器反馈](docs/machine-feedback.md)
+- [更新记录](CHANGELOG.md) · [参与开发](CONTRIBUTING.md)
 
 项目采用 [GPL-3.0](LICENSE) 许可，素材来源详见[第三方说明](THIRD_PARTY.md)。仓库不包含生产配置、私有字体或第三方服务端及插件二进制文件。部分详细文档使用英文。

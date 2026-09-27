@@ -38,4 +38,4 @@ Reload is transactional: **any warning in either editable English or the selecte
 
 `Language.component(key, pairs...)` returns formatted Components for player-facing output. `Language.text(key, pairs...)` returns plain text for logs, errors and rule status. A caller may explicitly supply a Component parameter to retain its structure; never deserialize a player name or arbitrary parameter as MiniMessage. Language files cannot declare callbacks.
 
-Translations do not change probabilities, practice stakes, payouts, ownership or action availability. Card ranks/suits and game/action IDs remain symbols or identifiers. External models may contain painted lettering outside this interface. See [Tabletop alignment](tabletop-alignment.md).
+Translations do not change probabilities, practice stakes, payouts, ownership or action availability. Card ranks/suits and game/action IDs remain symbols or identifiers. External models may contain painted lettering outside this interface.

@@ -24,8 +24,7 @@ immediately and does not count it again when the rocket crashes. Each Plinko
 ball settles once using the stake captured when that ball was launched.
 
 These are free practice amounts: no money is withdrawn, no wallet is added, and
-no balance is awarded. Existing game rules, payout tables, random draws and
-machine placement persistence remain unchanged.
+no balance is awarded. Practice results do not affect saved machine placements.
 
 ## Sound cues
 
@@ -44,9 +43,7 @@ machine placement persistence remain unchanged.
 | Dragon Tower | Safe-floor ping, final result |
 
 Results use a low note for a loss, a neutral note for break-even, and a short
-ascending chime for a win. A large win gets one additional note. There is no
-fabricated near-miss, changed probability or automatic replay except Fortune's
-existing Spin Again rule.
+ascending chime for a win. A large win gets one additional note. Fortune's Spin Again sector can trigger another spin automatically.
 
 Sounds use Minecraft's **Blocks** volume category and are sent only to players
 within nine blocks of the machine origin. Queued notes are tick-driven and
@@ -63,23 +60,4 @@ MiniMessage and text-fitting path as other machine text.
 
 Readout positions are built-in per game and follow the `playfield` transform.
 They add no clickable region. Custom cabinet geometry may need a corresponding
-code-level readout layout adjustment. Existing button locations remain intact.
-
-Blackjack's profit readout is mounted above the original score display, with a
-visible gap. Duck Race uses a three-block racing distance (two blocks shorter
-than before), with the readout centered above the two middle finish houses.
-The houses, rear legs, finish line and duck animation endpoints move together;
-the race duration and game rules remain unchanged.
-
-## Wheel models and previews
-
-Fortune now has a purple housing, pink rim lamps and a dark diamond pointer.
-Money Wheel uses a brown housing, black center, colored outer ring, white
-pointer and four matching choice buttons. Both retain their original 20-sector
-order and probabilities, and include rear supports, axle and vent details.
-`python tools/refine_wheels.py` regenerates only the wheel-specific geometry.
-
-The [README showcase](../README.md#machine-showcase) renders actual Display snapshots exported from the local Purpur
-probe. Blocks use representative colors and text uses a substitute font; item
-sprites are approximate. They are not Minecraft screenshots. Client rendering,
-sound mixing and interaction feel still require in-game acceptance.
+code-level readout layout adjustment.

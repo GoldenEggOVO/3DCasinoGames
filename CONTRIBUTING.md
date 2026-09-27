@@ -22,4 +22,4 @@ Do not commit runtime worlds, credentials, third-party JARs, private fonts or lo
 
 Cover game rules, amounts and recovery semantics with behavioral tests. Visual changes must preserve gameplay and payment behavior. The public API is still in beta; document breaking changes explicitly.
 
-See [architecture and interfaces](docs/architecture.md) for the code layout and API, [verification](docs/verification.md) for isolated-server checks, and [resource tools](docs/resources.md) for asset generation and preview workflows.
+See [architecture and interfaces](docs/architecture.md) for the code layout and API, [verification](docs/verification.md) for isolated-server checks, and [model tools](docs/custom-models.md) for asset generation and preview workflows.

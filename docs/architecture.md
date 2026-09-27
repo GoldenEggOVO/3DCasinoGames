@@ -22,7 +22,7 @@
 
 测试中的 `Frozen*Round` 是冻结的 0.3.3 行为基线，只用于与新规则逐动作对比，不会进入插件 JAR。修改玩法应同时更新明确的行为测试；不能悄悄修改冻结基线使差分测试通过。
 
-内置几何保存在 `vanilla-models.json`；修改后阅读 [resources.md](resources.md) 并进行客户端外观验收。内置按钮位置及尺寸由 `BuiltinLayouts` 和对应控制器的原版布局覆盖共同确定，测试需要覆盖实际定义而非重复写一套期望实现。
+内置几何保存在 `vanilla-models.json`；修改后阅读 [模型工具](custom-models.md) 并进行客户端外观验收。内置按钮位置及尺寸由 `BuiltinLayouts` 和对应控制器的原版布局覆盖共同确定，测试需要覆盖实际定义而非重复写一套期望实现。
 
 `machine/PlacementStore` 独立保存机器布置和模型快照，使用临时文件同步后原子替换；对局状态不写入布置文件。`MachineManager` 按所有者与游戏类型索引，区分保存记录与已加载实体。区块或世界卸载只卸载实体，显式删除才写入记录变更。
 
@@ -34,4 +34,4 @@
 
 `ui.MenuView` 是不可变的标题、正文、输入框、按钮和关闭按钮描述。`PaperMenus` 只负责转换到 Paper Dialog，内部不再生成临时 YAML。`MenuSessions` 使用单调时钟、玩家 UUID、令牌和单次消费；回调再检查插件启用、菜单开关、主线程、权限及具体机器状态。五分钟过期，退出、重载和停止时清理。
 
-`VanillaDisplay.sync` 在确认模型、语言、位置、变换和发光均未变化后快速返回。文字重载只更新现有 TextDisplay；机器控制器在安全刷新点更新动态读数。保存的模型定义也经过记录构造校验，不能通过 JSON 恢复绕过 YAML 校验。详见 [Tabletop 对齐说明](tabletop-alignment.md)。
+`VanillaDisplay.sync` 在确认模型、语言、位置、变换和发光均未变化后快速返回。文字重载只更新现有 TextDisplay；机器控制器在安全刷新点更新动态读数。保存的模型定义也经过记录构造校验，不能通过 JSON 恢复绕过 YAML 校验。
