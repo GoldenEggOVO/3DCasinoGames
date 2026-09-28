@@ -22,7 +22,8 @@ def main():
     parser.add_argument('--port', type=int, default=25597)
     parser.add_argument('--server-template', type=Path, required=True,
                         help='Prepared server folder with accepted EULA, libraries, cache and versions')
-    parser.add_argument('--server-version', choices=('26.2', '26.3'), default='26.2')
+    parser.add_argument('--server-version', choices=('1.21.8', '1.21.9', '1.21.10', '1.21.11',
+                                                   '26.1.2', '26.2', '26.3'), default='26.2')
     parser.add_argument('--server-jar', default='purpur-2622.jar',
                         help='Bootstrap JAR filename in the template folder')
     parser.add_argument('--java-home', type=Path, default=os.environ.get('JAVA_HOME'))
@@ -38,7 +39,8 @@ def main():
         check.bind(('127.0.0.1', args.port))
     version = ET.parse(CASINO / 'pom.xml').findtext('{http://maven.apache.org/POM/4.0.0}version')
     plugin = CASINO / f'target/3dcasino-{version}.jar'
-    classes = CASINO / 'target/casino3d-probe-classes'
+    probe_build = CASINO / 'target' / ('probe-' + datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ'))
+    classes = probe_build / 'classes'
     classes.mkdir(parents=True, exist_ok=True)
     server_jars = sorted((base / 'versions' / args.server_version).glob('*.jar'))
     if len(server_jars) != 1:
@@ -48,10 +50,10 @@ def main():
     subprocess.run([str(jdk / ('javac' + suffix)), '-encoding', 'UTF-8', '-cp',
                     os.pathsep.join(map(str, jars)), '-d', str(classes),
                     str(HERE / 'CasinoVanillaProbe.java')], check=True)
-    probe = CASINO / 'target/CasinoVanillaProbe.jar'
+    probe = probe_build / 'CasinoVanillaProbe.jar'
     with zipfile.ZipFile(probe, 'w', zipfile.ZIP_DEFLATED) as archive:
         archive.writestr('plugin.yml', 'name: CasinoVanillaProbe\nversion: 1\n'
-                         "api-version: '26.2'\nmain: dev.casino3d.probe.CasinoVanillaProbe\n"
+                         "api-version: '1.21.8'\nmain: dev.casino3d.probe.CasinoVanillaProbe\n"
                          'depend: [3dcasino]\n')
         for file in sorted(classes.rglob('*.class')):
             archive.write(file, file.relative_to(classes).as_posix())

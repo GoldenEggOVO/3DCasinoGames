@@ -16,9 +16,9 @@
 
 ## 安装
 
-需要 **Paper / Purpur 26.2 或 26.3 和 Java 25**。同一个 JAR 支持这两个 Minecraft 版本，无需资源包或客户端模组。已测试的 26.3 服务端构建仍为实验版，详见[兼容性验证](docs/verification.md#cross-version-compatibility)。
+需要 **Paper / Purpur 1.21.8 或更新版本和 Java 25**。同一个 JAR 支持已验证的各个 Minecraft 版本，无需资源包或客户端模组。已测试的 26.3 服务端构建仍为实验版，详见[兼容性验证](docs/verification.md#cross-version-compatibility)。
 
-1. 从 [Beta 发布页](https://github.com/GoldenEggOVO/3DCasinoGames/releases/tag/v0.6.0-beta.2) 下载 `3dcasino-0.6.0-beta.2.jar`。
+1. 从 [Beta 发布页](https://github.com/GoldenEggOVO/3DCasinoGames/releases/tag/v0.6.0-beta.3) 下载 `3dcasino-0.6.0-beta.3.jar`。
 2. 停服并备份插件数据和世界，将 JAR 放入 `plugins/`，同一插件只保留一个版本。
 3. 启动服务器，使用 `/3dcasino` 打开菜单，或使用 `/3dcasino create blackjack` 创建机器。
 

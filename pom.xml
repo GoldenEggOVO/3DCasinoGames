@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>dev.casino3d</groupId>
     <artifactId>3dcasino</artifactId>
-    <version>0.6.0-beta.2</version>
+    <version>0.6.0-beta.3</version>
     <properties>
         <maven.compiler.release>25</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -18,7 +18,7 @@
         <dependency>
             <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>
-            <version>26.2.build.111-stable</version>
+            <version>1.21.8-R0.1-20250906.215025-55</version>
             <scope>provided</scope>
         </dependency>
         <dependency>

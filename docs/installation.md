@@ -2,8 +2,8 @@
 
 ## Requirements
 
-- Paper / Purpur 26.2 or 26.3, Java 25. Use the same JAR for both versions. The verified 26.3 server builds are experimental; see [the compatibility matrix](verification.md#cross-version-compatibility).
-- One `3dcasino-0.6.0-beta.2.jar` from the [Beta release](https://github.com/GoldenEggOVO/3DCasinoGames/releases/tag/v0.6.0-beta.2).
+- Paper / Purpur 1.21.8 minimum, Java 25. Use one JAR for the tested versions; newer untested releases are not automatically guaranteed. The verified 26.3 server builds are experimental; see [the compatibility matrix](verification.md#cross-version-compatibility).
+- One `3dcasino-0.6.0-beta.3.jar` from the [Beta release](https://github.com/GoldenEggOVO/3DCasinoGames/releases/tag/v0.6.0-beta.3).
 
 The JAR includes vanilla BlockDisplay/TextDisplay/Interaction machines. No resource pack or client mod is required. Native Dialog requires a compatible Minecraft client. Cross-version proxies and Bedrock bridges need their own client acceptance tests.
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.0-beta.3
+
+- Lower the minimum server API to 1.21.8 and pin the official Paper 1.21.8 compile dependency. One plugin JAR supports the verified older and newer servers; Java 25 remains required.
+- Recompile against the older Adventure API to avoid text-builder linkage errors on pre-26.2 servers, without changing production Java behavior.
+- Extend the runtime probe to the older versions and isolate its build outputs. Complete natural Blackjack feedback before replacing test rounds.
+- Refresh English/Chinese installation instructions and consolidate maintained documentation.
+
 ## Compatibility verification — 2026-09-27
 
 - Verify the existing beta.2 JAR on Paper 26.3 build 42 and Purpur 26.3 build 2642, with a fresh Purpur 26.2 regression run. No plugin binary change is required; retain the 26.2 compile/API floor so one JAR supports both versions.

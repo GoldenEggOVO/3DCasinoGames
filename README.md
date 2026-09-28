@@ -16,9 +16,9 @@
 
 ## Install
 
-Requires **Paper / Purpur 26.2 or 26.3 and Java 25**. The same JAR supports both Minecraft versions; no resource pack or client mod is required. The tested 26.3 server builds are experimental; see [compatibility verification](docs/verification.md#cross-version-compatibility).
+Requires **Paper / Purpur 1.21.8 or newer and Java 25**. One JAR covers the tested Minecraft versions; no resource pack or client mod is required. The tested 26.3 server builds are experimental; see [compatibility verification](docs/verification.md#cross-version-compatibility).
 
-1. Download `3dcasino-0.6.0-beta.2.jar` from [the Beta release](https://github.com/GoldenEggOVO/3DCasinoGames/releases/tag/v0.6.0-beta.2).
+1. Download `3dcasino-0.6.0-beta.3.jar` from [the Beta release](https://github.com/GoldenEggOVO/3DCasinoGames/releases/tag/v0.6.0-beta.3).
 2. Stop the server, back up plugin data and worlds, and place the JAR in `plugins/`. Keep only one version installed.
 3. Start the server and use `/3dcasino` or `/3dcasino create blackjack`.
 

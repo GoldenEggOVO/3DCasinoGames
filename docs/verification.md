@@ -1,41 +1,38 @@
-# Verification — 0.6.0-beta.2
+# Verification — 0.6.0-beta.3
 
 ## Cross-version compatibility
 
-The unchanged published beta.2 JAR was tested on all three servers below on 2026-09-27, using Java 25. Every run used plugin digest `5bcbfc4e68c5d2ca98687e20b106406be03cccd5e89aea0ef4f3a2c54b60a77a`.
+Minimum supported server version: **Paper / Purpur 1.21.8**. **Java 25 is required**, including on older Minecraft versions. One JAR is used across the tested versions.
 
-| Server | Build | Three phases | Local evidence directory under `reports/vanilla-runtime/` |
-| --- | --- | --- | --- |
-| Purpur 26.2 | 2622 | Passed | `run-20260927T092857122591Z` |
-| Purpur 26.3 | 2642 (experimental) | Passed | `run-20260927T092700249294Z` |
-| Paper 26.3 | 42 (alpha) | Passed | `run-20260927T092832854840Z` |
+The release is compiled against the pinned official Paper 1.21.8 API. This also resolves the older-server Adventure linkage error without changing production Java or gameplay. Version 1.21.7 is unsupported because the implementation uses `Player.closeDialog()`.
 
-Each run checks the actual Minecraft version, all 12 machines, 1,857 targeting samples in its first phase, feedback, Dialog construction/calls, command completion, language overrides, menus on/off, persistence and deletion across restarts. Each runtime contains only Casino and the disposable probe. The Python suite also passed all 20 tests after the runner changes.
+## Release validation
 
-The plugin keeps its Paper 26.2 compilation dependency and `api-version: '26.2'` minimum. There is no separate 26.3 artifact or version-specific gameplay branch. See [probe commands](../tools/vanilla-probe/README.md) to reproduce the checks. 26.3 upstream builds are still experimental; real-client rendering, sound and interaction acceptance remain separate from these server-side checks.
+- 159 Java tests passed, with no failures, errors or skips.
+- 20 Python tests passed.
+- The exact release JAR was exercised in the following clean servers using Java 25:
 
-## Beta.2 release validation
+| Server | Build | Three-phase probe |
+| --- | --- | --- |
+| Paper 1.21.8 | 60 | Passed |
+| Paper 26.3 | 42 (alpha) | Passed |
+| Purpur 1.21.8 | 2497 | Passed |
+| Purpur 1.21.9 | 2505 | Passed |
+| Purpur 1.21.10 | 2535 | Passed |
+| Purpur 1.21.11 | 2568 | Passed |
+| Purpur 26.1.2 | 2592 | Passed |
+| Purpur 26.2 | 2622 | Passed |
+| Purpur 26.3 | 2642 (experimental) | Passed |
 
-- Fresh release build: 159 Java tests and 20 Python tests passed, with no skipped Java tests.
-- The exact `3dcasino-0.6.0-beta.2.jar` passed all three clean Purpur phases: all 12 machines, feedback, menu toggles, targeting, saved-machine restoration and deletion across restarts.
-- Local evidence: `reports/vanilla-runtime/run-20260927T091003258657Z/result.json`, including the tested artifact digest.
-- Client visuals, sound mixing and high-density multiplayer performance remain separate in-game acceptance checks.
+Native Paper builds between the two listed Paper versions were not separately tested. Untested future releases are not guaranteed compatible. The 26.3 results apply to the listed experimental upstream builds.
 
-## Backward compatibility experiment
+## Scope and limits
 
-A separate local test build compiled the unchanged production Java sources against Purpur 1.21.8 build 2497 libraries, with `api-version: '1.21.8'`. The same artifact passed all three runtime phases on Purpur 1.21.8, 1.21.9, 1.21.10, 1.21.11, 26.1.2, 26.2 and 26.3 using Java 25. Older native Paper builds and Java 21 were not tested. This experiment does not change the published beta.2 JAR or its declared support.
+Each three-phase run creates and operates all 12 machines, checks 1,857 targeting samples, feedback, Dialog calls, command completion and language overrides. It then restores six saved placements with menus disabled, operates and deletes them, and confirms they remain absent after another restart. It also checks card reveals and feedback settlement, including doubled Blackjack stakes, early Crash cashouts and concurrent Plinko balls.
 
-Lowering only the metadata while retaining the 26.2 compile dependencies produced an Adventure `TextComponent.Builder.build()` linkage error on older servers. Recompiling with the older dependencies resolved it without changing production Java. Compilation against 1.21.7 fails because `Player.closeDialog()` is unavailable; that version needs implementation changes.
+The probe uses a simulated player and real server entities. Client rendering, fonts, audio, latency, FPS and interaction feel require in-game acceptance. Optional Vault/AuthMe integrations, cross-version clients and high-density multiplayer performance are outside this compatibility matrix.
 
-Local evidence and compilation instructions are in `reports/backward-compat/summary.md`; each successful run records the same test artifact digest. The probe also now completes feedback for a randomly dealt natural Blackjack before forcing a replacement test hand, avoiding an unrelated pending-result assertion.
-
-## Validation scope and limits
-
-The three-phase probe creates and operates all 12 machines, saves six placements, restores and operates them with menus disabled, removes them, and confirms they remain absent after another restart. It also checks card reveals, display initialization, language reload/fallback and feedback settlement, including doubled Blackjack stakes, early Crash cashouts and concurrent Plinko balls.
-
-The beta.2 surface audit covered 30 runtime snapshots with no same-facing coplanar overlaps. Java tests cover game rules, economy/persistence, language validation, menu callbacks and model definitions.
-
-The probe uses a simulated player and real server entities. It does not validate client rendering, fonts, audio, latency, FPS or interaction feel. Optional Vault/AuthMe integrations, cross-version clients and high-density multiplayer performance require separate acceptance.
+Local receipts are stored under `reports/vanilla-runtime/run-TIMESTAMP/result.json`; they record the server build, plugin digest and evidence for each phase. Release-run console logs are under `reports/beta3/`. These generated reports are not distributed with the plugin.
 
 ## Reproduce
 
@@ -45,7 +42,7 @@ python -m pip install -r tools/requirements-dev.txt
 python -m unittest discover -s tools -p "test_*.py"
 ```
 
-For clean Paper/Purpur 26.2 and 26.3 runs, follow the [runtime probe instructions](../tools/vanilla-probe/README.md). Compare the recorded plugin digests to verify that each server tested the same JAR.
+Follow the [runtime probe instructions](../tools/vanilla-probe/README.md) with the desired prepared Paper/Purpur server. Inspect all three phase logs and `result.json`, and compare plugin digests to confirm that every server tested the same JAR.
 
 To audit exported model surfaces:
 
@@ -53,4 +50,4 @@ To audit exported model surfaces:
 python tools/vanilla-preview/audit_surfaces.py reports/vanilla-runtime/run-TIMESTAMP/plugins/CasinoVanillaProbe/preview-snapshots reports/vanilla-runtime/run-TIMESTAMP/surface-audit.json
 ```
 
-Inspect all three phase logs, `result.json` and the surface audit. GitHub Actions also runs Maven and Python checks for each pushed commit.
+GitHub Actions also runs Maven and Python checks for each pushed commit.
