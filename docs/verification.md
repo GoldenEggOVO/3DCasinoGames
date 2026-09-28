@@ -21,6 +21,14 @@ The plugin keeps its Paper 26.2 compilation dependency and `api-version: '26.2'`
 - Local evidence: `reports/vanilla-runtime/run-20260927T091003258657Z/result.json`, including the tested artifact digest.
 - Client visuals, sound mixing and high-density multiplayer performance remain separate in-game acceptance checks.
 
+## Backward compatibility experiment
+
+A separate local test build compiled the unchanged production Java sources against Purpur 1.21.8 build 2497 libraries, with `api-version: '1.21.8'`. The same artifact passed all three runtime phases on Purpur 1.21.8, 1.21.9, 1.21.10, 1.21.11, 26.1.2, 26.2 and 26.3 using Java 25. Older native Paper builds and Java 21 were not tested. This experiment does not change the published beta.2 JAR or its declared support.
+
+Lowering only the metadata while retaining the 26.2 compile dependencies produced an Adventure `TextComponent.Builder.build()` linkage error on older servers. Recompiling with the older dependencies resolved it without changing production Java. Compilation against 1.21.7 fails because `Player.closeDialog()` is unavailable; that version needs implementation changes.
+
+Local evidence and compilation instructions are in `reports/backward-compat/summary.md`; each successful run records the same test artifact digest. The probe also now completes feedback for a randomly dealt natural Blackjack before forcing a replacement test hand, avoiding an unrelated pending-result assertion.
+
 ## Validation scope and limits
 
 The three-phase probe creates and operates all 12 machines, saves six placements, restores and operates them with menus disabled, removes them, and confirms they remain absent after another restart. It also checks card reveals, display initialization, language reload/fallback and feedback settlement, including doubled Blackjack stakes, early Crash cashouts and concurrent Plinko balls.

@@ -206,8 +206,11 @@ public final class CasinoVanillaProbe extends JavaPlugin {
                         checkVanillaCards(machine);
                         // Force a dealer draw as well as a hole-card reveal, independent of shuffle.
                         var blackjack = (dev.casino3d.game.blackjack.BlackjackRound) round;
-                        for (int attempt = 0; !round.active() && attempt < 100; attempt++)
+                        for (int attempt = 0; !round.active() && attempt < 100; attempt++) {
+                            // Finish feedback for a randomly dealt natural before replacing its round.
+                            for (int frame = 0; frame < 20; frame++) ((PracticeMachine<?>) machine).tick();
                             blackjack.start(System.currentTimeMillis());
+                        }
                         require(round.active(), "Could not start Blackjack probe hand");
                         var dealerHand = (List<Integer>) field(round, "dealer");
                         dealerHand.clear(); dealerHand.addAll(List.of(1, 2));
