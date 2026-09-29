@@ -16,7 +16,15 @@ menu-enabled: true
 language: en_US
 ```
 
-Use `/3dcasino` or `/3dcasino create <game>`. Operators have `3dcasino.machine`; grant this with your permissions plugin for other builders. Players also need `3dcasino.use` (default true). Right-click buttons to play; Shift + right-click opens settings.
+Use `/3dcasino` or `/3dcasino create <game>`. Operators have `3dcasino.machine`; grant this with your permissions plugin for other builders. Players also need `3dcasino.use` (default true).
+
+## Multiplayer (development build)
+
+In `0.6.0-beta.4-SNAPSHOT`, right-click buttons to play. Ordinary players need only `3dcasino.use`; OPs can use Shift + right-click to manage any nearby machine. Builders granted `3dcasino.machine` may manage their own machines.
+
+In the development build, each machine accepts one player at a time. Selecting numbers or adjusting a game reserves it for that player; PLAY keeps it reserved through the round, reveal animation and any remaining Plinko balls. Other players receive a busy message. Settings and deletion are blocked while a player is using the machine. Logout, death, changing worlds or two minutes without valid input reset an unfinished practice session and release the machine.
+
+Each player has separate selections, outcomes and practice totals. Keno numbers, HiLo threshold/direction, Mines mine count and Duck Race/Money Wheel choices are saved with settled totals under `players/<player-uuid>.json`, separately for each machine creator/game. Unfinished rounds and pending payouts are not restored. The visible cabinet shows the current player's data; it does not combine everyone's results. These multiplayer changes are not included in the published beta.3 JAR yet.
 
 Game IDs: `blackjack`, `mines`, `crash`, `plinko`, `slots`, `duck_race`, `wheel_of_fortune`, `money_wheel`, `penguin_cross`, `keno`, `hilo`, `dragon_tower`.
 
@@ -48,7 +56,8 @@ Built-in models always use geometry bundled in the JAR. Existing `machine-appear
 - `config.yml`: menu switch and language selection.
 - `languages/en_US.yml`, `languages/zh_CN.yml`: editable runtime messages; see [language configuration](languages.md).
 - `machines/*.yml`: optional custom machine definitions; built-in machines need no files.
-- `placements.json`: saved machines, owners, transforms, definition snapshots and practice stakes.
+- `placements.json`: saved machines, owners, transforms, definition snapshots and administrator-configured practice stakes.
+- `players/<player-uuid>.json`: personal preferences and settled practice totals per machine (development build). Corrupt files are reported and preserved; affected profiles cannot be saved until the file is repaired and the plugin is restarted.
 - `rounds/`, `game-rounds/`: persisted settlement records when present.
 
 Set `menu-enabled: false` and restart to disable Dialog. Commands, buttons, persistence and console reconciliation remain available. Definition reload affects new machines; saved machines retain their definition snapshots. Active rounds and animations are not restored after restart.

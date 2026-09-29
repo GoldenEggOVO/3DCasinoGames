@@ -11,7 +11,10 @@ plugin JAR only; no sound pack, resource pack or additional plugin is needed.
 - **SESSION** is the sum of settled net results on this loaded machine. It is
   shared by the machine's users, not a player account. It resets when the machine
   is removed, unloaded/recreated or the server restarts. Unfinished rounds are
-  not included. It is neither saved nor sent to an economy provider.
+  not included. This describes the published beta.3 build. In
+  `0.6.0-beta.4-SNAPSHOT`, SESSION belongs to the current player and is saved
+  across restarts, separately for each machine creator/game. Unfinished rounds
+  are excluded in both builds; totals are never sent to an economy provider.
 - **CASH OUT** previews the available return on active Mines, Crash, Penguin
   Cross and Dragon Tower rounds. **BALLS IN PLAY** counts concurrent Plinko balls.
 - Losses are red, break-even is gray, wins are green, and returns of at least

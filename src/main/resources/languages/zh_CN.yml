@@ -264,3 +264,5 @@
 "feedback.big_win": "<gold>{amount}"
 "feedback.session": "<gray>本机累计 {amount}"
 "feedback.pending": "<gray>在场弹珠 {count}"
+
+"machine.occupied": "<reset><yellow>这台机器正在由其他玩家游玩，请等待本局结束。"

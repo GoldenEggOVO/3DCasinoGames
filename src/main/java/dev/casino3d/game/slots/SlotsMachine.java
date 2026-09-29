@@ -25,7 +25,7 @@ public final class SlotsMachine extends AnimatedMachine<SlotsRound> {
 
     public SlotsMachine(
             MachineManager manager, UUID owner, Location origin, MachineDefinition definition) {
-        super(manager, owner, origin, definition, new SlotsRound(new SecureRandom()));
+        super(manager, owner, origin, definition, () -> new SlotsRound(new SecureRandom()));
     }
 
     @Override

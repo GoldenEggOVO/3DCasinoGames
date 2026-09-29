@@ -135,6 +135,11 @@ final class CasinoMenus {
                 component("menu.machine-settings.delete"),
                 v -> {
                     if (machineValid(p, exists)) {
+                        if (!canEdit.getAsBoolean()) {
+                            p.sendMessage(component("menu.machine-settings.wait"));
+                            p.closeDialog();
+                            return;
+                        }
                         remove.run();
                         p.closeDialog();
                         p.sendMessage(component("menu.machine-settings.deleted"));

@@ -26,7 +26,7 @@ public final class MinesMachine extends PracticeMachine<MinesDemoRound> {
 
     public MinesMachine(
             MachineManager manager, UUID owner, Location origin, MachineDefinition definition) {
-        super(manager, owner, origin, definition, new MinesDemoRound(new SecureRandom()));
+        super(manager, owner, origin, definition, () -> new MinesDemoRound(new SecureRandom()));
         refined = definition.equals(MachineDefinition.builtin("mines"));
     }
 

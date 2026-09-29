@@ -19,7 +19,7 @@ public final class MoneyWheelMachine extends AnimatedMachine<MoneyWheelRound> {
 
     public MoneyWheelMachine(
             MachineManager manager, UUID owner, Location origin, MachineDefinition definition) {
-        super(manager, owner, origin, definition, new MoneyWheelRound(new SecureRandom()));
+        super(manager, owner, origin, definition, () -> new MoneyWheelRound(new SecureRandom()));
     }
 
     @Override

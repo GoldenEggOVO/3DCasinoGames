@@ -37,6 +37,8 @@ public final class MachineManager implements Listener {
     private final Map<Key, PracticeMachine<?>> machines = new LinkedHashMap<>();
     private final Map<Key, PlacementStore.Placement> placements = new LinkedHashMap<>();
     private final PlacementStore store;
+    private final PersonalDataStore personal;
+    private final Set<UUID> personalErrors = new HashSet<>();
     private boolean restoreScheduled;
     private boolean closed;
     private final MachineRegistry registry = new MachineRegistry();
@@ -44,6 +46,7 @@ public final class MachineManager implements Listener {
 
     public MachineManager(CasinoPlugin plugin) throws IOException {
         this.plugin = plugin;
+        personal = new PersonalDataStore(plugin.getDataFolder().toPath().resolve("players"));
         registry.reload(plugin.getDataFolder().toPath().resolve("machines"));
         store = new PlacementStore(plugin.getDataFolder().toPath().resolve("placements.json"));
         for (var placement : store.load()) {
@@ -54,6 +57,25 @@ public final class MachineManager implements Listener {
         task = plugin.getServer().getScheduler().runTaskTimer(plugin, this::tick, 1, 1);
     }
 
+    void restorePlayerData(UUID owner, String game, UUID player,
+            dev.casino3d.game.PracticeRound round, FeedbackState feedback) {
+        try {
+            var profile = personal.load(player, owner, game);
+            if (profile != null) profile.restore(round, feedback);
+        } catch (IOException ex) { personalError(player, ex); }
+    }
+
+    void savePlayerData(UUID owner, String game, UUID player,
+            dev.casino3d.game.PracticeRound round, FeedbackState feedback) {
+        try { personal.save(player, owner, game, PersonalDataStore.Profile.capture(round, feedback)); }
+        catch (IOException ex) { personalError(player, ex); }
+    }
+
+    private void personalError(UUID player, IOException ex) {
+        if (personalErrors.add(player)) plugin.getLogger().log(java.util.logging.Level.WARNING,
+                "Cannot load/save personal practice data for " + player + "; check players/" + player + ".json", ex);
+    }
+
     CasinoPlugin plugin() {
         return plugin;
     }
@@ -62,7 +84,7 @@ public final class MachineManager implements Listener {
         if (!plugin.machineAllowed(player)) return List.of();
         var owned = (args.length > 0 && args[0].equalsIgnoreCase("bet")
                 ? machines.keySet() : placements.keySet()).stream()
-                .filter(key -> key.owner.equals(player.getUniqueId())).map(Key::game).toList();
+                .filter(key -> player.isOp() || key.owner.equals(player.getUniqueId())).map(Key::game).toList();
         return dev.casino3d.CommandCompletion.player(args, MachineDefinition.games(),
                 args.length >= 2 ? registry.ids(args[1]) : List.of(), owned);
     }
@@ -84,6 +106,8 @@ public final class MachineManager implements Listener {
                 }
                 String game = args[1].toLowerCase(Locale.ROOT);
                 var machine = machines.get(new Key(player.getUniqueId(), game));
+                if (player.isOp() && (machine == null || !canManage(player, machine)))
+                    machine = managedNearby(player, game);
                 if (machine == null || !machine.game().equals(game)) {
                     throw new IllegalArgumentException("error.machine-missing");
                 }
@@ -96,6 +120,18 @@ public final class MachineManager implements Listener {
             }
             if (args.length >= 1 && args[0].equalsIgnoreCase("remove")) {
                 if (args.length > 2) throw new IllegalArgumentException("error.remove-usage");
+                if (player.isOp() && args.length == 2) {
+                    var machine = managedNearby(player, args[1]);
+                    if (machine == null) throw new IllegalArgumentException("error.machine-distance");
+                    remove(machine);
+                    player.sendMessage(dev.casino3d.Language.component("machine.removed"));
+                    return;
+                }
+                for (var machine : machines.values())
+                    if (machine.owner().equals(player.getUniqueId())
+                            && (args.length == 1 || machine.game().equalsIgnoreCase(args[1]))
+                            && !machine.managementIdle())
+                        throw new IllegalArgumentException("error.machine-busy");
                 var candidate = new LinkedHashMap<>(placements);
                 candidate
                         .keySet()
@@ -209,6 +245,7 @@ public final class MachineManager implements Listener {
 
     void remove(PracticeMachine<?> machine) {
         if (!contains(machine)) return;
+        if (!machine.managementIdle()) throw new IllegalArgumentException("error.machine-busy");
         var candidate = new LinkedHashMap<>(placements);
         candidate.remove(new Key(machine.owner(), machine.game()));
         save(candidate);
@@ -262,14 +299,18 @@ public final class MachineManager implements Listener {
 
     boolean canUse(Player player, PracticeMachine<?> machine) {
         return player.getWorld().equals(machine.origin().getWorld())
-                && plugin.allowed(player)
-                && (machine.game().equals("plinko")
-                        || player.getUniqueId().equals(machine.owner())
-                                && plugin.machineAllowed(player));
+                && plugin.allowed(player);
+    }
+
+    private PracticeMachine<?> managedNearby(Player player, String game) {
+        return machines.values().stream()
+                .filter(machine -> machine.game().equalsIgnoreCase(game) && canManage(player, machine))
+                .min(Comparator.comparingDouble(machine -> machine.origin().distanceSquared(player.getLocation())))
+                .orElse(null);
     }
 
     boolean canManage(Player player, PracticeMachine<?> machine) {
-        return player.getUniqueId().equals(machine.owner())
+        return (player.isOp() || player.getUniqueId().equals(machine.owner()))
                 && plugin.machineAllowed(player)
                 && player.getWorld().equals(machine.origin().getWorld())
                 && machine.nearSettings(player);
@@ -324,10 +365,41 @@ public final class MachineManager implements Listener {
         }
         if (chosen != null) {
             cancel.run();
-            chosen.click(chosenHit);
+            chosen.click(player, chosenHit);
         } else
             for (var machine : machines.values())
-                if (canUse(player, machine)) machine.confirmInput();
+                if (canUse(player, machine)) machine.confirmInput(player);
+    }
+
+    private void resetSession(PracticeMachine<?> machine) {
+        var saved = placements.get(new Key(machine.owner(), machine.game()));
+        if (saved == null) return;
+        var replacement = create(machine.game(), machine.owner(), machine.origin(), saved.definition());
+        replacement.inheritPlayers(machine);
+        replacement.restoreStake(saved.stake());
+        machine.clear();
+        try {
+            replacement.build();
+            machines.put(new Key(machine.owner(), machine.game()), replacement);
+        } catch (RuntimeException ex) {
+            replacement.clear();
+            machines.remove(new Key(machine.owner(), machine.game()));
+            throw ex;
+        }
+    }
+
+    @EventHandler
+    public void quit(PlayerQuitEvent event) { releasePlayer(event.getPlayer()); }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void death(org.bukkit.event.entity.PlayerDeathEvent event) { releasePlayer(event.getEntity()); }
+
+    @EventHandler
+    public void changeWorld(PlayerChangedWorldEvent event) { releasePlayer(event.getPlayer()); }
+
+    private void releasePlayer(Player player) {
+        for (var machine : List.copyOf(machines.values()))
+            if (machine.occupiedBy(player.getUniqueId())) resetSession(machine);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -360,6 +432,7 @@ public final class MachineManager implements Listener {
             }
             try {
                 machine.tick();
+                if (machine.sessionExpired()) resetSession(machine);
             } catch (RuntimeException ex) {
                 detach(machine);
                 plugin.getLogger()

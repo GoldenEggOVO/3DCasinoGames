@@ -29,7 +29,11 @@ public abstract class PracticeMachine<R extends PracticeRound> {
     protected final UUID owner;
     protected final Location origin;
     protected final MachineDefinition definition;
-    protected final R round;
+    protected R round;
+    private MachinePlayers<R> players;
+    private MachinePlayers.Data<R> playerData;
+    private UUID displayedPlayer;
+    private long configuredStake = 1000;
     protected final List<Entity> parts = new ArrayList<>();
     private final List<Target> targets = new ArrayList<>();
     private final Map<ItemDisplay, ButtonDefinition> buttons = new LinkedHashMap<>();
@@ -41,10 +45,9 @@ public abstract class PracticeMachine<R extends PracticeRound> {
     private ItemDisplay highlighted;
     protected int age;
     private long lastClick;
-    protected final FeedbackState feedback = new FeedbackState();
+    protected FeedbackState feedback;
     private final MachineSounds sounds;
     private MachineScreen screen;
-    private long observedRound;
 
 
     protected PracticeMachine(
@@ -52,14 +55,51 @@ public abstract class PracticeMachine<R extends PracticeRound> {
             UUID owner,
             Location origin,
             MachineDefinition definition,
-            R round) {
+            java.util.function.Supplier<R> rounds) {
         this.manager = manager;
         this.plugin = manager.plugin();
         this.owner = owner;
         this.origin = origin.clone();
         this.definition = definition;
-        this.round = round;
+        players = new MachinePlayers<>(rounds, (id, data) ->
+                manager.restorePlayerData(owner, definition.game(), id, data.round, data.feedback));
+        selectPlayer(owner);
         sounds = new MachineSounds(this.origin);
+    }
+
+    private void selectPlayer(UUID id) {
+        displayedPlayer = id;
+        playerData = players.data(id);
+        round = playerData.round;
+        feedback = playerData.feedback;
+        restoreStake(configuredStake);
+    }
+
+    protected final void savePlayerData() {
+        manager.savePlayerData(owner, game(), displayedPlayer, round, feedback);
+    }
+
+    protected final void touchPlayerInput() {
+        var id = players.player();
+        if (id != null) players.claim(id);
+    }
+
+    protected final UUID playingPlayer() { return players.player(); }
+    final boolean acceptsPlayer(Player player) { return players.accepts(player.getUniqueId()); }
+    final boolean sessionExpired() { return players.expired(); }
+    final boolean occupiedBy(UUID id) { return id.equals(players.player()); }
+    final boolean managementIdle() { return players.player() == null && canEditStake(); }
+
+    @SuppressWarnings("unchecked")
+    final void inheritPlayers(PracticeMachine<?> previous) {
+        var old = (PracticeMachine<R>) previous; // same game/definition on session reset
+        old.players.abandon();
+        players = old.players;
+        selectPlayer(old.displayedPlayer);
+    }
+
+    final void confirmInput(Player player) {
+        if (occupiedBy(player.getUniqueId())) confirmInput();
     }
 
     public final UUID owner() {
@@ -178,6 +218,8 @@ public abstract class PracticeMachine<R extends PracticeRound> {
             languageRevision = dev.casino3d.Language.revision();
         }
         updateFeedback();
+        players.update(round.active() || busy() || feedback.pending() > 0 || !canEditStake());
+        players.tick();
         sounds.tick(age);
         if (age % 4 == 0) hover();
         syncVanillaDisplays();
@@ -190,8 +232,8 @@ public abstract class PracticeMachine<R extends PracticeRound> {
 
     private void updateFeedback() {
         long sequence = round.sequence();
-        if (sequence != observedRound) {
-            observedRound = sequence;
+        if (sequence != playerData.observedRound) {
+            playerData.observedRound = sequence;
             feedback.launch(sequence, round.stake());
             sounds.start();
         }
@@ -207,7 +249,10 @@ public abstract class PracticeMachine<R extends PracticeRound> {
     }
     protected final void settleFeedback(Object id, long returned) {
         var result = feedback.reveal(id, returned);
-        if (result != null) sounds.result(result, age);
+        if (result != null) {
+            sounds.result(result, age);
+            savePlayerData();
+        }
     }
     protected final void sound(Sound sound, float volume, float pitch) { sounds.play(sound, volume, pitch); }
 
@@ -504,13 +549,24 @@ public abstract class PracticeMachine<R extends PracticeRound> {
         return nearest;
     }
 
-    final void click(TargetHit hit) {
+    final void click(Player player, TargetHit hit) {
+        if (!acceptsPlayer(player)) {
+            player.sendMessage(dev.casino3d.Language.component("machine.occupied"));
+            return;
+        }
+        if (!player.getUniqueId().equals(displayedPlayer)) {
+            selectPlayer(player.getUniqueId());
+            confirmInput();
+            refresh();
+        }
         long now = System.currentTimeMillis();
         if (now - lastClick < 150
                 || busy()
                 || !rowAvailable(hit.target.row)
                 || !available(hit.target.action)) return;
+        players.claim(player.getUniqueId());
         lastClick = now;
+        long sequence = round.sequence();
         if (buttons.containsKey(hit.target.visual)) {
             var button = buttons.get(hit.target.visual);
             hit.target.visual.setTransformation(buttonPose(button, button.press()));
@@ -519,11 +575,15 @@ public abstract class PracticeMachine<R extends PracticeRound> {
         sound(Sound.BLOCK_STONE_BUTTON_CLICK_ON, .25f, 1.1f);
         action(hit.target.action);
         updateFeedback();
+        savePlayerData();
+        if (round.sequence() != sequence || feedback.pending() > 0) players.started();
+        players.update(round.active() || busy() || feedback.pending() > 0 || !canEditStake());
         syncVanillaDisplays();
     }
 
     private void hover() {
-        var player = Bukkit.getPlayer(owner);
+        var id = playingPlayer();
+        var player = id == null ? null : Bukkit.getPlayer(id);
         ItemDisplay next = null;
         if (player != null && manager.canUse(player, this)) {
             var hit = ray(player, manager.blockDistance(player));
@@ -547,25 +607,26 @@ public abstract class PracticeMachine<R extends PracticeRound> {
         if (amount < 100 || amount > 10000 || amount % 100 != 0) {
             throw new IllegalArgumentException("error.machine-stake");
         }
-        if (!canEditStake()) throw new IllegalArgumentException("error.machine-busy");
+        if (!managementIdle()) throw new IllegalArgumentException("error.machine-busy");
         manager.saveStake(this, amount);
         restoreStake(amount);
         refresh();
     }
 
     final void restoreStake(long amount) {
+        configuredStake = amount;
         if (round instanceof DemoRound demo) demo.setConfiguredStake(amount);
         else round.setStake(amount);
     }
 
     public final void settings(Player player) {
-        confirmInput();
+        if (!manager.canManage(player, this)) return;
         plugin.openMachineSettings(
                 player,
                 dev.casino3d.Language.text("games." + game()),
                 () -> round instanceof DemoRound demo ? demo.configuredStake() : round.stake(),
                 this::setStake,
-                this::canEditStake,
+                this::managementIdle,
                 () -> manager.contains(this) && manager.canManage(player, this),
                 () -> manager.remove(this));
     }

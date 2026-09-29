@@ -26,7 +26,7 @@ public final class HiloMachine extends AnimatedMachine<HiloRound> {
 
     public HiloMachine(
             MachineManager manager, UUID owner, Location origin, MachineDefinition definition) {
-        super(manager, owner, origin, definition, new HiloRound(new SecureRandom()));
+        super(manager, owner, origin, definition, () -> new HiloRound(new SecureRandom()));
     }
 
     @Override
@@ -118,10 +118,10 @@ public final class HiloMachine extends AnimatedMachine<HiloRound> {
     }
 
     void adjustSlider() {
-        Player p = Bukkit.getPlayer(owner);
+        var id = playingPlayer();
+        Player p = id == null ? null : Bukkit.getPlayer(id);
         if (p == null
                 || !plugin.allowed(p)
-                || !plugin.machineAllowed(p)
                 || !p.getWorld().equals(origin.getWorld())) {
             sliding = false;
             return;
@@ -153,6 +153,8 @@ public final class HiloMachine extends AnimatedMachine<HiloRound> {
         int value = ShowcaseGeometry.aimedThreshold(local, ray);
         if (value > 0 && value != round.threshold()) {
             round.setThreshold(value);
+            touchPlayerInput();
+            savePlayerData();
             refresh();
         }
     }

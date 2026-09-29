@@ -20,7 +20,7 @@ public final class PenguinCrossMachine extends AnimatedMachine<PenguinCrossRound
 
     public PenguinCrossMachine(
             MachineManager manager, UUID owner, Location origin, MachineDefinition definition) {
-        super(manager, owner, origin, definition, new PenguinCrossRound(new SecureRandom()));
+        super(manager, owner, origin, definition, () -> new PenguinCrossRound(new SecureRandom()));
     }
 
     @Override

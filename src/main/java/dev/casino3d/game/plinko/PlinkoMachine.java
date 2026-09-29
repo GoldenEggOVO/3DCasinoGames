@@ -32,7 +32,7 @@ public final class PlinkoMachine extends PracticeMachine<PlinkoMachine.Round> {
 
     public PlinkoMachine(
             MachineManager manager, UUID owner, Location origin, MachineDefinition definition) {
-        super(manager, owner, origin, definition, new Round());
+        super(manager, owner, origin, definition, () -> new Round());
     }
 
     public static Transformation playButtonPose(boolean pressed) {

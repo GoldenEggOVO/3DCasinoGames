@@ -14,3 +14,5 @@ Each invocation creates a new loopback-only server under `reports/vanilla-runtim
 The probe asserts the actual Minecraft version before testing machines. `result.json` records the requested server version, bootstrap and plugin digests, exit codes and pass markers. Compare `tested_jar_sha256` across runs to verify that the same JAR was tested. A compilation failure, incorrect runtime version, missing pass marker or nonzero server exit is a failure.
 
 Coverage includes all 12 machines, native Dialog construction/calls with a simulated player, permission-filtered command completion, display state, ray targeting, feedback settlement, menus disabled, custom language fallback, saved placements and deletion across restarts. This does not replace real-client visual, audio or mouse-interaction acceptance.
+
+The development probe also tests two non-owner players and a non-owner OP on every machine: exclusive preparation/rounds, busy feedback, Plinko batch ownership, independent rounds and totals, OP settings, blocked stake edits during play, logout release and personal-data recovery across restart.

@@ -22,7 +22,7 @@ public final class WheelOfFortuneMachine extends AnimatedMachine<WheelOfFortuneR
 
     public WheelOfFortuneMachine(
             MachineManager manager, UUID owner, Location origin, MachineDefinition definition) {
-        super(manager, owner, origin, definition, new WheelOfFortuneRound(new SecureRandom()));
+        super(manager, owner, origin, definition, () -> new WheelOfFortuneRound(new SecureRandom()));
     }
 
     @Override

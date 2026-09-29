@@ -18,7 +18,7 @@ public abstract class AnimatedMachine<R extends PracticeRound> extends PracticeM
             UUID owner,
             Location origin,
             MachineDefinition definition,
-            R round) {
+            java.util.function.Supplier<R> round) {
         super(manager, owner, origin, definition, round);
     }
 

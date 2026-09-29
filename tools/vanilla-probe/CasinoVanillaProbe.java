@@ -5,6 +5,7 @@ import dev.casino3d.CasinoPlugin;
 import dev.casino3d.MachineGeometry;
 import dev.casino3d.game.PracticeRound;
 import dev.casino3d.machine.MachineManager;
+import dev.casino3d.machine.FeedbackState;
 import dev.casino3d.machine.PracticeMachine;
 import dev.casino3d.model.VanillaGeometry;
 import dev.casino3d.model.ModelItems;
@@ -120,6 +121,7 @@ public final class CasinoVanillaProbe extends JavaPlugin {
             if (!Files.exists(marker)) {
                 checkMenus(casino, player, true);
                 benchmarkRestore(manager);
+                checkMultiplayer(casino, manager, player);
                 for (String game : GAMES) {
                     manager.command(player, new String[] {"create", game});
                     var machines = (Map<?, ?>) field(manager, "machines");
@@ -274,6 +276,7 @@ public final class CasinoVanillaProbe extends JavaPlugin {
                     checkFeedbackCombinations((PracticeMachine<?>) machine, round, game);
                     checkSettings(casino, machine, player);
                     var previousParts = new ArrayList<>((List<Entity>) field(machine, "parts"));
+                    quit(manager, player);
                     manager.command(player, new String[] {"remove", game});
                     require(previousParts.stream().noneMatch(Entity::isValid), "Orphan display: " + game);
                     require(machines.isEmpty(), "Remove failed: " + game);
@@ -286,7 +289,8 @@ public final class CasinoVanillaProbe extends JavaPlugin {
                         manager.command(player, new String[] {"create", game});
                         var machine = ((Map<?, ?>) field(manager, "machines")).values().iterator().next();
                         checkAim(machine, player, game);
-                        manager.command(player, new String[] {"remove", game});
+                        quit(manager, player);
+                    manager.command(player, new String[] {"remove", game});
                     }
                 }
                 placementYaw = 0;
@@ -298,6 +302,7 @@ public final class CasinoVanillaProbe extends JavaPlugin {
                 checkMenus(casino, player, false);
                 var machines = (Map<?, ?>) field(manager, "machines");
                 require(machines.size() == 6, "Machines not restored");
+                checkPersonalRestart(casino, manager, player);
                 for (var machine : List.copyOf(machines.values())) {
                     String game = ((PracticeMachine<?>) machine).game();
                     checkVisuals(machine, game);
@@ -318,6 +323,7 @@ public final class CasinoVanillaProbe extends JavaPlugin {
                     click(manager, player, play.getKey(), game);
                     require(!round.result().equals(before) || round.active() || round.finished(),
                             "Menu-disabled PLAY failed: " + game);
+                    quit(manager, player);
                     manager.command(player, new String[] {"remove", game});
                 }
                 require(machines.isEmpty(), "Restored machine not removed");
@@ -535,6 +541,134 @@ public final class CasinoVanillaProbe extends JavaPlugin {
         getLogger().info("CASINO_VANILLA_MENU_PASS enabled=" + enabled + " dialogs=" + (shownDialogs - before));
     }
 
+    private Player guest(UUID id, boolean operator) {
+        var base = player();
+        return (Player) Proxy.newProxyInstance(Player.class.getClassLoader(), new Class<?>[]{Player.class},
+                (proxy, method, args) -> switch (method.getName()) {
+                    case "getUniqueId" -> id;
+                    case "isOp" -> operator;
+                    case "hasPermission", "isPermissionSet" -> "3dcasino.use".equals(args[0]);
+                    case "hashCode" -> id.hashCode();
+                    case "equals" -> proxy == args[0];
+                    default -> method.invoke(base, args);
+                });
+    }
+
+    private static void clearClickCooldown(Object machine) throws Exception {
+        var field = PracticeMachine.class.getDeclaredField("lastClick");
+        field.setAccessible(true);
+        field.setLong(machine, 0);
+    }
+
+    private void quit(MachineManager manager, Player player) throws Exception {
+        var event = org.bukkit.event.player.PlayerQuitEvent.class
+                .getConstructor(Player.class, net.kyori.adventure.text.Component.class)
+                .newInstance(player, net.kyori.adventure.text.Component.empty());
+        manager.quit(event);
+    }
+
+    private void checkPersonalRestart(CasinoPlugin casino, MachineManager manager, Player creator) throws Exception {
+        var id = UUID.fromString("11111111-1111-1111-1111-111111111111");
+        var json = com.google.gson.JsonParser.parseString(Files.readString(
+                casino.getDataFolder().toPath().resolve("players/" + id + ".json"))).getAsJsonObject();
+        long total = json.getAsJsonObject("machines").getAsJsonObject(OWNER + ":keno").get("totalNet").getAsLong();
+        manager.command(creator, new String[]{"create", "keno"});
+        var machine = (PracticeMachine<?>) ((Map<?, ?>) field(manager, "machines")).values().stream()
+                .filter(m -> ((PracticeMachine<?>) m).game().equals("keno")).findFirst().orElseThrow();
+        var a = guest(id, false);
+        var tile = (ItemDisplay) ((List<?>) field(machine, "tiles")).getFirst();
+        click(manager, a, tile, "keno"); // saved number 1 must toggle OFF, rather than turn ON
+        var round = (dev.casino3d.game.keno.KenoRound) field(machine, "round");
+        require(round.selected().isEmpty() && round.sequence() == 0 && !round.active(),
+                "Personal selections not restored or unfinished round resumed");
+        require(((FeedbackState) field(machine, "feedback")).totalNet() == total,
+                "Settled personal total did not survive restart");
+        quit(manager, a);
+        manager.command(creator, new String[]{"remove", "keno"});
+        getLogger().info("CASINO_PERSONAL_RESTART_PASS preferences=true totals=true active=false");
+    }
+
+    private void checkMultiplayer(CasinoPlugin casino, MachineManager manager, Player creator) throws Exception {
+        Player a = guest(UUID.fromString("11111111-1111-1111-1111-111111111111"), false);
+        Player b = guest(UUID.fromString("22222222-2222-2222-2222-222222222222"), false);
+        Player admin = guest(UUID.fromString("33333333-3333-3333-3333-333333333333"), true);
+        var canUse = MachineManager.class.getDeclaredMethod("canUse", Player.class, PracticeMachine.class);
+        var canManage = MachineManager.class.getDeclaredMethod("canManage", Player.class, PracticeMachine.class);
+        canUse.setAccessible(true); canManage.setAccessible(true);
+        for (String game : GAMES) {
+            manager.command(creator, new String[]{"create", game});
+            var machine = (PracticeMachine<?>) ((Map<?, ?>) field(manager, "machines")).values().iterator().next();
+            require((boolean) canUse.invoke(manager, a, machine), "Guest cannot play: " + game);
+            require(!(boolean) canManage.invoke(manager, a, machine), "Guest can manage: " + game);
+            var buttons = (Map<ItemDisplay, String>) field(machine, "buttonActions");
+            var play = buttons.entrySet().stream().filter(e -> List.of("start", "play").contains(e.getValue())).findFirst().orElseThrow().getKey();
+            aim(play, new org.joml.Vector3f(0, .2f, .13f));
+            require((boolean) canManage.invoke(manager, admin, machine), "Non-owner OP cannot manage: " + game);
+            checkSettings(casino, machine, admin);
+            ItemDisplay selection = null;
+            if (game.equals("keno")) {
+                selection = (ItemDisplay) ((List<?>) field(machine, "tiles")).getFirst();
+                clearClickCooldown(machine); click(manager, a, selection, game);
+            }
+            clearClickCooldown(machine); click(manager, a, play, game);
+            var firstRound = (PracticeRound) field(machine, "round");
+            var firstFeedback = (FeedbackState) field(machine, "feedback");
+            long sequence = firstRound.sequence();
+            int pending = firstFeedback.pending();
+            require(sequence > 0 || game.equals("plinko") && pending > 0, "Guest PLAY failed: " + game);
+            clearClickCooldown(machine); click(manager, b, selection == null ? play : selection, game);
+            require(firstRound == field(machine, "round") && firstRound.sequence() == sequence
+                    && firstFeedback.pending() == pending, "Another player interfered: " + game);
+            var setStake = PracticeMachine.class.getDeclaredMethod("setStake", long.class);
+            setStake.setAccessible(true);
+            try {
+                setStake.invoke(machine, 2400L);
+                throw new IllegalStateException("Busy machine stake changed: " + game);
+            } catch (java.lang.reflect.InvocationTargetException expected) {
+                require("error.machine-busy".equals(expected.getCause().getMessage()), "Wrong busy error");
+            }
+            if (game.equals("crash")) {
+                var crash = (dev.casino3d.game.crash.CrashRound) firstRound;
+                crash.tick(crash.started() + 1_000_000);
+            }
+            if (game.equals("plinko")) {
+                for (int frame = 0; frame < 4; frame++) machine.tick();
+                clearClickCooldown(machine); click(manager, a, play, game);
+                require(firstFeedback.pending() == pending + 1, "Active player cannot launch another ball");
+            }
+            if (game.equals("mines") || game.equals("blackjack") || game.equals("penguin_cross") || game.equals("dragon_tower")) {
+                quit(manager, a);
+                machine = (PracticeMachine<?>) ((Map<?, ?>) field(manager, "machines")).values().iterator().next();
+                buttons = (Map<ItemDisplay, String>) field(machine, "buttonActions");
+                play = buttons.entrySet().stream().filter(e -> List.of("start", "play").contains(e.getValue())).findFirst().orElseThrow().getKey();
+            } else {
+                for (int frame = 0; frame < 1200; frame++) machine.tick();
+                require(firstFeedback.pending() == 0, "Settlement did not finish: " + game);
+            }
+            if (game.equals("keno")) {
+                var tile = (ItemDisplay) ((List<?>) field(machine, "tiles")).get(1);
+                clearClickCooldown(machine); click(manager, b, tile, game);
+                require(((dev.casino3d.game.keno.KenoRound) field(machine, "round")).selected().equals(java.util.Set.of(2)),
+                        "Keno selections leaked between players");
+            }
+            clearClickCooldown(machine); click(manager, b, play, game);
+            require(firstRound != field(machine, "round") && firstFeedback != field(machine, "feedback"),
+                    "Players share a round or feedback: " + game);
+            require(((FeedbackState) field(machine, "feedback")).totalNet() == 0, "Personal net leaked: " + game);
+            if (game.equals("slots")) {
+                for (int frame = 0; frame < 100; frame++) machine.tick();
+                clearClickCooldown(machine); click(manager, a, play, game);
+                require(firstRound == field(machine, "round") && firstFeedback == field(machine, "feedback"),
+                        "Returning player's data was replaced");
+                quit(manager, a);
+            }
+            quit(manager, b);
+            manager.command(creator, new String[]{"remove", game});
+            require(((Map<?, ?>) field(manager, "machines")).isEmpty(), "Multiplayer cleanup failed: " + game);
+            getLogger().info("CASINO_MULTIPLAYER_PASS game=" + game + " public=true exclusive=true personal=true op=true");
+        }
+    }
+
     private void click(MachineManager manager, Player player, ItemDisplay visual, String game) {
         String name = VanillaGeometry.name(visual.getItemStack());
         var matrix = VanillaGeometry.matrix(visual.getTransformation());
@@ -596,6 +730,7 @@ public final class CasinoVanillaProbe extends JavaPlugin {
 
     private void checkSettings(CasinoPlugin casino, Object machine, Player player) throws Exception {
         var settings = casino.machineSettings();
+        ((Map<?, ?>) field(settings, "lastOpen")).clear(); // each probe scenario starts after a separate human click
         var target = ((Map<?, ?>) field(settings, "targets")).get(machine);
         var opened = new int[] {0};
         settings.register(machine, OWNER, (Location) field(target, "origin"),

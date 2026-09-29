@@ -102,7 +102,8 @@ def main():
                         'pass': process.returncode == 0 and marker in log
                         and 'CASINO_VANILLA_FAIL' not in log,
                         'evidence': [line for line in log.splitlines() if any(marker in line for marker in
-                                     ('CASINO_VANILLA_', 'CASINO_AIM_PASS', 'CASINO_NAMESPACE_TAB_PASS', 'CASINO_FEEDBACK_PASS'))]}
+                                     ('CASINO_VANILLA_', 'CASINO_AIM_PASS', 'CASINO_NAMESPACE_TAB_PASS',
+                                      'CASINO_FEEDBACK_PASS', 'CASINO_MULTIPLAYER_PASS', 'CASINO_PERSONAL_RESTART_PASS'))]}
         result['phases'].append(phase_result)
         (run / 'result.json').write_text(json.dumps(result, ensure_ascii=False, indent=2),
                                          encoding='utf-8')

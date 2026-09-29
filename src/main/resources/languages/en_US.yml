@@ -264,3 +264,5 @@
 "feedback.big_win": "<gold>{amount}"
 "feedback.session": "<gray>SESSION {amount}"
 "feedback.pending": "<gray>BALLS IN PLAY {count}"
+
+"machine.occupied": "<reset><yellow>This machine is being used by another player. Please wait."

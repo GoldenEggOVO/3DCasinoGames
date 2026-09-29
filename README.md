@@ -28,6 +28,10 @@ Defaults are `menu-enabled: true` and `language: en_US`. Editable language files
 
 Vault and AuthMe are optional integrations.
 
+### Development build: multiplayer
+
+`0.6.0-beta.4-SNAPSHOT` adds public play on all 12 machines. Preparation and play are reserved for one player; other players and operators cannot interrupt an occupied machine. Operators can manage nearby machines made by other players. Personal choices and settled practice totals are saved across restarts in UUID-based files. Unfinished rounds reset on restart or session abandonment. See [installation](docs/installation.md) for details; the published beta.3 JAR does not include these changes yet.
+
 ## Features
 
 All 12 physical machines are free practice: they do not withdraw money or award an economy balance.

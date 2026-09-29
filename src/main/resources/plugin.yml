@@ -1,5 +1,5 @@
 name: 3dcasino
-version: 0.6.0-beta.3
+version: 0.6.0-beta.4-SNAPSHOT
 main: dev.casino3d.CasinoPlugin
 api-version: '1.21.8'
 softdepend: [Vault, AuthMe]

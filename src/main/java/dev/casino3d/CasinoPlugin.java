@@ -90,7 +90,7 @@ public final class CasinoPlugin extends JavaPlugin implements Listener {
     }
 
     public boolean machineAllowed(Player player) {
-        return allowed(player) && CasinoPermissions.allowed(player, "machine");
+        return allowed(player) && (player.isOp() || CasinoPermissions.allowed(player, "machine"));
     }
 
     public boolean menusEnabled() {

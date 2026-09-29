@@ -23,7 +23,7 @@ public final class KenoMachine extends AnimatedMachine<KenoRound> {
 
     public KenoMachine(
             MachineManager manager, UUID owner, Location origin, MachineDefinition definition) {
-        super(manager, owner, origin, definition, new KenoRound(new SecureRandom()));
+        super(manager, owner, origin, definition, () -> new KenoRound(new SecureRandom()));
     }
 
     @Override

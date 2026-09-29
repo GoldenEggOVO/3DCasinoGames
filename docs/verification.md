@@ -36,6 +36,14 @@ Local receipts are stored under `reports/vanilla-runtime/run-TIMESTAMP/result.js
 
 ## Reproduce
 
+### Multiplayer development build — 0.6.0-beta.4-SNAPSHOT
+
+On September 29, 2026, the same development JAR passed 168 Java tests, 20 Python tests and all three clean-server phases on Paper 1.21.8 build 60, Purpur 26.2 build 2622 and Paper 26.3 build 42 (alpha). This is separate from the published beta.3 matrix above.
+
+The added server probes exercise non-owner public play, exclusive player control, personal rounds and feedback, non-owner OP settings, occupied-machine stake rejection and Plinko batches across all 12 games. They verify logout handover and persisted Keno preferences/totals after restart. Unit tests cover preparation reservation, idle expiry, unfinished-session reset, corrupt-file preservation and retaining fresh in-memory data when the saved profile is stale.
+
+Receipts are retained locally under `reports/multiplayer/final-results.json`. The probe uses simulated players and real server entities; actual Minecraft client multiplayer interaction and visual acceptance remain pending. Other versions in the beta.3 matrix have not been rerun for this development build.
+
 ```sh
 mvn -B -ntp package
 python -m pip install -r tools/requirements-dev.txt

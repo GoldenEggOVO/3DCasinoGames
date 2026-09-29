@@ -94,7 +94,7 @@ public final class MachineSettingsTargets implements Listener {
                                 eye, direction, 5, org.bukkit.FluidCollisionMode.NEVER, true);
         if (block != null) nearest = block.getHitPosition().distance(eye.toVector()) + .01;
         for (var target : targets.values()) {
-            if (!target.owner.equals(p.getUniqueId())
+            if (!(p.isOp() || target.owner.equals(p.getUniqueId()))
                     || !target.origin.getWorld().equals(p.getWorld())) continue;
             double distance = distance(target.origin, target.bounds, eye, direction);
             if (distance < nearest) {

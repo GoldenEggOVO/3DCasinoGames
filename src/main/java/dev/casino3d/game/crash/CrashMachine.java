@@ -19,7 +19,7 @@ public final class CrashMachine extends PracticeMachine<CrashRound> {
 
     public CrashMachine(
             MachineManager manager, UUID owner, Location origin, MachineDefinition definition) {
-        super(manager, owner, origin, definition, new CrashRound(new SecureRandom()));
+        super(manager, owner, origin, definition, () -> new CrashRound(new SecureRandom()));
     }
 
     @Override

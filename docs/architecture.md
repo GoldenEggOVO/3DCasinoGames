@@ -26,6 +26,10 @@ Bundled geometry lives in `vanilla-models.json`. Follow the [model tooling instr
 
 `machine/PlacementStore` saves placements and definition snapshots separately from rounds, syncing a temporary file before atomic replacement. `MachineManager` indexes machines by owner and game, distinguishing saved records from loaded entities. Chunk or world unloads remove loaded entities; explicit deletion also updates saved records.
 
+In the `0.6.0-beta.4-SNAPSHOT` development build, `MachinePlayers` keeps each player's practice round and feedback separate. A physical machine reserves preparation and play for one player until all results and animations finish. Operators can manage any nearby machine, but management cannot interrupt an occupied machine. Logout, death, world changes and two minutes without input abandon unfinished play and release the machine.
+
+`PersonalDataStore` atomically saves preferences and settled feedback in `players/<player-uuid>.json`, keyed by machine creator UUID and game. Live rounds and pending feedback are never persisted. Session abandonment preserves current in-memory preferences and settled totals even if a file write failed; malformed files are reported and preserved for repair.
+
 `Language` loads messages with bundled English defaults and creates only missing language files. Menus and entity labels use stable keys and named placeholders. Translate service errors at presentation boundaries; translations never participate in action, probability or payment decisions. See [languages](languages.md).
 
 ## Text and menus

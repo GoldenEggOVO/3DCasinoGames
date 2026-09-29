@@ -19,7 +19,7 @@ public final class DuckRaceMachine extends AnimatedMachine<DuckRaceRound> {
 
     public DuckRaceMachine(
             MachineManager manager, UUID owner, Location origin, MachineDefinition definition) {
-        super(manager, owner, origin, definition, new DuckRaceRound(new SecureRandom()));
+        super(manager, owner, origin, definition, () -> new DuckRaceRound(new SecureRandom()));
     }
 
     @Override

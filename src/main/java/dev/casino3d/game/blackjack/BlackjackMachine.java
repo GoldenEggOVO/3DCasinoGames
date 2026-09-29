@@ -22,7 +22,7 @@ public final class BlackjackMachine extends PracticeMachine<BlackjackRound> {
 
     public BlackjackMachine(
             MachineManager manager, UUID owner, Location origin, MachineDefinition definition) {
-        super(manager, owner, origin, definition, new BlackjackRound(new SecureRandom()));
+        super(manager, owner, origin, definition, () -> new BlackjackRound(new SecureRandom()));
     }
 
     public static String readout(List<Integer> player, List<Integer> dealer, boolean active) {

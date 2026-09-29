@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — 0.6.0-beta.4-SNAPSHOT
+
+- Allow ordinary players to use public practice machines while reserving each preparation/round for one player, including concurrent Plinko balls. Other players receive an occupied message.
+- Give each player independent game state and feedback; persist personal choices and settled totals by UUID without resuming unfinished rounds.
+- Allow OPs to manage nearby machines created by other players. Block stake edits and deletion while a player occupies a machine.
+- Release abandoned sessions on logout, death, world change or two minutes of inactivity. HiLo follows the active player's view.
+
 ## 0.6.0-beta.3
 
 - Lower the minimum server API to 1.21.8 and pin the official Paper 1.21.8 compile dependency. One plugin JAR supports the verified older and newer servers; Java 25 remains required.

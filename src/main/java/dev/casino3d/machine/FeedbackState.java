@@ -32,6 +32,7 @@ public final class FeedbackState {
         totalNet += last.net();
         return last;
     }
+    void restore(long total, Result last) { totalNet = total; this.last = last; pending.clear(); }
     public Result last() { return last; }
     public int pending() { return pending.size(); }
     public long totalNet() { return totalNet; }
