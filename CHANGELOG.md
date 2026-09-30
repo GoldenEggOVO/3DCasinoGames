@@ -6,6 +6,7 @@
 - Give each player independent game state and feedback; persist personal choices and settled totals by UUID without resuming unfinished rounds.
 - Allow OPs to manage nearby machines created by other players. Block stake edits and deletion while a player occupies a machine.
 - Release abandoned sessions on logout, death, world change or two minutes of inactivity. HiLo follows the active player's view.
+- Deduplicate occupied notices per player when one right-click generates multiple entity interaction events.
 
 ## 0.6.0-beta.3
 

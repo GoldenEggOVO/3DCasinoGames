@@ -48,6 +48,7 @@ public final class CasinoVanillaProbe extends JavaPlugin {
     private boolean sneaking;
     private int shownDialogs;
     private boolean permissions = true;
+    private final Map<UUID, Integer> occupiedMessages = new LinkedHashMap<>();
     private final Map<UUID, Transformation> spawnPoses = new LinkedHashMap<>();
     private final Map<UUID, Integer> spawnDurations = new LinkedHashMap<>();
     private final Map<UUID, Boolean> spawnVisibility = new LinkedHashMap<>();
@@ -122,6 +123,7 @@ public final class CasinoVanillaProbe extends JavaPlugin {
                 checkMenus(casino, player, true);
                 benchmarkRestore(manager);
                 checkMultiplayer(casino, manager, player);
+                checkMinesRelease(manager, player);
                 for (String game : GAMES) {
                     manager.command(player, new String[] {"create", game});
                     var machines = (Map<?, ?>) field(manager, "machines");
@@ -550,6 +552,14 @@ public final class CasinoVanillaProbe extends JavaPlugin {
                     case "hasPermission", "isPermissionSet" -> "3dcasino.use".equals(args[0]);
                     case "hashCode" -> id.hashCode();
                     case "equals" -> proxy == args[0];
+                    case "sendMessage" -> {
+                        for (Object argument : args)
+                            if (argument instanceof net.kyori.adventure.text.Component component
+                                    && PlainTextComponentSerializer.plainText().serialize(component)
+                                            .equals(dev.casino3d.Language.text("machine.occupied")))
+                                occupiedMessages.merge(id, 1, Integer::sum);
+                        yield null;
+                    }
                     default -> method.invoke(base, args);
                 });
     }
@@ -588,6 +598,43 @@ public final class CasinoVanillaProbe extends JavaPlugin {
         getLogger().info("CASINO_PERSONAL_RESTART_PASS preferences=true totals=true active=false");
     }
 
+    private void checkMinesRelease(MachineManager manager, Player creator) throws Exception {
+        for (boolean cashout : new boolean[]{false, true}) {
+            manager.command(creator, new String[]{"create", "mines"});
+            var machines = (Map<?, ?>) field(manager, "machines");
+            var machine = (PracticeMachine<?>) machines.values().iterator().next();
+            var buttons = (Map<ItemDisplay, String>) field(machine, "buttonActions");
+            var play = buttons.entrySet().stream().filter(e -> e.getValue().equals("start")).findFirst().orElseThrow().getKey();
+            click(manager, creator, play, "mines");
+            var round = (dev.casino3d.game.mines.MinesDemoRound) field(machine, "round");
+            int mask = round.mines().mask();
+            int cell = Integer.numberOfTrailingZeros(cashout ? ~mask & ((1 << 25) - 1) : mask);
+            clearClickCooldown(machine);
+            click(manager, creator, (ItemDisplay) ((List<?>) field(machine, "cells")).get(cell), "mines");
+            var ray = PracticeMachine.class.getDeclaredMethod("ray", Player.class, double.class);
+            ray.setAccessible(true);
+            var hit = ray.invoke(machine, creator, 5d);
+            require(hit != null && field(field(hit, "target"), "action").equals("cell:" + cell),
+                    "Mines tile ray selected " + (hit == null ? "nothing" : field(field(hit, "target"), "action"))
+                            + " instead of cell:" + cell);
+            getLogger().info("MINES_FINISH_TRACE cashout=" + cashout + " cell=" + cell
+                    + " mask=" + mask + " revealed=" + round.mines().revealed()
+                    + " phase=" + round.mines().phase() + " active=" + round.active()
+                    + " finished=" + round.finished() + " sequence=" + round.sequence());
+            for (int frame = 0; frame < 10; frame++) machine.tick();
+            if (cashout) {
+                var cash = buttons.entrySet().stream().filter(e -> e.getValue().equals("cash")).findFirst().orElseThrow().getKey();
+                clearClickCooldown(machine); click(manager, creator, cash, "mines");
+                for (int frame = 0; frame < 10; frame++) machine.tick();
+            }
+            require(round.finished() && !round.active(), "Mines did not finish: cashout=" + cashout
+                    + " phase=" + round.mines().phase() + " revealed=" + round.mines().revealed());
+            manager.command(creator, new String[]{"remove", "mines"});
+            require(machines.isEmpty(), "Finished Mines cannot be deleted: cashout=" + cashout);
+        }
+        getLogger().info("CASINO_MULTIPLAYER_PASS mines_delete_after_loss_and_cashout=true");
+    }
+
     private void checkMultiplayer(CasinoPlugin casino, MachineManager manager, Player creator) throws Exception {
         Player a = guest(UUID.fromString("11111111-1111-1111-1111-111111111111"), false);
         Player b = guest(UUID.fromString("22222222-2222-2222-2222-222222222222"), false);
@@ -616,7 +663,14 @@ public final class CasinoVanillaProbe extends JavaPlugin {
             long sequence = firstRound.sequence();
             int pending = firstFeedback.pending();
             require(sequence > 0 || game.equals("plinko") && pending > 0, "Guest PLAY failed: " + game);
+            int notices = occupiedMessages.getOrDefault(b.getUniqueId(), 0);
             clearClickCooldown(machine); click(manager, b, selection == null ? play : selection, game);
+            require(occupiedMessages.getOrDefault(b.getUniqueId(), 0) - notices == 1,
+                    "One right-click sent duplicate occupied messages: " + game);
+            int adminNotices = occupiedMessages.getOrDefault(admin.getUniqueId(), 0);
+            click(manager, admin, selection == null ? play : selection, game);
+            require(occupiedMessages.getOrDefault(admin.getUniqueId(), 0) - adminNotices == 1,
+                    "Another player's notice was suppressed: " + game);
             require(firstRound == field(machine, "round") && firstRound.sequence() == sequence
                     && firstFeedback.pending() == pending, "Another player interfered: " + game);
             var setStake = PracticeMachine.class.getDeclaredMethod("setStake", long.class);
@@ -672,9 +726,11 @@ public final class CasinoVanillaProbe extends JavaPlugin {
     private void click(MachineManager manager, Player player, ItemDisplay visual, String game) {
         String name = VanillaGeometry.name(visual.getItemStack());
         var matrix = VanillaGeometry.matrix(visual.getTransformation());
-        var local = matrix.transformPosition(new org.joml.Vector3f(0,
-                name != null && name.contains("button") ? .2f : 0, .13f));
-        var direction = matrix.transformDirection(new org.joml.Vector3f(0, 0, 1)).normalize();
+        boolean mineCell = game.equals("mines") && name == null;
+        var local = matrix.transformPosition(mineCell ? new org.joml.Vector3f(0, 2, 0)
+                : new org.joml.Vector3f(0, name != null && name.contains("button") ? .2f : 0, .13f));
+        var direction = matrix.transformDirection(mineCell ? new org.joml.Vector3f(0, 1, 0)
+                : new org.joml.Vector3f(0, 0, 1)).normalize();
         var offset = MachineGeometry.rotate(local.x, local.y, local.z, visual.getLocation().getYaw());
         var normal = MachineGeometry.rotate(direction.x, direction.y, direction.z, visual.getLocation().getYaw());
         Location target = visual.getLocation().add(offset.x(), offset.y(), offset.z());
@@ -688,6 +744,10 @@ public final class CasinoVanillaProbe extends JavaPlugin {
                 picked.getHitPosition().subtract(picked.getHitEntity().getLocation().toVector()), EquipmentSlot.HAND);
         Bukkit.getPluginManager().callEvent(event);
         require(event.isCancelled(), "Button did not receive ray: " + game);
+        var general = new org.bukkit.event.player.PlayerInteractEntityEvent(
+                player, picked.getHitEntity(), EquipmentSlot.HAND);
+        Bukkit.getPluginManager().callEvent(general);
+        require(general.isCancelled(), "Duplicate entity event was not consumed: " + game);
     }
 
     private void checkAim(Object machine, Player player, String game) throws Exception {

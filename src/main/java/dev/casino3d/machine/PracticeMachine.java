@@ -45,6 +45,7 @@ public abstract class PracticeMachine<R extends PracticeRound> {
     private ItemDisplay highlighted;
     protected int age;
     private long lastClick;
+    private final Map<UUID, Long> lastOccupiedNotice = new HashMap<>();
     protected FeedbackState feedback;
     private final MachineSounds sounds;
     private MachineScreen screen;
@@ -551,7 +552,12 @@ public abstract class PracticeMachine<R extends PracticeRound> {
 
     final void click(Player player, TargetHit hit) {
         if (!acceptsPlayer(player)) {
-            player.sendMessage(dev.casino3d.Language.component("machine.occupied"));
+            long now = System.currentTimeMillis();
+            Long previous = lastOccupiedNotice.get(player.getUniqueId());
+            if (previous == null || now - previous >= 150) {
+                lastOccupiedNotice.put(player.getUniqueId(), now);
+                player.sendMessage(dev.casino3d.Language.component("machine.occupied"));
+            }
             return;
         }
         if (!player.getUniqueId().equals(displayedPlayer)) {
